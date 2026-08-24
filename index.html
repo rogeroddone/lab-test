@@ -2577,9 +2577,13 @@
        the same frame as every other open lead. HG26 does the same here, so the
        lab frame opens at the height of the images and videos that open the
        other projects rather than at a hardcoded 16 / 9. */
+    /* The lead frame opens to a fixed share of the viewport rather than a
+       proportion of its width. It is the opening statement of the section, so
+       it is sized to the screen, not to the other leads' aspect. The
+       aspect-ratio is dropped here so it cannot fight the height. */
     .carousel-section.is-open #notypeLab1Container {
-      aspect-ratio: var(--thumbRatio, 16 / 9);
-      height: auto !important;
+      aspect-ratio: auto !important;
+      height: 90vh !important;
     }
     #notypeLab1Container .rm-slide-wrapper,
     #notypeLab1Container .rm-slide-item { height: 100%; }
@@ -2606,6 +2610,12 @@
       .carousel-section.is-open[data-lab] .rest-item .lab-iframe {
         height: 90vh !important;
         aspect-ratio: auto !important;
+      }
+      /* The 5x5 and 10x10 frame carries two stacked sets, so it is given more
+         height than the single-set frames. Its .rest-item wrapper follows,
+         since the item boxes the iframe. */
+      .carousel-section.is-open[data-lab] .rest-item .lab-iframe[data-tall] {
+        height: 140vh !important;
       }
     }
     /* ── A LAB STACK IS FULL BLEED, ALL OF IT ──
@@ -5372,12 +5382,15 @@
               <div class="rm-slide-item" style="position:relative; background:#000; overflow:hidden;">
                 <iframe class="lab-iframe" src="" data-src="hg26_3x3.html" scrolling="no" allowtransparency="true" style="width:100%;height:100%;border:none;display:block;pointer-events:auto;"></iframe>
               </div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid1.jpg?updatedAt=1787263165769&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid1.jpg?updatedAt=1787263165769&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid1.jpg?updatedAt=1787263165769&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid1.jpg?updatedAt=1787263165769&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid1.jpg?updatedAt=1787263165769&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" style="position:relative; background:#000; overflow:hidden;">
-                <iframe class="lab-iframe" src="" data-src="hg26_5x5_10x10.html" scrolling="no" allowtransparency="true" style="width:100%;height:100%;border:none;display:block;pointer-events:auto;"></iframe>
+                <iframe class="lab-iframe" data-tall="1" src="" data-src="hg26_5x5_10x10.html" scrolling="no" allowtransparency="true" style="width:100%;height:100%;border:none;display:block;pointer-events:auto;"></iframe>
               </div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_typefaces1.jpg?updatedAt=1787263165672&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_typefaces1.jpg?updatedAt=1787263165672&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_typefaces1.jpg?updatedAt=1787263165672&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_typefaces1.jpg?updatedAt=1787263165672&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_typefaces1.jpg?updatedAt=1787263165672&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_process14_5.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_process14_5.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item" style="position:relative; background:#000; overflow:hidden;">
+                <iframe class="lab-iframe" src="" data-src="hg26_3d.html" scrolling="no" allowtransparency="true" style="width:100%;height:100%;border:none;display:block;pointer-events:auto;"></iframe>
+              </div>
             </div>
           </div>
         </div>
