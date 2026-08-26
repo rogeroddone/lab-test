@@ -1488,14 +1488,20 @@
        in its space; the only difference is that the paint has moved to a fixed
        layer. */
     @media (max-width: 768px) {
+      /* ── THE PLATE IS OFF ON THE PHONE ──
+         It was on: the photo the phone showed was this fixed layer, placed by
+         script from the flow spacer's resting rect, with the push, the blur
+         and the cover coordinating around it. Three subsystems to fake a
+         photo standing still, and when any one of them measured at the wrong
+         moment the page came up wrong in ways no stylesheet read could
+         explain, which is what an afternoon was spent on.
+
+         The phone paints the photo into .about-photo-ph itself now, in the
+         flow, and scrolls it like any other content. The plate and its
+         machinery stay for the desktop, where the standing-still effect is
+         the point and the geometry it depends on is stable. */
       body.view-about #aboutPlate {
-        display: block;
-        left: var(--plateX, 50vw);
-        top: var(--plateY, 25vh);
-        transform: none;
-        width: var(--plateW, 66vw);
-        height: var(--plateH, auto);
-        aspect-ratio: auto;
+        display: none !important;
       }
       /* The spacer holds the space and paints nothing; see .about-photo-ph
          further down this sheet, where its background is cleared at source. */
@@ -1821,8 +1827,82 @@
       .col-para-mob .info-paragraph-wrap { padding-top: 2.8em; }
       .col-para-mob.is-open { max-height: 3000px; opacity: 1; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.6, 0.95) 0.04s, opacity 0.4s ease 0.04s; }
 
-      .about-bio-grid { display: block; }
-      .about-bio-text { display: block; padding: 0; font-size: 26.67px; }
+      /* ── ON THE PHONE THE PHOTO COMES FIRST ──
+         Column order: photo, then the bio, then Contact. The bio used to open
+         the page and the photo sat under it; now the portrait is what the page
+         opens on and the words sit directly over the contact rule, which is
+         where a reader who has decided to get in touch is already looking.
+
+         Flex rather than block, purely to get one reordering lever: the photo
+         keeps its DOM position, which the desktop grid still places by
+         grid-column and grid-row, and only the phone reads the order. flex:none
+         because a column flex container will otherwise shrink a fixed-height
+         box to make room. */
+      .about-bio-grid { display: flex; flex-direction: column; }
+      .about-photo-ph { order: -1; flex: none; }
+      .about-bio-text { order: 0; }
+
+      /* ── THE PLUS SITS ON THE RULE, ON THE RIGHT ──
+         The same block the work entries use: Expa, Cruise, Principal Brand
+         Designer. Absolute against the text block, so the control holds the
+         rule's right end while the copy flows under it. It used to sit a
+         gutter below the last line, which put it in a different place
+         depending on whether the bio was open or closed. */
+      .about-bio-text {
+        display: block;
+        padding: 0;
+        font-size: 26.67px;
+        /* Positioning context for the plus, and nothing else. */
+        position: relative;
+      }
+      /* ── AND NO RESERVED HEIGHT ──
+         alignFirstSection() writes an inline min-height on .about-bio-grid to
+         hold the desktop record on its parked slot, sized to the OPEN essay.
+         It is gated to the desktop on the way in and nothing clears it on the
+         way out, so a page that was ever at desktop width carries that
+         reservation into the phone and the record sits a screen below where
+         the copy ends. That is the space that would not close.
+
+         On the phone the bio is a block in a column: it is as tall as its copy
+         and no taller, and opening the plus pushes everything under it down,
+         which is what the work entries already do. !important because the
+         value it beats is inline. */
+      #view-about .about-bio-grid { min-height: 0 !important; }
+
+      /* ── NO PIN ON THE PHONE ──
+         positionBio() writes an inline translateY on this element to hold the
+         desktop statement level with the name while the record scrolls. On the
+         phone the bio is a block in a column and any translate just tears it
+         away from the record under it. !important because inline is what it
+         has to beat. */
+      #view-about .about-bio-text { transform: none !important; }
+
+      /* ── THE BIO LABEL IS OFF ──
+         No rule and no word over this block. The rule was this label's own
+         border-top, so both go with one declaration.
+
+         The element stays in the markup rather than being deleted, because a
+         selector further down the file reads the first .section-label inside
+         #view-about and removing this one silently changes which element that
+         is. display:none takes its box, its border and its text out of the
+         layout while leaving the DOM shape alone.
+
+         Safe to do now. It was tried twice before and both times the record
+         below vanished, which looked like this change and was not: it was the
+         min-height reservation above, which is fixed. */
+      #view-about .about-bio-text .section-label { display: none; }
+
+      /* Clear of the button, so a long first line does not run under it. */
+      #bioLeadMob { padding-right: 2.4em; }
+      .bio-more-mob {
+        position: absolute;
+        /* Zero. The label is off, so the paragraph is the first thing in this
+           box and its top and the button's top are the same line. */
+        top: 0;
+        right: 0;
+        margin-top: 0;
+        width: auto;
+      }
       /* Mobile paints this one. The desktop box is a transparent spacer, so the
          fill and radius live here, and now the photo does too. Same image and
          same transform as #aboutPlate.
@@ -1833,16 +1913,19 @@
          distance from the photo's edge to the edge of the screen is
          (100vw - (50vw - pad)) / 2, which reduces to 25vw + half a pad.
 
-         These are the resting values and the fallback. fitAboutPhoto() writes
-         an inline width, height and pair of margins over them on the phone,
-         because the photo is the shock absorber for the contact peek: it holds
-         half the measure where there is room and shrinks where there is not,
-         centred in whatever space is left either way. With script off this is
-         what shows, which is the half-width photo with equal air on four
-         sides. */
+         These are the values, full stop. fitAboutPhoto() used to write an
+         inline width, height and pair of margins over them on the phone, with
+         the photo acting as shock absorber for a measured contact peek. That
+         is gone: the column flows and the sheet decides. */
       .about-photo-ph {
-        /* No paint. This is a spacer: the image is on #aboutPlate, which is
-           fixed. It used to carry the photo itself, and the rule clearing that
+        /* The paint is BACK on this element for the phone. The plate is off
+           below 769 (see the rule a few hundred lines up), so this box is the
+           photo, not a spacer for one. Same asset and crop the plate used.
+           !important because an old inline write may still be clearing it. */
+        background: #D9D9D9 url('https://ik.imagekit.io/rfi7kdlxzn/roger_photo.jpg?tr=q-80,w-1000') center / cover no-repeat !important;
+        /* Desktop reader's note, still true above 769: the image is on
+           #aboutPlate, which is fixed. This box used to carry the photo
+           itself, and the rule clearing that
            sat 350 lines earlier in this sheet, so order quietly kept the old
            background alive and the page showed two photos, one pinned and one
            scrolling past it. Cleared here, where it was set. */
@@ -1854,8 +1937,42 @@
         width: calc((var(--col) * 8) + (var(--gap) * 7));
         margin-left: auto;
         margin-right: auto;
-        margin-top: calc(25vw + var(--pad) / 2);
-        margin-bottom: calc(25vw + var(--pad) / 2);
+        /* ── THE PHOTO IS THE TOP OF THE COLUMN, AND THAT IS ALL ──
+           No top margin: the view's own padding is the air above it, and every
+           margin added here pushed the record further under the fold.
+
+           2.1em under it, which is the exact figure every .section-label on
+           this page carries over itself. Bio, Contact, Availability, Work
+           experience, Press and Education are then all one interval apart, and
+           the photo is spaced from Bio the same way Bio is spaced from
+           Contact. One rhythm, top to bottom. */
+        /* ── CENTRED IN THE VIEWPORT ──
+           --mobPhotoTop is written by mobileBehancePeek() and is whatever puts
+           the MIDDLE of this photo on the middle of the screen. Horizontal
+           centring is already the margin:auto above, inside a box that is
+           eight of the twelve columns, so the two together centre it on both
+           axes. Zero is the fallback, which is the photo sitting straight
+           under the view's own padding. */
+        margin-top: var(--mobPhotoTop, 0px);
+        /* ── THE DROP ──
+           --mobBioDrop is written by mobileBehancePeek() and is whatever
+           pushes the block under the photo far enough down that the LAST LINE
+           of Availability, "Remote or hybrid in San Francisco", is cut in half
+           by the bottom of the screen. So the first screen ends on a severed
+           line, which says the column continues, and everything above it, the
+           bio, the plus, Contact, all three links and the first line of
+           Availability, is whole.
+
+           The anchor was Behance one build ago. One section further down means
+           the block sits higher, which is the same lever asked to give less.
+
+           Only this one margin is measured. Everything below it is spaced by
+           the 0.63em interval the stack uses, so the drop moves the whole
+           block as one piece without touching the rhythm inside it.
+
+           2.1em is the fallback and the floor, which is what shows with script
+           off and on any screen too short for the peek to be worth having. */
+        margin-bottom: var(--mobBioDrop, 2.1em);
       }
       /* .section-label carries 2.1em over it, cancelled on :first-of-type. The
          Contact label is not the first of its type: #aboutStacksSpacer is a div
@@ -1864,15 +1981,24 @@
          it. That is a fixed number against a proportional one, so the bottom
          clearance drifted from the other three at every width. Cancelled on the
          label the spacer introduces, which is Contact and only Contact. */
-      #view-about #aboutStacksSpacer + .section-label { margin-top: 0; }
+      /* ── AND CONTACT IS JUST THE NEXT SECTION ──
+         Zero for as long as the photo sat directly above Contact and its
+         bottom margin was the clearance. The bio is in between now, so Contact
+         is no longer the top of anything: it is the second label in a stack
+         that starts at Bio, and it takes the same 2.1em every other label in
+         that stack takes. Written here rather than left to :first-of-type,
+         which would otherwise zero it for being first inside its own box. */
+      #view-about #aboutStacksSpacer + .section-label { margin-top: 0.63em; }
 
       /* ── BIO PLUS ──
          The same control as the job entries below and the footer: one
          affordance, one look, wherever the site asks you to open something.
-         It hangs one gutter off the end of the opening paragraph. */
+         It sat a gutter under the last line of the copy; it is now pinned to
+         the right end of the rule above the copy, by the block a few rules up,
+         which is where every job entry keeps its own. This rule only has to
+         turn it on. */
       .bio-more-mob {
         display: block;
-        margin-top: var(--gap);
       }
       .bio-more-mob .read-more-btn { pointer-events: auto; }
       /* Collapsed by default on the phone: the lead paragraph carries the
@@ -1888,6 +2014,16 @@
          inset scales with the blur so the feathered edge is always pushed
          outside the crop. At 0 blur the child is exactly inset:0. */
       .about-photo-ph { position: relative; overflow: hidden; }
+
+      /* ── THE PHOTO STANDS DOWN FOR THE COPY ──
+         Opening the bio turns this column into five paragraphs, and a portrait
+         sitting in the middle of them is an interruption in something the
+         reader has just asked to read. body.bio-open is already published by
+         the plus handler for the rule alignment, so this costs nothing but a
+         selector. Quick, because it is getting out of the way rather than
+         making an entrance. */
+      body.bio-open .about-photo-ph { opacity: 0; }
+      .about-photo-ph { transition: opacity 0.18s ease; }
 
       /* Work bio overlay */
       .featured-works-text { display: block; }
@@ -1931,11 +2067,21 @@
            because they are the content. */
         color: #999999;
         line-height: 1;
-        margin-top: 2.1em;
+        /* The space under the last line of the previous block, Behance to the
+           Availability rule. Set to the same 0.63em the label holds over its
+           own copy, so one interval separates everything in the stack: rule to
+           name, name to copy, copy to the next rule. */
+        margin-top: 0.63em;
         margin-bottom: 0;
         border-top: 0.5px solid #000;
-        padding-top: 8px;
-        padding-bottom: 1.05em;
+        /* 2.5px, which is the margin-bottom .about-contact-block-right-line
+           carries under the rule on every job entry. The labels sat at 8px, so
+           "Contact" hung further off its rule than "Independent" hangs off
+           its. One distance under every rule on the page now. */
+        padding-top: 2.5px;
+        /* 1.05em, less forty percent. The grey name and the copy it introduces
+           are one unit; a full line between them read as two. */
+        padding-bottom: 0.63em;
         overflow: hidden;
       }
       .section-label:first-of-type {
@@ -1947,11 +2093,14 @@
         font-weight: 400;
         color: #999999;
         line-height: 1;
-        margin-top: 2.1em;
+        /* One interval, as .section-label above. */
+        margin-top: 0.63em;
         margin-bottom: 0;
         border-top: 0.5px solid #000;
-        padding-top: 8px;
-        padding-bottom: 1.05em;
+        /* The job entries' own 2.5px, as .section-label above. */
+        padding-top: 2.5px;
+        /* Same forty percent cut as .section-label. */
+        padding-bottom: 0.63em;
       }
       /* Remove extra space after contact links — match work experience spacing */
       .work-contact-links::after { height: 0; }
@@ -3320,7 +3469,13 @@
            --mobLead using the same cap metrics the footer uses. The fallback
            is one gutter under the header bar, which is where this sits if
            script never runs or the screen is too short to hold the block. */
-        padding-top: var(--mobLead, var(--gap));
+        /* One gutter. This used to be --mobLead, the offset that put the work
+           statement on the same line as the Info page's opening paragraph so
+           switching views moved the eye sideways. That statement is off this
+           page, so there is nothing here to align and the measured figure
+           would only push the index down. --mobLead is still written and still
+           correct; nothing on the work view reads it now. */
+        padding-top: var(--gap);
         /* One gutter from the copyright to the foot of the viewport. This is
            the footer's clearance: #workFooter's own padding-bottom is zero so
            the two do not add up. */
@@ -3390,7 +3545,15 @@
         margin-bottom: calc(var(--gap) * 8) !important;
       }
 
-      /* ── STATEMENT ── */
+      /* ── STATEMENT: OFF THE WORK PAGE ──
+         The claim and the twenty years lived at the top of the phone's work
+         view and again, in full, on Info. Two statements of the same thing one
+         tap apart, and the one here was standing between the reader and the
+         only thing this page is for. Work opens on the work now.
+
+         Hidden, not deleted. The desktop reads the same element, and
+         headingsLead() still looks it up, so it stays in the markup. */
+      body.view-work #workBioMob { display: none !important; }
       #workBioMob { margin: 0; }
       #workBioMob .about-bio-text { font-size: 26.67px; }
 
@@ -3489,16 +3652,26 @@
            Eight gutters is the fallback, which is where this sat before and is
            close enough that nothing jumps if script never runs. */
         margin-top: var(--mobHeadTop, calc(var(--gap) * 8));
-        /* One gutter over the first thumbnail, down from four. The headings
-           belong to the stack they introduce, so the air goes above them, not
-           below: at four gutters under, the heading floated between the
-           statement and the cards and belonged to neither. */
+        /* One gutter over the first thumbnail. The heading belongs to the
+           stack it introduces, so the air goes ABOVE it, not below: the two
+           empty lines asked for are in mobileFold()'s figure, which is what
+           actually sets this element's top. Two lines were briefly put here
+           instead, which opened the wrong gap and pushed the heading up
+           against the statement. */
         margin-bottom: var(--gap);
         font-size: 26.67px;
         font-weight: 400;
         line-height: 1.1;
         letter-spacing: -0.01em;
+        /* Black. It was grey for a build, on the argument that it names the
+           block rather than being content. With the statement gone from above
+           it this is the first type on the page, and the first type on a page
+           is not a caption. */
         color: #000;
+        /* No rule. One was drawn here to separate the statement from the
+           index; the statement has gone, so there is nothing on the other side
+           of it and a line at the top of a page divides nothing. The open
+           project still draws its own, where there IS something above. */
         border-top: 0;
         padding: 0;
       }
@@ -3509,15 +3682,99 @@
          under it, four gutters to the next one. */
       body.view-work .carousel-section { margin-bottom: calc(var(--gap) * 4); }
       body.view-work .carousel-section .carousel-media-wrap { margin-bottom: var(--gap); }
-      /* ── THE DESCRIPTION RECEDES ──
-         The name is the project, the line under it says what kind of thing it
-         was. Grey separates the two at a glance on a screen where they sit one
-         above the other with nothing else between them: Cruise black,
-         autonomous vehicles grey.
+      /* ── THE DISCIPLINES ARRIVE ──
+         The card used to say only what each thing WAS: Cruise, autonomous
+         vehicles. That is the least useful line available on a page of seven
+         images, because the reader can already see what the work is and the
+         category says nothing about what Roger did to it. The disciplines do.
 
-         Same value the section labels on the Info page and the discipline
-         lists carry, so one grey means one thing across the phone. */
-      body.view-work .carousel-section .info-description { color: #999999; }
+         So .col-list comes back on the phone and takes the line directly under
+         the name, on the full measure, which is exactly where the category used
+         to sit. It ran BESIDE the name on column 5 for a build; at this width
+         that left both halves cramped and wrapped the disciplines while the
+         name had room to spare.
+
+         Collapsed only. An open project keeps its own copy of the same list
+         at the head of .col-para-mob, and the description still leads the
+         disciplines on the desktop where placeDescription() parks it. */
+      /* ── THE CATEGORY GOES FOR GOOD ──
+         "Autonomous vehicles" under "Cruise" names what the company is, which
+         the reader can already see from the image and which says nothing about
+         what Roger did to it. The disciplines take that slot instead.
+         placeDescription() still parks this inside .col-title on the phone, so
+         hiding it here is what empties the line they now occupy. */
+      body.view-work .carousel-section:not(.is-open) .info-description {
+        display: none;
+      }
+      /* .col-list is display:none for the whole phone further up the sheet.
+         This is the one place it comes back. grid-row 1 is required: the
+         mobile .info-grid places .col-title on row 1 explicitly, so row 2 is
+         stated here rather than left to auto-placement, which is what puts
+         these on their own line under the name instead of beside it.
+
+         margin-top is zeroed off the base rule, which carries --list-cap: a
+         negative equal to this type's line-box-to-cap gap. That correction
+         exists to top this type's CAP on a neighbour's cap when the two sit
+         SIDE BY SIDE on one row, which is the desktop card. Here the
+         disciplines are the LINE UNDER the name, so what is wanted is ordinary
+         leading between two lines of type and the correction would eat into
+         it. */
+      /* ── THE INDEX IS NAMES ONLY ──
+         Nothing under the thumbnail but the project. The category went first,
+         then the disciplines: both are things a reader gets inside the
+         project, and neither earns a line on a list they are scrolling past.
+         What is left is seven images and seven names.
+
+         display:none rather than deleting the rules below it. The slash
+         setting, the row and the height equaliser are all still correct and
+         all still cost nothing while this is off, so the disciplines can come
+         back to the card by changing this one word. */
+      body.view-work .carousel-section:not(.is-open) .col-list {
+        display: none;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        align-self: start;
+        margin-top: 0;
+      }
+      /* ── ONE LINE, NOT A LIST ──
+         The spans are block on the desktop, where the disciplines are a
+         stacked list beside a card. On the phone they run on: Iconography /
+         Art direction / Guidelines. A stack of three short words next to a
+         one-word project name read as a column of fragments; set as a line it
+         reads as a sentence about the work.
+
+         The rule is drawn by CSS rather than typed into the markup, so the
+         desktop list and the open project's own bulleted copy are untouched
+         and there is still one place, the spans, where the disciplines are
+         written. The separator hangs off the SECOND span onward, so the line
+         cannot end on a slash however many there are. */
+      body.view-work .carousel-section:not(.is-open) .col-list .info-list-para span {
+        display: inline;
+      }
+      body.view-work .carousel-section:not(.is-open) .col-list .info-list-para span + span::before {
+        content: " / ";
+      }
+      /* ── EVERY GAP THE SAME ──
+         The disciplines set the height of this row, and the projects do not
+         carry the same number of them: Uber has one, Cruise has three, and at
+         this measure three wrap to two lines where one does not. The section's
+         margin is a constant, so the space between thumbnails came out
+         different under every card, and the stack lost its beat.
+
+         --mobMetaH is the tallest of these rows, measured by mobileMetaHeight()
+         and applied to all of them, so the gap under every thumbnail is the
+         gap under the busiest one. Measured rather than authored because it
+         changes with the screen width and with the words themselves. */
+      body.view-work .carousel-section:not(.is-open) .info-grid {
+        min-height: var(--mobMetaH, 0px);
+      }
+      /* The name has the row to itself, so it takes the full measure. It was
+         cut to four tracks while the disciplines sat opposite it on 5; with
+         them on their own line underneath, that cut would only make a long
+         project name wrap for no reason. */
+      body.view-work .carousel-section:not(.is-open) .col-title {
+        grid-column: 1 / -1;
+      }
 
       /* ── ONE LINE, NOT TWO ──
          The break after "Principal" is set for the desktop measure, which is
@@ -3531,16 +3788,19 @@
       .nomob-sp { display: inline; }
 
       /* ── THUMBNAIL SHAPE ──
-         Was the asset's own ratio cut to 42.75% of its height by COLLAPSED,
-         which on a portrait phone asset came out near 2:1 and read as a strip.
-         Pinned to 4:3 instead: shorter than the lead image a project opens on,
-         taller than the strip, and the same for every card so the stack scans.
+         Was 4:3. Now the same full-bleed width with the HEIGHT cut by 30
+         percent, which is 0.75 of the measure dropping to 0.525, written as
+         40:21 so the number stays a ratio rather than a pixel figure that a
+         screen width could invalidate.
 
          aspect-ratio with height:auto !important beats the inline height
-         setHeight() writes, the same way the desktop cards do it. One number to
-         move if the shape wants adjusting. */
+         setHeight() writes, the same way the desktop cards do it. One number
+         to move if the shape wants adjusting.
+
+         Collapsed only, as before: an open project's lead image is not a
+         thumbnail and keeps its asset's own proportion. */
       body.view-work .carousel-section:not(.is-open) .rm-main-container {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 40 / 21;
         height: auto !important;
       }
 
@@ -5116,10 +5376,82 @@
       }
     }
 
+
+    /* ══ PHONE: SWIPE BETWEEN THE TWO VIEWS ════════════════════════════════
+       Drag left for Info, right for Work. The header is untouched by any of
+       this: .header-fixed is a body child, not a child of either view, so
+       "Roger Oddone" and the Work / Info pair hold their exact positions while
+       the page moves under them, and the underline changes side because
+       switchView() moves the .active class, which is the same thing a tap on
+       the label does.
+
+       The INCOMING view is animated and the outgoing one is not. switchView()
+       sets display:none on the one it is leaving in the same tick, so there is
+       no box left to move; animating both would mean keeping two full views
+       laid out at once, and every measured offset on this page assumes exactly
+       one is up. One view sliding in reads as the page moving anyway.
+
+       transform only, so nothing reflows and no measurement this file takes
+       can see the gesture. The class is stripped on animationend, which
+       matters: a live transform makes the element a containing block for any
+       fixed-position descendant, and this page has several. */
+    @media (max-width: 768px) {
+      @keyframes vSlideFromRight { from { transform: translate3d(100%, 0, 0); } to { transform: none; } }
+      @keyframes vSlideFromLeft  { from { transform: translate3d(-100%, 0, 0); } to { transform: none; } }
+      .v-slide-right { animation: vSlideFromRight 0.34s cubic-bezier(0.33, 1, 0.68, 1); }
+      .v-slide-left  { animation: vSlideFromLeft  0.34s cubic-bezier(0.33, 1, 0.68, 1); }
+    }
+
+    /* ══ PHONE TYPE, ONE STEP UP ═══════════════════════════════════════════
+       Twenty percent, and it is one number, because the GLOBAL TYPE OVERRIDE
+       a few thousand lines up pins every element on the page to --type on
+       !important. Nothing else reaches the screen. The first attempt at this
+       wrote out a scale, 32 / 35.2 / 19.44 against the authored 26.67 / 29.33
+       / 16.2, and not one of those declarations rendered: they all sit above
+       the override and lose to it on every breakpoint.
+
+       So the step is applied where the size is actually decided, --typeScale
+       in :root, and both derived sizes follow: --type for the site and
+       --typeSmall for the one exception that beats the override on
+       specificity.
+
+       Three moves are in this one figure: two steps of twenty percent up and
+       one of ten percent back down. 0.95 x 1.2 x 1.2 x 0.9 = 1.2312, which
+       puts the phone at 17.24px against the desktop's 13.3px. This line is the
+       whole control: multiply it to go up, divide to come down, delete the
+       block to return the phone to the desktop's setting.
+
+       Phone only. The desktop keeps 0.95, which is what the two-column layout
+       and every measured offset in it were tuned against.
+
+       The header band comes along without help. --headerH is read off a live
+       baseline probe rather than authored, so the bar grows with the type it
+       wraps instead of the type growing inside a fixed band. */
+    @media (max-width: 768px) {
+      :root { --typeScale: 1.2312; }
+    }
   </style>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body class="view-work">
+<script>
+/* ── FIRST SCRIPT ON THE PAGE: THE ERROR LOG ──
+   Installed before any other script runs, because an exception thrown during
+   initial evaluation fires before any listener added later and is lost to
+   everything except the devtools console. The #debug panel reads this list.
+   Nothing else touches it, and with no #debug in the URL it costs one empty
+   array. */
+window.__errLog = [];
+(function () {
+  function push(m) { if (window.__errLog.indexOf(m) === -1) window.__errLog.push(m); }
+  window.addEventListener('error', function (e) {
+    push((e.message || 'error') + (e.filename ? (' @' + String(e.filename).split('/').pop() + ':' + e.lineno) : ''));
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    push('promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+})();
+</script>
 
 <div id="collapseDock"></div>
 <!-- Back to top, one per scrolling column. Fixed, and only on screen once the
@@ -5199,13 +5531,12 @@
                here they are a scroll away. Same paragraph as the claim, on its
                own line, so it reads as the end of one thought rather than as a
                caption under it. -->
-          <p>Hands-on designer. 20+ years defining brand identities and building the systems that carry them.<br>Google, Uber, Cruise.</p>
+          <p>Hands-on designer. 20+ years defining brand identities<br>and building the systems that carry them.</p>
         </div>
       </div>
       <div id="bioCarSpacer"></div>
       <div id="mobileWorksLabel">
-        <span>Selected works (6)</span>
-        <span>Lab [Interactive] (1)</span>
+        <span>Selected works (7)</span>
       </div>
 
       <div id="worksLabel">Selected works (6)<br>&amp; Lab [Interactive] (1)</div>
@@ -5528,6 +5859,22 @@
       <div id="aboutSpacer" style="grid-column:1/-1;"></div>
       <div class="about-bio-grid">
         <div class="about-bio-text">
+          <!-- The word stays in the markup and is painted out in the sheet.
+               Two cheaper-looking versions were tried and both broke the page:
+               deleting the element took the rule with it, since the rule IS
+               this element's border-top, and emptying the element took the rule
+               AND the whole record below it, so something downstream is keyed
+               to this label having content.
+
+               Rather than hunt that down, nothing about the element changes.
+               Same tag, same class, same text, same box, same height. Only the
+               ink is removed, one line down in the sheet. The layout cannot
+               shift because from the layout's point of view nothing happened.
+
+               .section-label is display:none above 769px, so this is a phone
+               element without needing to say so, and it is :first-of-type here
+               so the 2.1em that separates the later labels is cancelled. -->
+          <div class="section-label">Bio</div>
           <!-- Two breaks, not two paragraphs. "Hands-on designer." is the claim
                and the rest is what it means, so the line is skipped between
                them and the claim holds the top of the column on its own.
@@ -5586,7 +5933,7 @@
         <div class="about-contact-block about-contact-block-right no-label" id="availabilityBlock">
           <div class="about-contact-block-right-line" data-stack="1"></div>
           <div class="about-contact-block-right-desc">
-            <p class="about-job-desc">Open to Staff and Principal<span class="nomob-sp">&nbsp;</span><br class="nomob">brand design roles.<br>Remote or hybrid in San Francisco.</p>
+            <p class="about-job-desc">Open to Staff and Principal<span class="nomob-sp">&nbsp;</span><br class="nomob"> brand design roles.<br>Remote or hybrid in San Francisco.</p>
           </div>
         </div>
         <div class="work-experience-label">Work experience</div>
@@ -5664,13 +6011,13 @@
         <div class="about-contact-block about-contact-block-right">
           <div class="about-contact-block-right-line" data-stack="4"></div>
           <div class="about-contact-block-right-desc">
-            <p class="about-job-desc" style="font-size:29.33px; line-height:1.1;">MBA, Branding, brand management<br><span style="color:#000;">Faculdades Integradas Rio Branco (Brazil)<br>2005—2007</span></p>
+            <p class="about-job-desc" style="font-size:29.33px; line-height:1.1;">MBA, Branding, brand management<br><span style="color:#000;">Faculdades Integradas Rio Branco<br>2005—2007 (Brazil)</span></p>
           </div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-desc">
-            <p class="about-job-desc" id="eduLast" style="font-size:29.33px; line-height:1.1;">Graphic design degree<br><span style="color:#000;">Centro Universitário Belas Artes de São Paulo (Brazil)<br>1998—2001<span class="pc-base"></span></span></p>
+            <p class="about-job-desc" id="eduLast" style="font-size:29.33px; line-height:1.1;">Graphic design degree<br><span style="color:#000;">Centro Universitário Belas Artes de São Paulo<br>1998—2001 (Brazil)<span class="pc-base"></span></span></p>
           </div>
         </div>
       </div>
@@ -5997,141 +6344,34 @@ function switchView(view) {
    photo travels up with the rule. Once that is gone the peek is what is lost.
    That trade is deliberate. A legible photo and no peek is a page; a 20px
    photo and a peek is neither. */
+/* ── fitAboutPhoto: DESKTOP CLEANUP ONLY ──
+   This used to size and position the photo on the phone, writing an inline
+   width, height and both margins to make three things true at once: the photo
+   centred on the screen, the Contact block cut by the fold, and the copy
+   aligned to the work view's heading. On a 932px screen with the bio group
+   between the photo and Contact, those cannot all hold, and every build spent
+   its budget on the first two and pushed the whole record below the fold.
+
+   The phone flows instead. Photo, then Bio, then Contact, Availability, Work
+   experience, Press, Education, each separated by the same 2.1em its label
+   carries. One rhythm down the column, nothing measured, nothing that can put
+   a section off screen. The reader scrolls, which is what a record is for.
+
+   What is left here is the clearing. Inline values written by earlier builds,
+   and the desktop's own inline margin, survive a resize across the breakpoint
+   and would beat the sheet, so both sides are wiped on the way through. */
 function fitAboutPhoto() {
   const photo = document.querySelector('#view-about .about-photo-ph');
-  /* The Contact heading. Its border-top IS the rule the reader sees above
-     Contact, and its margin-top is the space between that rule and the photo,
-     so the rule cannot be moved without moving this. */
   const label = document.querySelector('#view-about .about-contact-inner .section-label');
-
-  if (window.innerWidth > 768) {
-    /* Inline values written below survive a resize back across the breakpoint
-       and would beat the sheet, so they are cleared on the way out. */
-    if (label) label.style.marginTop = '';
-    return;
-  }
-
-  const links = document.querySelectorAll('#view-about .work-contact-links .work-contact-link');
-  const mainEl = document.getElementById('mainContent');
-  const li = links[1];                       // LinkedIn, the line the fold cuts
-  if (!photo || !li || !label) return;
-
-  const root = document.documentElement;
-  const gap = parseFloat(getComputedStyle(root).getPropertyValue('--gap')) || 10;
-  const RATIO = 5 / 4;                       // the 4/5 box, height over width
-
-  /* The label's authored margin-top, read before anything is written to it.
-     This is the resting distance from the photo down to the rule and the
-     ceiling for it: the rule may come closer, never further. */
-  label.style.marginTop = '';
-  const LMAX = parseFloat(getComputedStyle(label).marginTop) || 0;
-
-  // Zero every lever and drop the photo back to the sheet's own size to read.
+  if (label) label.style.marginTop = '';
+  if (!photo) return;
   photo.style.width = '';
   photo.style.height = '';
-  photo.style.marginTop = '0px';
-  photo.style.marginBottom = '0px';
-  label.style.marginTop = '0px';
-  void document.body.offsetHeight;
-
-  const scrolled = mainEl ? mainEl.scrollTop : 0;
-  const h = photo.getBoundingClientRect().height;
-  const r = li.getBoundingClientRect();
-  const linkMid = r.top + r.height / 2 + scrolled;
-
-  /* Everything under the photo moves one for one with the three levers, so B
-     is what they may add up to for LinkedIn's middle to land on the fold. */
-  const B = window.innerHeight - linkMid;
-
-  /* Whatever still separates the photo from the rule with all three at zero:
-     grid row spacing and the like, none of it under this function's control.
-     The floor is expressed against it so the gutter is measured photo edge to
-     rule, not as a margin value that happens to be named gap. */
-  const base0 = label.getBoundingClientRect().top - photo.getBoundingClientRect().bottom;
-  const Dfloor = Math.max(0, gap - base0);
-
-  /* ── BACK TO THE KNOWN-GOOD SPLIT, PLUS A READOUT ──
-     Builds 69, 70 and 71 all tried to move this and all three did nothing, so
-     the allocation is back to the one that was working before build 69: the
-     surplus splits evenly above and below the photo, with a floor of one
-     gutter on each side.
-
-     Why the three failed, now that the sheet has been read properly rather
-     than assumed:
-
-     69 moved the photo's two margins. It could not close the gap to the rule,
-     because the Contact label sat between them with its own margin-top.
-
-     70 and 71 added that label margin as a lever. It has no range: the rule at
-     line 1767, "#view-about #aboutStacksSpacer + .section-label", already sets
-     it to 0 on the phone. LMAX is 0, so there was nothing there to give.
-
-     71 then pinned the photo's top margin to LMAX, which is that same 0. A
-     margin of 0 cannot be reduced, so the final stage, the one that was
-     actually asked for, could never move the photo by a single pixel.
-
-     The real constraint, which none of the three respected: the photo sits in
-     normal flow, so it can only travel up by as much top margin as it has. Its
-     top margin is not authored anywhere. It is whatever this function computes,
-     and in the tight case that was already at its floor. There is no reserve to
-     spend, which is why nothing happened three times running.
-
-     Fixing that means deciding what the photo's resting top margin should BE,
-     and that is a design call, not an inference. The readout below is here to
-     get the numbers off a real phone first. */
-  const need = B;
-  const side = Math.max(need, 2 * gap) / 2;
-  const mTop = side, mBot = side;
-  label.style.marginTop = '';                // authored value, untouched
-
-  photo.style.height = h.toFixed(1) + 'px';
-  photo.style.width = (h / RATIO).toFixed(1) + 'px';
-  photo.style.marginTop = mTop.toFixed(1) + 'px';
-  photo.style.marginBottom = mBot.toFixed(1) + 'px';
-
-  /* ── DIAGNOSTIC READOUT ──
-     Off unless the URL ends in #debug, so it can never appear in production.
-     Everything below is measured after the write, on the real element, so it
-     reports what the phone is actually doing rather than what was intended.
-     CLEARANCE is the number this whole exercise is about: the distance from
-     the bottom edge of the photo to the top of the Contact rule. */
-  if (location.hash.indexOf('debug') !== -1) {
-    let box = document.getElementById('photoDebug');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'photoDebug';
-      box.style.cssText = 'position:fixed;left:4px;bottom:4px;z-index:99999;'
-        + 'background:rgba(255,255,255,0.94);border:0.5px solid #000;padding:6px;'
-        + 'font:10px/1.35 monospace;text-transform:none;white-space:pre;'
-        + 'pointer-events:none;color:#000;';
-      document.body.appendChild(box);
-    }
-    requestAnimationFrame(() => {
-      const pr = photo.getBoundingClientRect();
-      const lr = label.getBoundingClientRect();
-      const lr2 = li.getBoundingClientRect();
-      const bioOpen = !!document.body.className.match(/bio-open/)
-        || (document.getElementById('bioRestMob')
-            && getComputedStyle(document.getElementById('bioRestMob')).display !== 'none');
-      box.textContent =
-          'innerH    ' + window.innerHeight.toFixed(0)
-        + '\nB (budget) ' + B.toFixed(1)
-        + '\ngap       ' + gap.toFixed(1)
-        + '\nLMAX      ' + LMAX.toFixed(1) + '   <- label margin, authored'
-        + '\nbase0     ' + base0.toFixed(1)
-        + '\nDfloor    ' + Dfloor.toFixed(1)
-        + '\nmTop      ' + mTop.toFixed(1)
-        + '\nmBot      ' + mBot.toFixed(1)
-        + '\nphoto top ' + pr.top.toFixed(1) + '  bot ' + pr.bottom.toFixed(1)
-        + '\nrule top  ' + lr.top.toFixed(1)
-        + '\nCLEARANCE ' + (lr.top - pr.bottom).toFixed(1) + '  <- photo to rule'
-        + '\nLinkedIn  top ' + lr2.top.toFixed(1) + '  mid ' + (lr2.top + lr2.height / 2).toFixed(1)
-        + '\nfold      ' + window.innerHeight.toFixed(0) + '  (peek ok if mid <= fold)'
-        + '\nbio open  ' + bioOpen;
-    });
-  }
+  photo.style.marginTop = '';
+  photo.style.marginBottom = '';
 }
 window._fitAboutPhoto = fitAboutPhoto;
+window._setAboutSpacer = function () { try { setAboutSpacer(); } catch (e) {} };
 
 /* Builds 69-73 tried to move .about-photo-ph on the phone, as margins and
    then as a scroll pin, and none of it showed on screen. It could not: on the
@@ -6167,7 +6407,34 @@ function setAboutSpacer() {
        Info starts at its own padding, same as it would with script off. The
        agreement between the two pages was worth having when both had
        something near the top to agree about. */
+    /* ── THE INFO COPY LANDS ON THE WORK HEADING ──
+       Restored, and driven off the right number this time. The build that
+       removed this was aligning to the work STATEMENT, which the fold anchor
+       had pushed most of a screen down and which is not on the work page at
+       all any more. The target now is "Selected works (7)", the first type the
+       work view shows, published by mobileFold() as _mobWorksLabelY while that
+       view is up.
+
+       Measured, not assumed: zero the spacer, read where the opening paragraph
+       actually falls, grow the spacer by the difference. #aboutSpacer is the
+       first child of #view-about, so its height IS the offset and nothing else
+       in the column needs to know about it.
+
+       Only while Info is on screen. This also runs at init with #view-about
+       still display:none, where every offset reads zero and the difference
+       would come out as the entire target. */
     spacer.style.height = '0px';
+    const leadMob = document.getElementById('bioLeadMob');
+    const aboutEl = document.getElementById('view-about');
+    const worksY = window._mobWorksLabelY || 0;
+    const shown = aboutEl && getComputedStyle(aboutEl).display !== 'none';
+    if (worksY && leadMob && shown) {
+      void mainEl.offsetHeight;
+      let ly = 0, ln = leadMob;
+      while (ln && ln !== mainEl) { ly += ln.offsetTop; ln = ln.offsetParent; }
+      const need = worksY - ly;
+      if (need > 0) spacer.style.height = need.toFixed(1) + 'px';
+    }
 
     /* ── CONTACT SITS ON THE PHOTO, NOT ON THE WORK LABEL ──
        This used to grow #aboutStacksSpacer until the Contact rule landed on
@@ -7758,7 +8025,18 @@ window._updateSlideIndicator = function(section, idx) {
 function applyMobileRows() {
   const mob = window.innerWidth <= 768;
   document.querySelectorAll('.info-secondary').forEach(el => el.style.display = mob ? 'grid' : 'none');
-  document.querySelectorAll('.col-list, .col-para-a, .col-para-b, .col-block:not(.col-block-mob)').forEach(el => el.style.display = mob ? 'none' : '');
+  document.querySelectorAll('.col-para-a, .col-para-b, .col-block:not(.col-block-mob)').forEach(el => el.style.display = mob ? 'none' : '');
+  /* ── .col-list IS NOT SCRIPT'S ANY MORE ──
+     It used to be in the list above and got an inline display:none on every
+     phone width. An inline style outranks any rule in the sheet, so the phone
+     rule that brings the disciplines back beside the project name could never
+     win no matter how it was written, and the card showed the name alone.
+
+     The sheet owns the decision now: hidden for the phone by the base mobile
+     rule, back on collapsed cards only, still shown on the desktop in both
+     states. All this does is clear whatever an earlier build wrote inline, so
+     the cascade is reading a clean element. */
+  document.querySelectorAll('.col-list').forEach(el => el.style.display = '');
 }
 applyMobileRows();
 window.addEventListener('resize', applyMobileRows);
@@ -8005,6 +8283,16 @@ window._fluidReveal = function (block, mutate, shown, hidden) {
     /* The parked slot is either being abandoned or restored by this click, and
        neither is a scroll or a resize, so nothing else would recompute it. */
     if (window._alignFirstSection) requestAnimationFrame(window._alignFirstSection);
+    /* ── THE PHONE FLOWS, IT DOES NOT RESERVE ──
+       Both calls above are desktop machinery that decide where the record sits
+       relative to a parked sidebar stack, and both write inline geometry. On
+       the phone there is no sidebar and no parked slot: opening the plus
+       should push Contact, Availability and the record down by the height of
+       the essay and nothing else, the same as every job toggle. So whatever
+       they wrote is taken straight back off. */
+    if (window.innerWidth <= 768 && window._mobileAboutSanitize) {
+      window._mobileAboutSanitize();
+    }
   }
   btn.innerHTML = SVG_PLUS;
   rest.style.display = 'none';
@@ -8914,7 +9202,44 @@ function initCarousel(sec) {
        Painted directly rather than by clearing the flag, because the flag lives
        in a closure this code cannot reach, and in this layout there is nothing
        left that would act on it anyway. */
-    if (window._mobileFold) requestAnimationFrame(window._mobileFold);
+    /* ── CLOSING A PROJECT RETURNS TO THE TOP ──
+       The index is a page, not a position in one. Closing used to leave the
+       reader at whatever depth the project had been opened from, so they fell
+       out of a project into the middle of the list with the heading and the
+       first two thumbnails already behind them. Now the home page is the home
+       page every time it is arrived at.
+
+       Phone only, and only on the way OUT of a project. scroll-behavior is
+       forced to auto around it so this is a jump rather than a long smooth
+       run back up under the reader's thumb. */
+    if (!anyOpen && window.innerWidth <= 768) {
+      var mc = document.getElementById('mainContent');
+      if (mc) {
+        var sb = mc.style.scrollBehavior;
+        mc.style.scrollBehavior = 'auto';
+        mc.scrollTop = 0;
+        mc.style.scrollBehavior = sb;
+      }
+      if (window.scrollY) window.scrollTo(0, 0);
+    }
+    /* ── RECOMPUTE MORE THAN ONCE ──
+       One frame was not enough. Closing a project puts seven collapsed rows
+       back into the layout, restores the header band and lets the scroll
+       settle, and the frame immediately after the class change can still read
+       a zero-height thumbnail or a half-applied layout. A single early read
+       used to be the only read there was.
+
+       Three passes: the next frame, then twice on a short timer. They are
+       idempotent, they cost one layout each, and the last one is what actually
+       holds. */
+    [0, 80, 260].forEach(function (t) {
+      var run = function () {
+        if (window._mobileFold) window._mobileFold();
+        if (window._mobileMetaHeight) window._mobileMetaHeight();
+        if (window._setAboutSpacer) window._setAboutSpacer();
+      };
+      if (t) setTimeout(run, t); else requestAnimationFrame(run);
+    });
 
     /* ── THE LEFT COLUMN GOES BACK TO THE TOP ──
        A project is an overlay: scroll past it and the landing page is there
@@ -9490,34 +9815,17 @@ setTimeout(() => {
    the carousel, because the slide index is published on the section's dataset
    by several different paths (arrows, drag, keyboard) and a poll cannot miss
    one of them. Cheap: it only runs while a project is open. */
-/* ── LAB TAGS ──
-   What is left of the per-image numbering module. The counters it was named
-   for are gone; the poll stays because the one thing still on it, the
-   Lab [Interactive] tag, is stamped onto a title that initCarousel rebuilds
-   at a point that is not observable from here, and a poll cannot miss it. */
-(function labTags() {
-  function tick() {
-    /* The per-image counters are not built any more. The block that wrote them
-       ran on every frame a project was open, measuring offsetTop for each
-       image to keep the numbers level with their pictures; with the labels
-       gone that is a layout read per image per frame for nothing. Removed
-       here rather than hidden in CSS, so the work stops as well as the paint.
-       This loop stays for the one thing still on it. */
-    // Lab cards label themselves, directly under their title.
-    document.querySelectorAll('#view-work .carousel-section[data-lab]').forEach(ls => {
-      const host = ls.querySelector('.col-title');
-      if (host && !host.querySelector(':scope > .lab-tag')) {
-        const t = document.createElement('div');
-        t.className = 'lab-tag';
-        t.setAttribute('aria-hidden', 'true');
-        t.innerHTML = 'Interactive';
-        host.appendChild(t);
-      }
-    });
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-})();
+/* ── LAB TAGS: REMOVED ──
+   HG26 used to stamp itself "Lab [Interactive]" under its title, injected on a
+   rAF poll because initCarousel rebuilds .col-title at a point this module
+   cannot observe. The card carries its name and its disciplines and nothing
+   else now, the same as the other six, so the tag is gone and the poll with
+   it: it existed only to place that one element and was reading the DOM on
+   every frame for the life of the page to do it.
+
+   .lab-tag's rules are still in the sheet a few thousand lines up. Nothing
+   builds the element any more, so they are inert; left in place because the
+   next Lab piece will want them back rather than rewritten. */
 
 (function slideCounter() {
   const pad = n => String(n).padStart(2, '0');
@@ -10238,6 +10546,74 @@ document.addEventListener('visibilitychange', function() {
 
    Measured with the figure cleared first, or the previous pass's number is
    inside the number being measured and the block creeps on every resize. */
+/* ── PHONE: HORIZONTAL SWIPE SWITCHES THE VIEW ──
+   Left goes to Info, right comes back to Work. Nothing else about the page
+   changes: switchView() already owns the display swap, the scroll reset and
+   the .active class that draws the underline, so this only decides WHEN to
+   call it and adds the slide.
+
+   The whole difficulty is not stealing a vertical scroll. The page is a tall
+   column and almost every touch on it is meant for that column, so the gesture
+   has to be clearly, deliberately sideways before it counts: at least 55px
+   across, and at least twice as far across as it went down. Anything less and
+   the finger keeps the scroll.
+
+   Locked out while a project is open. Sideways out of an open project has no
+   obvious meaning, and the X and the back control are already there for it. */
+(function viewSwipe() {
+  var MOB = window.matchMedia('(max-width: 768px)');
+  var MIN_X = 55;      /* how far across before it counts */
+  var RATIO = 2;       /* how much more across than down */
+  var MAX_MS = 700;    /* a slow drag is a scroll that wandered */
+
+  var x0 = 0, y0 = 0, t0 = 0, live = false;
+
+  function slide(el, cls) {
+    if (!el) return;
+    el.classList.remove('v-slide-left', 'v-slide-right');
+    void el.offsetWidth;                     /* restart the animation */
+    el.classList.add(cls);
+    var off = function () {
+      el.classList.remove(cls);
+      el.removeEventListener('animationend', off);
+    };
+    el.addEventListener('animationend', off);
+  }
+
+  function go(view) {
+    if (typeof switchView !== 'function') return;
+    switchView(view);
+    var el = document.getElementById(view === 'about' ? 'view-about' : 'view-work');
+    slide(el, view === 'about' ? 'v-slide-right' : 'v-slide-left');
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    live = false;
+    if (!MOB.matches) return;
+    if (document.body.classList.contains('has-open')) return;
+    if (!e.touches || e.touches.length !== 1) return;
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    t0 = Date.now();
+    live = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function (e) {
+    if (!live) return;
+    live = false;
+    var t = e.changedTouches && e.changedTouches[0];
+    if (!t) return;
+    if (Date.now() - t0 > MAX_MS) return;
+    var dx = t.clientX - x0;
+    var dy = t.clientY - y0;
+    if (Math.abs(dx) < MIN_X) return;
+    if (Math.abs(dx) < Math.abs(dy) * RATIO) return;
+    var onWork = document.body.classList.contains('view-work');
+    if (dx < 0 && onWork) go('about');
+    else if (dx > 0 && !onWork) go('work');
+  }, { passive: true });
+})();
+
 (function mobileFoldInit() {
   var MOB = window.matchMedia('(max-width: 768px)');
 
@@ -10245,25 +10621,90 @@ document.addEventListener('visibilitychange', function() {
     var root  = document.documentElement;
     var label = document.getElementById('mobileWorksLabel');
     if (!label) return;
-    if (!MOB.matches || document.body.classList.contains('has-open')) {
-      root.style.removeProperty('--mobHeadTop');
-      return;
-    }
+    /* ── SKIP, NEVER CLEAR ──
+       This used to removeProperty here. That is the whole of the tight-gap
+       bug after closing a project: the moment anything ran this while the
+       project was still up, the figure went and the heading fell back on the
+       authored eight gutters, which is a different page from the one that
+       loads. Nothing ever put it back, because the recompute on close is a
+       single frame and any one of resize, orientation or the media query
+       could land inside the open state and undo it.
+
+       The last good figure is always better than the fallback: the fallback
+       is a guess and the figure was measured off this exact screen. It is
+       only read inside max-width 768 rules, so leaving it set on a desktop
+       costs nothing either. */
+    if (!MOB.matches || document.body.classList.contains('has-open')) return;
+    /* ── THE ANCHOR IS THE THIRD THUMBNAIL ──
+       It was the second, cut at two thirds. Two whole cards and most of a
+       third is more of the index on the first screen, and a thin band of the
+       next one still says the list continues. The statement and the header
+       do not move: this only ever writes the heading's top margin, so the
+       block from "Selected works" down slides up into the space instead. */
     var secs = document.querySelectorAll('#view-work .carousel-section');
-    if (secs.length < 2) return;
-    var media = secs[1].querySelector('.carousel-media-wrap');
+    if (secs.length < 3) return;
+    var media = secs[2].querySelector('.carousel-media-wrap');
     var main  = document.getElementById('mainContent');
     if (!media || !main) return;
 
     root.style.setProperty('--mobHeadTop', '0px');
     var natural = parseFloat(getComputedStyle(label).marginTop) || 0;
     var r = media.getBoundingClientRect();
-    if (!r.height) { root.style.removeProperty('--mobHeadTop'); return; }
-    /* Where the two thirds line sits inside the column's own coordinates. */
-    var cur  = r.top + r.height * (2 / 3) + main.scrollTop;
+    /* Hold the last good figure rather than clearing it. Clearing drops the
+       heading onto the authored fallback of eight gutters, which is a visibly
+       different page, and a zero-height read here is always a transient: the
+       collapsed rows are display:none under an open project and come back a
+       frame later. */
+    if (!r.height) return;
+    /* ── WHERE THE CUT LINE SITS, MEASURED WITHOUT THE SCROLL ──
+       This used to be the media's viewport rect plus main.scrollTop, on the
+       reasoning that the two convert a viewport reading into a content one.
+       They only do that if #mainContent is the box that actually scrolled.
+       On the phone it is not always, and the two terms then belong to
+       different coordinate systems: the sum is right at the top of the page
+       and drifts by the scroll everywhere else.
+
+       That is the bug behind the tight gap after closing a project. The
+       reader is part way down when they hit the X, this ran against a rect
+       that no longer agreed with the scrollTop added to it, and the figure it
+       produced put the heading in a different place from the one it holds on
+       first load.
+
+       offsetTop instead. It is a LAYOUT value, resolved against the offset
+       parent chain and unaffected by scrolling, so it reads the same at the
+       top of the page and half way down it. Summed up to #mainContent, whose
+       padding box starts at the top of the viewport, so a content y and a
+       viewport y at rest are the same number and want can stay as the plain
+       viewport height. Only the HEIGHT still comes off the rect, which is the
+       one thing a rect reports that scrolling cannot touch. */
+    var y = 0, n = media;
+    while (n && n !== main) { y += n.offsetTop; n = n.offsetParent; }
+    var cur  = y + r.height * 0.8;
     var want = window.innerHeight;
+    /* ── NO PADDING ON TOP OF THE ANCHOR ──
+       Two empty lines used to be added here, on top of whatever this figure
+       came to, because air above the heading cannot be put in the sheet: this
+       function measures the result and takes back the same amount. With the
+       anchor moved down to the third thumbnail the block has to travel UP,
+       and those two lines are exactly what it has to travel up through, so
+       they go. The anchor is the only thing setting this now.
+
+       The clamp at zero is the one thing that can still miss the target: on a
+       short screen the heading cannot rise past the statement above it, and
+       the third thumbnail will show less than a fifth. Nothing is broken when
+       that happens, the first screen is simply full. */
     root.style.setProperty('--mobHeadTop',
       Math.max(0, natural + (want - cur)).toFixed(1) + 'px');
+
+    /* ── PUBLISH WHERE THE HEADING LANDED ──
+       setAboutSpacer() aligns the Info copy to this exact line, and it runs on
+       the Info view where #view-work is display:none and every offset in it
+       reads zero. So the number is taken here, while Work is up, and left on
+       the window for it. offsetTop again: a layout value, unaffected by the
+       scroll, measured after the margin above has been written. */
+    var ly = 0, ln = label;
+    while (ln && ln !== main) { ly += ln.offsetTop; ln = ln.offsetParent; }
+    if (ly) window._mobWorksLabelY = ly;
   }
 
   function boot() {
@@ -10280,6 +10721,58 @@ document.addEventListener('visibilitychange', function() {
   window.addEventListener('orientationchange', apply);
   if (MOB.addEventListener) MOB.addEventListener('change', apply);
   window._mobileFold = apply;
+})();
+
+/* ── PHONE: ONE HEIGHT FOR EVERY META ROW ──
+   The name and the disciplines share a row under each thumbnail, and that row
+   is as tall as whichever of the two runs longer. The disciplines vary: one
+   for Uber, three for Cruise and Expa, and at this measure three wrap where
+   one does not. Left alone the stack breathes differently under every card.
+
+   So the tallest row is measured and given to all of them as a min-height. It
+   has to be measured: the wrap point moves with the screen width and with the
+   words, so any number written into the sheet would be right at one size and
+   wrong at the next.
+
+   Cleared first, then read, or the previous pass's floor would be the thing
+   being measured and the value could only ever grow. Skipped entirely on the
+   desktop and while a project is open, where the collapsed rows are not laid
+   out and every rect reads zero. */
+(function mobileMetaHeight() {
+  var MOB = window.matchMedia('(max-width: 768px)');
+
+  function apply() {
+    var root = document.documentElement;
+    /* Skip rather than clear, for the reason mobileFold() gives at length:
+       a figure measured off this screen beats the fallback, and clearing it
+       from inside the open state is how it goes missing. */
+    if (!MOB.matches || document.body.classList.contains('has-open')) return;
+    root.style.removeProperty('--mobMetaH');
+    var rows = document.querySelectorAll(
+      '#view-work .carousel-section:not(.is-open) .info-grid');
+    if (!rows.length) return;
+    var tallest = 0;
+    rows.forEach(function (row) {
+      var h = row.getBoundingClientRect().height;
+      if (h > tallest) tallest = h;
+    });
+    if (!tallest) return;
+    root.style.setProperty('--mobMetaH', tallest.toFixed(1) + 'px');
+  }
+
+  function boot() {
+    apply();
+    /* The face decides where the line breaks, so the first measurement taken
+       against the fallback font is not the one that survives. */
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(apply);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  window.addEventListener('load', apply);
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', apply);
+  if (MOB.addEventListener) MOB.addEventListener('change', apply);
+  window._mobileMetaHeight = apply;
 })();
 </script>
 <script>
@@ -10462,6 +10955,18 @@ document.addEventListener('visibilitychange', function() {
 
     let over = infoLeadOffset();
     if (over == null || !isFinite(over) || over < 0) over = 0;
+    /* ── TWENTY PERCENT CLOSER TO THE NAME ──
+       The figure above is the Info page's own lead, which is what put the Work
+       statement on exactly the line the Info paragraph sits on: switching
+       views moved the eye sideways rather than up and down. Four fifths of it
+       pulls the statement up toward "Roger Oddone" and gives up that
+       alignment, which is the whole point of reading it off the Info view in
+       the first place. Set the multiplier back to 1 to get it back.
+
+       The remainder is not lost. S is the total air the block needs and the
+       split is over plus the reel gap, so whatever comes off here is handed
+       straight to the gap under the statement. */
+    over = over * 0.8;
     if (over > S) over = S;
 
     root.style.setProperty('--mobLead', over.toFixed(1) + 'px');
@@ -14822,6 +15327,278 @@ document.addEventListener('visibilitychange', function() {
 
   if (document.readyState === 'complete') setTimeout(boot, 400);
   else window.addEventListener('load', function () { setTimeout(boot, 400); });
+})();
+</script>
+
+<script>
+/* ── PHONE: BEHANCE IS CUT BY THE FOLD ──
+   The first screen of Info ends on a severed line rather than on white. The
+   photo holds the top, and the block under it, the bio and its plus, Contact,
+   the email, LinkedIn, is pushed down by exactly the amount that lands the
+   MIDDLE of the last contact link on the bottom edge of the screen. A line
+   sliced in half says the column continues; a screen that stops on empty page
+   says it has ended.
+
+   One lever, the photo's bottom margin, published as --mobBioDrop. Everything
+   below the photo is spaced by the stack's own 0.63em interval, so this moves
+   the whole block as one piece and changes nothing inside it.
+
+   offsetTop rather than rects, for the reason mobileFold() sets out at length:
+   offsetTop is a layout value and reads the same at the top of the page as
+   half way down it, where a viewport rect does not.
+
+   Not while the essay is open. Opening the plus is meant to push the record
+   down and off the bottom of the screen, the way the work entries do;
+   recomputing the drop then would haul it back up to keep a peek the reader
+   has just navigated away from. The figure from the closed state stands and
+   the column simply grows past it.
+
+   Own script block, after the sanitizer, because the sanitizer clears inline
+   geometry and this writes a custom property instead, which survives it. */
+(function mobileBehancePeek() {
+  function topIn(el, root) {
+    var y = 0;
+    while (el && el !== root) { y += el.offsetTop; el = el.offsetParent; }
+    return y;
+  }
+
+  function apply() {
+    var root = document.documentElement;
+    if (window.innerWidth > 768) return;
+    if (!document.body.classList.contains('view-about')) return;
+    if (document.body.classList.contains('has-open')) return;
+    if (document.body.classList.contains('bio-open')) return;
+
+    var main  = document.getElementById('mainContent');
+    var photo = document.querySelector('#view-about .about-photo-ph');
+    /* The last line of Availability: "Remote or hybrid in San Francisco". */
+    var avail = document.querySelector('#availabilityBlock .about-job-desc');
+    if (!main || !photo || !avail) return;
+
+    /* Both levers to zero before anything is read, or the previous pass's
+       figures are inside the numbers being measured and the block creeps down
+       a little on every run. */
+    root.style.setProperty('--mobPhotoTop', '0px');
+    root.style.setProperty('--mobBioDrop', '0px');
+    void document.body.offsetHeight;
+
+    /* ── THE CUT DECIDES, THE PHOTO SPLITS WHAT IS LEFT ──
+       These were solved in sequence for a build, photo centred on the screen
+       first and the drop given the remainder, and the two do not both fit: the
+       centring ate the budget and the drop bottomed out at its floor with the
+       cut line below the fold.
+
+       One equation instead. Both margins sit between the top of the column and
+       the bio, so the copy below them moves down by their SUM and neither
+       margin alone matters to the cut:
+
+         T is the sum that lands the middle of Availability's last line on the
+         bottom of the screen. That is the requirement and it is met exactly.
+
+         T then splits in half. Equal air above the photo and below it means
+         the photo is centred in the gap between "Roger Oddone" and "Hands-on
+         designer", which is the space it actually lives in. Horizontally it is
+         already centred by the margin:auto on an eight-column box.
+
+       So the crop always holds and the photo is centred in whatever the crop
+       leaves, rather than the two competing for the same pixels.
+
+       The paragraph is two lines and only the LAST one is the target, so the
+       midpoint wanted is half a line above the element's bottom, not the
+       middle of the block. line-height read live, since the phone runs its own
+       type scale. */
+    var ar = avail.getBoundingClientRect();
+    if (!ar.height) return;
+    var lh = parseFloat(getComputedStyle(avail).lineHeight);
+    if (!isFinite(lh) || !lh) lh = ar.height;
+    var mid = topIn(avail, main) + ar.height - (lh / 2);
+
+    var T = window.innerHeight - mid;
+    /* Floored at zero. On a screen too short to hold the column down to that
+       line, the block sits as high as the flow allows and the cut falls below
+       the fold; nothing is ever pulled upward into the portrait. */
+    if (!isFinite(T) || T < 0) T = 0;
+    var half = T / 2;
+    root.style.setProperty('--mobPhotoTop', half.toFixed(1) + 'px');
+    root.style.setProperty('--mobBioDrop', half.toFixed(1) + 'px');
+  }
+
+  function burst() {
+    apply();
+    requestAnimationFrame(apply);
+    setTimeout(apply, 160);
+    setTimeout(apply, 450);
+  }
+  window._mobileBehancePeek = burst;
+  window.addEventListener('load', burst);
+  window.addEventListener('resize', burst);
+  window.addEventListener('orientationchange', burst);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(burst);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', burst);
+  else burst();
+
+  var orig = window.switchView;
+  if (typeof orig === 'function') {
+    window.switchView = function (v) {
+      var r = orig.apply(this, arguments);
+      if (v === 'about') burst();
+      return r;
+    };
+  }
+})();
+</script>
+
+<script>
+/* ── PHONE INFO COLUMN SANITIZER ──
+   Own script block, loaded after everything, because its whole job is to have
+   the last word. Several subsystems write inline geometry onto the Info
+   column: the spacer sizing, the desktop record pull-up, the bio pin's
+   translate, the old photo fitting. Each cleans up after itself on the paths
+   its author thought of, and the record disappearing intermittently on the
+   phone is what it looks like when a load takes a path none of them thought
+   of, most plainly a page that opened at desktop width for a moment before
+   emulation or a rotation put it at phone width, leaving desktop figures
+   inline where no phone code ever clears them.
+
+   This does not diagnose. It wipes. On every entry to Info, every resize and
+   every rotation, at phone width, every known inline write on the column goes
+   back to the sheet's values, and the wipe repeats over a few frames so a
+   late writer cannot sneak one back in. Idempotent, so running it twice
+   costs nothing but the frames. */
+(function mobileAboutSanitize() {
+  function clean() {
+    if (window.innerWidth > 768) return;
+    var spacer = document.getElementById('aboutSpacer');
+    if (spacer) spacer.style.height = '0px';
+    var stacks = document.getElementById('aboutStacksSpacer');
+    if (stacks) stacks.style.height = '0px';
+    var inner = document.querySelector('#view-about .about-contact-inner');
+    if (inner) { inner.style.marginTop = ''; inner.style.transform = ''; }
+    var bio = document.querySelector('#view-about .about-bio-text');
+    if (bio) bio.style.transform = '';
+    /* The reservation. alignFirstSection() sizes this to the expanded essay
+       for the desktop's parked stack and never takes it off, and it is what
+       held the record off the bottom of the phone. */
+    var grid = document.querySelector('#view-about .about-bio-grid');
+    if (grid) grid.style.minHeight = '';
+    var photo = document.querySelector('#view-about .about-photo-ph');
+    if (photo) {
+      photo.style.width = '';
+      photo.style.height = '';
+      photo.style.marginTop = '';
+      photo.style.marginBottom = '';
+    }
+  }
+  function burst() {
+    clean();
+    requestAnimationFrame(clean);
+    setTimeout(clean, 120);
+    setTimeout(clean, 400);
+  }
+  window._mobileAboutSanitize = burst;
+  window.addEventListener('resize', burst);
+  window.addEventListener('orientationchange', burst);
+  window.addEventListener('load', burst);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', burst);
+  else burst();
+  /* Last wrapper wins: whatever else switchView has become by this point in
+     the file, entering Info now ends with a wipe. */
+  var orig = window.switchView;
+  if (typeof orig === 'function') {
+    window.switchView = function (v) {
+      var r = orig.apply(this, arguments);
+      if (v === 'about') burst();
+      return r;
+    };
+  }
+})();
+</script>
+
+<script>
+/* Separate script block on purpose: if the main script above dies part way
+   through, this still runs, and its error list shows where it died. */
+/* ── INFO COLUMN READOUT ──
+   Off unless the URL ends in #debug, so it cannot appear in production. Prints
+   where every block in the phone's Info column actually sits, measured on the
+   real device after everything has settled.
+
+   It exists because this column has several subsystems writing to it at once:
+   #aboutSpacer, #aboutStacksSpacer, the fixed #aboutPlate, positionBio()'s
+   transform pin, and the sheet's own margins. When a section does not appear
+   where it should, the question is always WHICH of them moved it, and that is
+   not answerable from a screenshot.
+
+   y values are viewport coordinates at the current scroll. "off" means the
+   element is display:none. */
+(function infoColumnDebug() {
+  /* Hash only. A width gate used to sit here too, read once at parse time,
+     which is before device emulation reliably reports, and it is why this
+     panel could silently never appear. If the URL asks, the panel shows. */
+  if (location.href.indexOf('debug') === -1) return;
+
+  var ROWS = [
+    ['spacer',   '#aboutSpacer'],
+    ['photoBox', '#view-about .about-photo-ph'],
+    ['plate',    '#aboutPlate'],
+    ['bioText',  '#view-about .about-bio-text'],
+    ['bioLabel', '#view-about .about-bio-text .section-label'],
+    ['bioLead',  '#bioLeadMob'],
+    ['stackSp',  '#aboutStacksSpacer'],
+    ['contact',  '#view-about .about-contact-inner'],
+    ['cLabel',   '#view-about .about-contact-inner .section-label'],
+    ['cBlock',   '#view-about .about-contact-inner .about-contact-block'],
+    ['workLbl',  '#view-about .work-experience-label']
+  ];
+
+  function line(name, sel) {
+    var el = document.querySelector(sel);
+    if (!el) return name + '  MISSING';
+    var cs = getComputedStyle(el);
+    if (cs.display === 'none') return name + '  off';
+    var r = el.getBoundingClientRect();
+    return name
+      + '  y ' + r.top.toFixed(0)
+      + '  h ' + r.height.toFixed(0)
+      + '  mt ' + parseFloat(cs.marginTop).toFixed(0)
+      + '  mb ' + parseFloat(cs.marginBottom).toFixed(0)
+      + (cs.transform !== 'none' ? '  TF ' + cs.transform : '')
+      + (el.style.height ? '  inlineH ' + el.style.height : '');
+  }
+
+  /* The log itself is installed at the top of <body>, before any script that
+     could throw. This panel only reads it. */
+  var errs = window.__errLog || [];
+
+  function render() {
+    var box = document.getElementById('infoDebug');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'infoDebug';
+      box.style.cssText = 'position:fixed;left:4px;top:44px;z-index:99999;'
+        + 'background:rgba(255,255,255,0.94);border:0.5px solid #000;padding:6px;'
+        + 'font:9px/1.3 monospace;text-transform:none;white-space:pre;'
+        + 'pointer-events:none;color:#000;max-width:96vw;';
+      document.body.appendChild(box);
+    }
+    var out = ['innerH ' + window.innerHeight + '   view '
+      + (document.body.classList.contains('view-about') ? 'info' : 'work')];
+    ROWS.forEach(function (r) { out.push(line(r[0], r[1])); });
+    /* ── THE EXCEPTIONS ──
+       A script that throws part way through leaves everything after it
+       unrun, which on this page looks exactly like a layout bug: sections
+       that never get their inline styles simply are not where they should
+       be. Reading the geometry cannot tell those two apart. This can. */
+    out.push('errors ' + errs.length);
+    errs.slice(0, 4).forEach(function (m) { out.push('  ! ' + m.slice(0, 90)); });
+    box.textContent = out.join('\n');
+  }
+
+  var tick = function () { requestAnimationFrame(render); };
+  ['load', 'resize', 'scroll', 'click'].forEach(function (e) {
+    window.addEventListener(e, tick, true);
+  });
+  setTimeout(tick, 600);
+  setTimeout(tick, 1500);
 })();
 </script>
 
