@@ -1956,15 +1956,15 @@
         margin-top: var(--mobPhotoTop, 0px);
         /* ── THE DROP ──
            --mobBioDrop is written by mobileBehancePeek() and is whatever
-           pushes the block under the photo far enough down that the LAST LINE
-           of Availability, "Remote or hybrid in San Francisco", is cut in half
-           by the bottom of the screen. So the first screen ends on a severed
-           line, which says the column continues, and everything above it, the
-           bio, the plus, Contact, all three links and the first line of
-           Availability, is whole.
+           pushes the block under the photo far enough down that BEHANCE, the
+           third and last contact link, is cut in half by the bottom of the
+           screen. So the first screen ends on a severed word, which says the
+           column continues, and everything above it, the bio, the plus,
+           Contact, the email and LinkedIn, is whole.
 
-           The anchor was Behance one build ago. One section further down means
-           the block sits higher, which is the same lever asked to give less.
+           The anchor was the last line of Availability for a build, which is
+           one section further down and therefore a block sitting higher on the
+           screen. Back to Behance means the same lever giving more.
 
            Only this one margin is measured. Everything below it is spaced by
            the 0.63em interval the stack uses, so the drop moves the whole
@@ -3642,7 +3642,7 @@
         /* Written by mobileFold(). The whole block below the statement, the
            headings and the stack under them, is positioned from the bottom
            rather than the top: what has to be true is that the SECOND
-           thumbnail is cut by the fold with two thirds of it showing.
+           thumbnail, Uber, is cut by the fold with nine tenths of it showing.
 
            A cropped thumbnail is the phone's version of the half line of type
            the desktop cuts at the foot of its left column. One image whole and
@@ -3786,6 +3786,8 @@
          gone, it is what keeps "Principal" and "brand" apart. */
       br.nomob { display: none; }
       .nomob-sp { display: inline; }
+      /* The client line arrives. See .mobonly-clients further down the sheet. */
+      .mobonly-clients { display: inline; }
 
       /* ── THUMBNAIL SHAPE ──
          Was 4:3. Now the same full-bleed width with the HEIGHT cut by 30
@@ -3858,6 +3860,18 @@
        left the two words touching. A non-breaking space cannot collapse, and
        the span keeps it off the desktop entirely. */
     .nomob-sp { display: none; }
+
+    /* ── THE CLIENT LINE, PHONE ONLY ──
+       "at Google, Uber, Cruise" is carried inside the bio's opening sentence
+       rather than under it, so it reads as the end of one thought instead of
+       a caption. Off on the desktop, where the cards sit on screen beside the
+       statement and the names are already there to be read; on the phone the
+       work is a tap and a scroll away, so the sentence says who it was for.
+
+       Same device as .nomob-sp above: hidden here, turned back on inside the
+       max-width 768 block. The closing full stop is OUTSIDE the span, so the
+       desktop sentence still ends properly with the span gone. */
+    .mobonly-clients { display: none; }
 
     /* ── BACK TO TOP ──
        Off by default. It belongs to the unified desktop, where each half has a
@@ -5402,8 +5416,8 @@
       .v-slide-left  { animation: vSlideFromLeft  0.34s cubic-bezier(0.33, 1, 0.68, 1); }
     }
 
-    /* ══ PHONE TYPE, ONE STEP UP ═══════════════════════════════════════════
-       Twenty percent, and it is one number, because the GLOBAL TYPE OVERRIDE
+    /* ══ PHONE TYPE ════════════════════════════════════════════════════════
+       One number, because the GLOBAL TYPE OVERRIDE
        a few thousand lines up pins every element on the page to --type on
        !important. Nothing else reaches the screen. The first attempt at this
        wrote out a scale, 32 / 35.2 / 19.44 against the authored 26.67 / 29.33
@@ -5415,11 +5429,13 @@
        --typeSmall for the one exception that beats the override on
        specificity.
 
-       Three moves are in this one figure: two steps of twenty percent up and
-       one of ten percent back down. 0.95 x 1.2 x 1.2 x 0.9 = 1.2312, which
-       puts the phone at 17.24px against the desktop's 13.3px. This line is the
-       whole control: multiply it to go up, divide to come down, delete the
-       block to return the phone to the desktop's setting.
+       Four moves are in this one figure: two steps of twenty percent up, one
+       of ten percent back down, and a further twenty percent down taken in
+       this build. 0.95 x 1.2 x 1.2 x 0.9 x 0.8 = 0.98496, which puts the
+       phone at 13.79px against the desktop's 13.3px, so the two are now
+       within half a pixel of each other. This line is the whole control:
+       multiply it to go up, divide to come down, delete the block to return
+       the phone to the desktop's setting.
 
        Phone only. The desktop keeps 0.95, which is what the two-column layout
        and every measured offset in it were tuned against.
@@ -5428,7 +5444,7 @@
        baseline probe rather than authored, so the bar grows with the type it
        wraps instead of the type growing inside a fixed band. */
     @media (max-width: 768px) {
-      :root { --typeScale: 1.2312; }
+      :root { --typeScale: 0.98496; }
     }
   </style>
   <script defer src="/_vercel/insights/script.js"></script>
@@ -5887,7 +5903,7 @@ window.__errLog = [];
                taught to every one of them. Inside, the top does not move and
                only the block's bottom grows, which is the one thing those
                measurements already handle. -->
-          <p id="bioLeadMob">Hands-on designer. 20+ years defining brand identities and building the systems that carry them.</p>
+          <p id="bioLeadMob">Hands-on designer. 20+ years defining brand identities and building the systems that carry them<span class="mobonly-clients"> at Google, Uber, Cruise</span>.</p>
           <div id="bioRestMob">
             <p>When I start a branding project, the first thing I ask a client is what makes them different in their category. It's only fair to turn that question on myself.</p>
             <p>The answer isn't passion, or being a little obsessed. Every designer says that. It's that more than twenty years in, I'm still the one making the work. I've rebranded a company operating in sixty five countries, built identity systems that hundreds of designers use every day, and worked directly with founders shaping brands from nothing. At every point where the path bent toward managing the work, I found a way to keep making it instead.</p>
@@ -10635,15 +10651,21 @@ document.addEventListener('visibilitychange', function() {
        only read inside max-width 768 rules, so leaving it set on a desktop
        costs nothing either. */
     if (!MOB.matches || document.body.classList.contains('has-open')) return;
-    /* ── THE ANCHOR IS THE THIRD THUMBNAIL ──
-       It was the second, cut at two thirds. Two whole cards and most of a
-       third is more of the index on the first screen, and a thin band of the
-       next one still says the list continues. The statement and the header
-       do not move: this only ever writes the heading's top margin, so the
-       block from "Selected works" down slides up into the space instead. */
+    /* ── THE ANCHOR IS UBER, NINE TENTHS SHOWING ──
+       Second in the stack, under Cruise. It was the third thumbnail cut at
+       four fifths, which put two whole cards and most of a third on the first
+       screen; that is a lot of index and it cost the reel the room to be a
+       reel. One whole card and all but a tenth of the next says the list
+       continues just as plainly, and the sliver still reads as a cut rather
+       than as a card that happens to end there.
+
+       Lower anchor, longer page above it: this only ever writes the heading's
+       top margin, so the block from "Selected works" down travels DOWN into
+       the space rather than up out of it. The statement and the header do not
+       move. */
     var secs = document.querySelectorAll('#view-work .carousel-section');
-    if (secs.length < 3) return;
-    var media = secs[2].querySelector('.carousel-media-wrap');
+    if (secs.length < 2) return;
+    var media = secs[1].querySelector('.carousel-media-wrap');
     var main  = document.getElementById('mainContent');
     if (!media || !main) return;
 
@@ -10679,20 +10701,18 @@ document.addEventListener('visibilitychange', function() {
        one thing a rect reports that scrolling cannot touch. */
     var y = 0, n = media;
     while (n && n !== main) { y += n.offsetTop; n = n.offsetParent; }
-    var cur  = y + r.height * 0.8;
+    var cur  = y + r.height * 0.9;
     var want = window.innerHeight;
     /* ── NO PADDING ON TOP OF THE ANCHOR ──
        Two empty lines used to be added here, on top of whatever this figure
        came to, because air above the heading cannot be put in the sheet: this
-       function measures the result and takes back the same amount. With the
-       anchor moved down to the third thumbnail the block has to travel UP,
-       and those two lines are exactly what it has to travel up through, so
-       they go. The anchor is the only thing setting this now.
+       function measures the result and takes back the same amount. The anchor
+       is the only thing setting this now.
 
        The clamp at zero is the one thing that can still miss the target: on a
-       short screen the heading cannot rise past the statement above it, and
-       the third thumbnail will show less than a fifth. Nothing is broken when
-       that happens, the first screen is simply full. */
+       short screen the heading cannot rise past the reel above it, and Uber
+       will show more than a tenth below the fold. Nothing is broken when that
+       happens, the first screen is simply full. */
     root.style.setProperty('--mobHeadTop',
       Math.max(0, natural + (want - cur)).toFixed(1) + 'px');
 
@@ -15371,9 +15391,15 @@ document.addEventListener('visibilitychange', function() {
 
     var main  = document.getElementById('mainContent');
     var photo = document.querySelector('#view-about .about-photo-ph');
-    /* The last line of Availability: "Remote or hybrid in San Francisco". */
-    var avail = document.querySelector('#availabilityBlock .about-job-desc');
-    if (!main || !photo || !avail) return;
+    /* ── THE ANCHOR IS BEHANCE AGAIN ──
+       It was the last line of Availability for a build, which is one section
+       further down the column and therefore a block sitting higher up the
+       screen. Back to the third and last contact link, so the cut lands
+       earlier and everything from the bio down travels further down the page.
+       .work-contact-links is a flex column, so each link is its own block and
+       its rect is one line. */
+    var anchor = document.querySelector('#view-about .work-contact-links .work-contact-link:last-child');
+    if (!main || !photo || !anchor) return;
 
     /* Both levers to zero before anything is read, or the previous pass's
        figures are inside the numbers being measured and the block creeps down
@@ -15392,8 +15418,8 @@ document.addEventListener('visibilitychange', function() {
        the bio, so the copy below them moves down by their SUM and neither
        margin alone matters to the cut:
 
-         T is the sum that lands the middle of Availability's last line on the
-         bottom of the screen. That is the requirement and it is met exactly.
+         T is the sum that lands the middle of the Behance link on the bottom
+         of the screen. That is the requirement and it is met exactly.
 
          T then splits in half. Equal air above the photo and below it means
          the photo is centred in the gap between "Roger Oddone" and "Hands-on
@@ -15403,15 +15429,13 @@ document.addEventListener('visibilitychange', function() {
        So the crop always holds and the photo is centred in whatever the crop
        leaves, rather than the two competing for the same pixels.
 
-       The paragraph is two lines and only the LAST one is the target, so the
-       midpoint wanted is half a line above the element's bottom, not the
-       middle of the block. line-height read live, since the phone runs its own
-       type scale. */
-    var ar = avail.getBoundingClientRect();
+       The anchor is a single line, so the midpoint wanted is simply the middle
+       of its own box. No line-height read is needed here: the previous anchor
+       was a two-line paragraph whose LAST line was the target, which is what
+       that arithmetic was for. */
+    var ar = anchor.getBoundingClientRect();
     if (!ar.height) return;
-    var lh = parseFloat(getComputedStyle(avail).lineHeight);
-    if (!isFinite(lh) || !lh) lh = ar.height;
-    var mid = topIn(avail, main) + ar.height - (lh / 2);
+    var mid = topIn(anchor, main) + (ar.height / 2);
 
     var T = window.innerHeight - mid;
     /* Floored at zero. On a screen too short to hold the column down to that
