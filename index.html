@@ -3641,8 +3641,8 @@
         display: block;
         /* Written by mobileFold(). The whole block below the statement, the
            headings and the stack under them, is positioned from the bottom
-           rather than the top: what has to be true is that the SECOND
-           thumbnail, Uber, is cut by the fold with nine tenths of it showing.
+           rather than the top: what has to be true is that the THIRD
+           thumbnail, Google, is cut by the fold with a fifth of it showing.
 
            A cropped thumbnail is the phone's version of the half line of type
            the desktop cuts at the foot of its left column. One image whole and
@@ -10651,21 +10651,21 @@ document.addEventListener('visibilitychange', function() {
        only read inside max-width 768 rules, so leaving it set on a desktop
        costs nothing either. */
     if (!MOB.matches || document.body.classList.contains('has-open')) return;
-    /* ── THE ANCHOR IS UBER, NINE TENTHS SHOWING ──
-       Second in the stack, under Cruise. It was the third thumbnail cut at
-       four fifths, which put two whole cards and most of a third on the first
-       screen; that is a lot of index and it cost the reel the room to be a
-       reel. One whole card and all but a tenth of the next says the list
-       continues just as plainly, and the sliver still reads as a cut rather
-       than as a card that happens to end there.
+    /* ── THE ANCHOR IS GOOGLE, A FIFTH SHOWING ──
+       Third in the stack, under Cruise and Uber. Two whole cards and a band
+       of the next one: the fold cuts Google near its top edge, so what shows
+       is a strip rather than most of a thumbnail. A strip is the least
+       ambiguous cut available, because nothing about it could be mistaken for
+       an image that simply ends there.
 
-       Lower anchor, longer page above it: this only ever writes the heading's
-       top margin, so the block from "Selected works" down travels DOWN into
-       the space rather than up out of it. The statement and the header do not
-       move. */
+       Higher anchor, more page above the fold: this only ever writes the
+       heading's top margin, so the block from "Selected works" down travels
+       UP out of the space rather than down into it. It was Uber at nine
+       tenths, which is roughly one card and a half further down. The reel,
+       the statement and the header do not move. */
     var secs = document.querySelectorAll('#view-work .carousel-section');
-    if (secs.length < 2) return;
-    var media = secs[1].querySelector('.carousel-media-wrap');
+    if (secs.length < 3) return;
+    var media = secs[2].querySelector('.carousel-media-wrap');
     var main  = document.getElementById('mainContent');
     if (!media || !main) return;
 
@@ -10701,7 +10701,7 @@ document.addEventListener('visibilitychange', function() {
        one thing a rect reports that scrolling cannot touch. */
     var y = 0, n = media;
     while (n && n !== main) { y += n.offsetTop; n = n.offsetParent; }
-    var cur  = y + r.height * 0.9;
+    var cur  = y + r.height * 0.2;
     var want = window.innerHeight;
     /* ── NO PADDING ON TOP OF THE ANCHOR ──
        Two empty lines used to be added here, on top of whatever this figure
@@ -10709,10 +10709,12 @@ document.addEventListener('visibilitychange', function() {
        function measures the result and takes back the same amount. The anchor
        is the only thing setting this now.
 
-       The clamp at zero is the one thing that can still miss the target: on a
-       short screen the heading cannot rise past the reel above it, and Uber
-       will show more than a tenth below the fold. Nothing is broken when that
-       happens, the first screen is simply full. */
+       The clamp at zero is the one thing that can still miss the target, and
+       this anchor sits close to it: two whole cards above the cut is most of
+       a phone screen already, so the figure this comes to is small and on a
+       shorter screen it is negative and clamps. The heading then sits flush
+       under the reel and Google shows less than a fifth. Nothing is broken
+       when that happens, the first screen is simply full. */
     root.style.setProperty('--mobHeadTop',
       Math.max(0, natural + (want - cur)).toFixed(1) + 'px');
 
