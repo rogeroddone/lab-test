@@ -5547,6 +5547,52 @@
 
       body.view-about #view-about { padding-top: calc(100vh / 6 - 38px); }
 
+      /* ── THE SMALL COPY, UP A TENTH ──
+         --type is the size everything on this page actually renders at: the
+         global block a few thousand lines up pins font-size to it with
+         !important on p, div and span alike, so the record, the labels, the
+         contact lines and the footer all come off this one figure. Raised here
+         rather than by editing --typeScale, which the desktop shares.
+
+         --typeSmall is deliberately left alone. It is the header and the nav,
+         which are furniture rather than copy, and they are already sized
+         against a 38px bar. */
+      :root { --type: calc(14px * var(--typeScale) * 1.1); }
+
+      /* ══════════ THE DOCUMENT SCROLLS, SO THE BROWSER BAR CAN GO ══════════
+         Chrome and Safari collapse their own bottom chrome on downward scroll
+         and bring it back on upward scroll. Neither will do it for an inner
+         scrolling element, and this page has always been one: html and body
+         are pinned at 100% with overflow hidden and .main-content does the
+         scrolling inside them. No property, no meta tag and no script can ask
+         for the behaviour; the only way to have it is to make the document the
+         thing that moves.
+
+         So on the phone the pins come off and .main-content stops being a
+         scroller. The class is written by the shim at the top of the scripts
+         rather than applied unconditionally, so the whole conversion is one
+         switch: if that script does not run, this does not either and the page
+         is exactly what it was.
+
+         min-height in dvh, not svh or vh. svh is the SMALL viewport, the
+         height with the browser bar showing, and the page would be that tall
+         forever with a strip of background under it once the bar went. dvh is
+         the live value and grows as the bar leaves, which is the whole point.
+         The layout above still measures in svh where it wants the conservative
+         figure. */
+      html.doc-scroll,
+      html.doc-scroll body {
+        height: auto;
+        overflow: visible;
+      }
+      html.doc-scroll body { overflow-x: hidden; }
+      html.doc-scroll .page-wrapper { height: auto; }
+      html.doc-scroll .main-content {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+      }
+
       /* ══════════ THE LAST LINE, BOTH PAGES ══════════
          The phone had no footer at all. #pageCopy is display:none outside the
          unified desktop, on a comment saying the phone carries the same line
@@ -5671,6 +5717,84 @@
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body class="view-work">
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   THE PHONE SCROLLS THE DOCUMENT
+   ══════════════════════════════════════════════════════════════════════════
+   Runs before every other script in the file, because the modules below all
+   capture #mainContent once at load and then hold that reference for the life
+   of the page. Whatever this changes about the element has to be true before
+   the first of them reads it.
+
+   WHY A SHIM RATHER THAN A REWRITE. Roughly eighty five places in this file
+   read or write a scrollTop, and ten of them attach a scroll listener, all to
+   #mainContent. Converting each by hand is eighty five chances to miss one,
+   and a missed one is a control that silently stops tracking. Instead the
+   element keeps its name and its API and stops being the thing that scrolls:
+   scrollTop reads and writes the document, scroll listeners are re-pointed at
+   the window, and clientHeight answers with the viewport rather than with the
+   full height of a block that is now as tall as its contents. Every module
+   below carries on talking to #mainContent and none of them has to know.
+
+   scrollHeight and clientHeight both have to move or the two disagree. Left
+   alone, a page-height element reports its own height as clientHeight, and
+   anything computing "how far is there left to scroll" from the pair gets
+   zero.
+
+   Phone only, and read once. Above 768 the inner scroller is correct: the two
+   columns scroll independently against each other and that is the layout.
+   A window resized across the boundary keeps whichever it started with, which
+   is a limitation and not an accident: unpicking property definitions and
+   re-pointing listeners mid-session is a larger risk than a reload. */
+(function documentScrollOnPhone() {
+  if (!window.matchMedia('(max-width: 768px)').matches) return;
+  var el = document.getElementById('mainContent');
+  if (!el) return;
+  var se = document.scrollingElement || document.documentElement;
+
+  /* The class the stylesheet keys the whole conversion off, set before first
+     paint so the pinned layout is never shown and then swapped. */
+  document.documentElement.classList.add('doc-scroll');
+
+  try {
+    Object.defineProperty(el, 'scrollTop', {
+      configurable: true,
+      get: function () { return se.scrollTop; },
+      set: function (v) { se.scrollTop = v; }
+    });
+    Object.defineProperty(el, 'scrollHeight', {
+      configurable: true,
+      get: function () { return se.scrollHeight; }
+    });
+    Object.defineProperty(el, 'clientHeight', {
+      configurable: true,
+      get: function () { return window.innerHeight; }
+    });
+  } catch (e) { /* If any of these cannot be redefined the page still works,
+                   it simply keeps the bar. Never worth throwing for. */ }
+
+  var addEL = EventTarget.prototype.addEventListener.bind(el);
+  var remEL = EventTarget.prototype.removeEventListener.bind(el);
+  var wrapped = new WeakMap();
+
+  el.addEventListener = function (type, fn, opts) {
+    if (type !== 'scroll' || typeof fn !== 'function') return addEL(type, fn, opts);
+    /* Called with the element as `this` and given the window's event, so a
+       handler that reads this.scrollTop gets the shimmed getter above and a
+       handler that ignores the event argument is unaffected either way. */
+    var w = wrapped.get(fn) || function (e) { return fn.call(el, e); };
+    wrapped.set(fn, w);
+    window.addEventListener('scroll', w, opts);
+  };
+  el.removeEventListener = function (type, fn, opts) {
+    if (type !== 'scroll' || typeof fn !== 'function') return remEL(type, fn, opts);
+    var w = wrapped.get(fn);
+    if (w) window.removeEventListener('scroll', w, opts);
+  };
+  el.scrollTo = function () { return window.scrollTo.apply(window, arguments); };
+  el.scrollBy = function () { return window.scrollBy.apply(window, arguments); };
+})();
+</script>
 <script>
 /* ── FIRST SCRIPT ON THE PAGE: THE ERROR LOG ──
    Installed before any other script runs, because an exception thrown during
@@ -16144,7 +16268,12 @@ document.addEventListener('visibilitychange', function() {
     #workBioMob .about-bio-text p,
     #mobileWorksLabel,
     #mobileWorksLabel span {
-      font-size: 20.16px !important;
+      /* 20.16 up 12 percent. A literal figure rather than a multiplication,
+         because this one is not derived from --type and never was: it is the
+         phone's own display size for the statement, and writing it as a
+         calc against a variable it does not depend on would imply a
+         relationship that is not there. */
+      font-size: 22.58px !important;
     }
   }
 
