@@ -1426,7 +1426,12 @@
          the pointer is in the left half. Width only: aspect-ratio carries the
          height, so one number moves the whole plate and the crop cannot drift
          out of proportion. */
-      width: calc(var(--plateScale) * var(--plateGrow, 1) * (2 * ((100vw - 2 * var(--pad) - 11 * var(--gap)) / 12) + var(--gap)));
+      /* ONE AND A HALF TRACKS. n columns is n tracks plus the n-1 gutters
+         between them, so 1.5 tracks carries half a gutter. It was 2 tracks and
+         a whole one. The centre is untouched: left is a fixed point and the
+         translate is -50%, so the plate narrows evenly around the line it
+         already holds. */
+      width: calc(var(--plateScale) * var(--plateGrow, 1) * (1.5 * var(--col) + 0.5 * var(--gap)));
       aspect-ratio: 4 / 5;
       /* Blur radius at rest. The scroll handler only ever writes a smaller
          value, so this is also the correct state on first paint and after a
@@ -1763,16 +1768,6 @@
       .main-content { display: block; height: 100svh; }
       .scroll-content { display: block; }
       .header-fixed { grid-template-columns: 1fr 1fr; }
-      /* ── THE TYPE RIDES THE BAND ──
-         .header-fixed sits at top:var(--pad), which is 10 on the phone, and
-         that figure was chosen against a 38px band: 10 over the line box and
-         about 12 under it, which reads as centred. The band is 57 now, so the
-         same 10 would leave half again as much air underneath as above and the
-         name would sit on the ceiling of its own rectangle.
-         15 is the same 10 taken up by half, the same ratio the band went up
-         by, so the pair keep the relationship they had. Top only: the page
-         margin left and right is still --pad and is not part of this. */
-      .header-fixed { top: 15px; }
       .header-name-wrap { grid-column: 1; }
       /* Two-column header on mobile: name left, Work / Info right. */
       .header-tabs { grid-column: 2; justify-content: flex-end; }
@@ -1794,26 +1789,19 @@
       .header-nav a:not(.active) { color: #999999 !important; opacity: 1; }
       .header-nav .sep { color: #999999 !important; opacity: 1; }
 
-      /* White header bar.
-         38 up by half to 57. The band is the only thing that grows: the type
-         inside it moves with it rather than staying pinned to the old top
-         edge, which is the rule two blocks up on .header-fixed. Every other
-         figure below that reads 57 is this one measurement taken again, not a
-         second decision: the padding that clears it, the sixth of the viewport
-         both columns open on, and the distance the bar travels when it slides
-         away. */
+      /* White header bar */
       .mobile-header-bar {
         display: block;
         position: fixed;
         top: 0; left: 0; right: 0;
-        height: 57px;
+        height: 38px;
         background: #F5F5F5;
         z-index: 9999;
         pointer-events: none;
       }
 
       /* Push scroll content below the header bar */
-      .main-content { padding-top: 57px; }
+      .main-content { padding-top: 38px; }
       #workBioMob { display: block; }
       .bio-subtitle-wrap { display: none !important; }
       body.view-work .scroll-content { padding-top: 5vh; padding-bottom: 240px; }
@@ -2525,6 +2513,67 @@
     .info-paragraph * { text-transform: none !important; }
     .info-paragraph .mob-tags,
     .info-paragraph .mob-tags * { text-transform: none !important; }
+
+    /* ── ONE STEP UP ──
+       A second size, and the only one besides --type and --typeSmall that
+       reaches the screen. 1.5x the site setting, written on class selectors so
+       it beats the GLOBAL TYPE OVERRIDE above on specificity as well as on
+       !important, and derived from --type so it follows --typeScale.
+
+       Two things run at it: the line of what the work was under each project
+       name, and the bio at the top of Info. Both are the first thing read in
+       their block, and on a page pinned to one size there is no other way to
+       say so.
+
+       .section-label is put back to the site size below. It sits inside
+       .about-bio-text on the phone as the word "Bio", a label rather than
+       copy, and would otherwise ride up with the paragraph it labels. */
+    .info-line,
+    .info-line *,
+    #view-about .about-bio-text,
+    #view-about .about-bio-text * {
+      font-size: calc(var(--type) * 1.5) !important;
+    }
+    #view-about .about-bio-text .section-label {
+      font-size: var(--type) !important;
+    }
+    .info-line {
+      display: block;
+      color: #000;
+      /* Under the name and close to it. There is no bottom margin: the
+         disciplines are still based on the thumbnail's foot, a card's height
+         away, so nothing sits below this line for it to hold off. */
+      margin: 0.35em 0 0 0;
+      line-height: 1.15 !important;
+      text-wrap: pretty;
+      /* ── THE MEASURE STOPS AT 8.5 ──
+         The card's copy column runs page columns 7 and 8 and the claim was
+         setting to the full width of it. It stops half a track short now: one
+         and a half tracks plus the half gutter inside them, the same measure
+         the portrait takes on the other half of the page. */
+      max-width: calc(1.5 * var(--col) + 0.5 * var(--gap));
+    }
+    /* The open project carries the claim in its own copy, and .col-title is
+       display:contents or a baseline flex row there, either of which would put
+       this line beside the name instead of under it. */
+    .carousel-section.is-open .col-title .info-line { display: none !important; }
+    /* Inside an open project the disciplines take --leadingCopy from a rule
+       further down that hits .col-list *. This line is the one node in there
+       that is a statement rather than a list, so it keeps its own. */
+    .carousel-section.is-open .col-list .info-line { line-height: 1.15 !important; }
+    /* The phone card is an image and a single line of name. There is no room
+       for a second size on it, and .col-list is display:none on an open
+       project, so the phone reads this line from its copy of it at the head of
+       .col-para-mob instead. */
+    @media (max-width: 768px) {
+      /* The phone card is an image and a single line of name, with a fixed
+         one-line height on .info-grid. There is no room for the claim on it,
+         so the phone reads it from the copy at the head of .col-para-mob when
+         the project opens and nowhere else. */
+      .col-title .info-line,
+      .col-list .info-line { display: none !important; }
+      .col-para-mob .info-line { margin: 0 0 1.1em 0; max-width: none; }
+    }
 
     /* ── INFO: WORK EXPERIENCE AND BELOW ──
        Everything from the Work experience label down, the entries, Press,
@@ -3351,6 +3400,40 @@
         margin-bottom: calc(-1 * var(--pad) + 8 * var(--gap));
       }
     }
+
+    /* ── THE EXTERNAL MARK ──
+       A corner and the diagonal that runs into it. The horizontal and the
+       vertical are one polyline through the corner point, mitred, and the
+       45 degree line terminates on that same point, so the three meet as one
+       joint rather than as three strokes ending near each other.
+
+       Sized in ex, which IS the x-height of whatever type the link is set in.
+       So the mark is the height of the lowercase beside it at every size on
+       the site without a single measurement, and it follows --typeScale for
+       free. currentColor through a mask rather than a fill, so it inherits the
+       link's own colour and its hover fade with it. */
+    :root {
+      --extArrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M0.9 9.1 L9.1 0.9 M3.1 0.9 L9.1 0.9 L9.1 6.9' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='butt' stroke-linejoin='miter'/></svg>");
+    }
+    a[target="_blank"]::after {
+      content: '';
+      display: inline-block;
+      width: 1ex;
+      height: 1ex;
+      margin-left: 0.5ex;
+      /* The mark sits on the x-height, so its box bottom is the baseline. */
+      vertical-align: baseline;
+      background-color: currentColor;
+      -webkit-mask-image: var(--extArrow);
+      mask-image: var(--extArrow);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+
     /* ── INFO HAIRLINES ──
        The rules down the right of Info were #000 while the sidebar's own rules
        are #7C7C7C, so the two halves of the same page read as two systems.
@@ -3546,7 +3629,7 @@
       body.view-work.has-open #workFooter { order: 2; }
       /* One gutter from the top of the viewport, not from under the bar. The
          bar is force-hidden on open and slides back on the first upward
-         scroll, so its 57px belongs to the project while it is away. The lead
+         scroll, so its 38px belongs to the project while it is away. The lead
          image is the project's opening line and it owns the screen. */
       body.view-work.has-open .main-content { padding-top: 0; }
       body.view-work.has-open #view-work { padding-top: var(--gap); }
@@ -3555,22 +3638,11 @@
          gutter in a row and lands the lead image at 20 rather than on the
          gutter the view already set. The page is not a card, so it goes. */
       body.view-work.has-open .carousel-section.is-open { padding-top: 0 !important; }
-      /* ── THE PROJECT'S LAST IMAGE ENDS WHERE THE LAST THUMBNAIL ENDS ──
-         Eight gutters, doubled from four, was clearance between the project
-         and the grid that used to follow it. The grid is display:none here and
-         the footer follows instead, so the figure is now measuring a break
-         that no longer exists, and it was the reason a project ended four
-         gutters lower than the landing does.
-
-         Four, which is what every thumbnail on the landing carries. The footer
-         takes those four back in its own padding-top, so the interval from the
-         last picture to the copyright is calc(100vh / 12) on both pages, and
-         the clearance under the copyright is var(--pad) on both because it is
-         the same declaration on the same element. One arithmetic, two states:
-         the last frame of a project sits off the foot of the screen by exactly
-         what the last thumbnail sits off it by. */
+      /* Clearance between the open project and the grid beneath it. Eight
+         gutters, doubled from four, and the same figure the desktop block
+         above uses, so the break reads the same on both. */
       body.view-work.has-open .carousel-section.is-open {
-        margin-bottom: calc(var(--gap) * 4) !important;
+        margin-bottom: calc(var(--gap) * 8) !important;
       }
 
       /* ── STATEMENT: OFF THE WORK PAGE ──
@@ -3911,10 +3983,6 @@
        phone already carries the same line inside #workFooter, at the foot of a
        page that actually scrolls to an end. */
     #pageCopy { display: none; color: #000; white-space: nowrap; }
-    /* Off by default for the same reason, and turned on only inside the phone
-       block. The unified desktop has its own copyright in #pageCopy and this
-       one would be a second. */
-    #workPageCopy { display: none; }
     /* Zero width strut sitting on the line's baseline. It renders nothing and
        exists only so script can read where that baseline is, which is the edge
        the clearance under the type is measured from. */
@@ -4731,19 +4799,7 @@
         display: grid;
         grid-column: 1 / -1;
         grid-template-columns: subgrid;
-        /* ── ON THE MARK'S BASELINE, NOT ON ITS BOX ──
-           This was `end`, which puts the two on a common box BOTTOM. That was
-           right while the row held a plate and a line of type, because a plate
-           has no descender space and a bottom edge was the only thing the two
-           shared. Both items are type now, and a box bottom is the wrong edge
-           for two runs of the same face: the .pc-base strut inside .pc-mark
-           changes that span's box without changing where its letters sit, so
-           the reservation was landing a few pixels off the mark's baseline.
-
-           `baseline` aligns the two first baselines directly, which is the
-           edge a reader actually sees. The strut stays, since alignArrowToCopyright
-           and measureCopyright both look for it. */
-        align-items: baseline;
+        align-items: end;
         /* ── THE COLUMN ENDS ON THE SAME INTERVAL IT OPENS ON ──
            Six gutters was the record's own rhythm, and it left the distance
            from the last line of Education to the foot of the page as whatever
@@ -4758,17 +4814,10 @@
         pointer-events: none;
       }
       body.unified #pageCopy .pc-mark { grid-column: 1 / 4; }
-      /* Column 3, one track left of where it was. It sat on 4, which is where
-         the left half's copy begins and where the back-to-top arrow used to
-         stand; pulled in, the mark and the reservation read as one line rather
-         than as two things at either end of a gap.
-
-         The mark still spans 1 / 4, so the two share track 3. Legal, and
-         invisible here: "© 2026 Roger Oddone" is nowhere near three tracks
-         wide, so the mark's box is empty where the reservation now sits. Left
-         as a span rather than trimmed to 1 / 3 because measureCopyright reads
-         that element's box and there is no reason to change what it reads. */
-      body.unified #pageCopy .pc-name { grid-column: 3 / -1; justify-self: start; }
+      /* Column 4 is where the left half's copy begins, and where the
+         back-to-top arrow used to stand. With the arrow gone the reservation
+         takes the slot rather than leaving a hole between the mark and it. */
+      body.unified #pageCopy .pc-name { grid-column: 4 / -1; justify-self: start; }
       /* ── THE RESERVATION GOES TO THE RIGHT EDGE ──
          It sat on column 4, next to the mark, which made the two read as one
          line of small print with a gap in it. On the last track instead, right
@@ -5080,97 +5129,53 @@
          visibility state, no threshold: the reader reaches the last picture
          and the way out is on it.
 
-         Inside the last picture's bottom left corner, one gutter in on both
-         edges. It used to sit under the picture on page column 3, level with
-         the copy; on the image instead, it is the close button's opposite
-         number, and a reader who has reached the end of the stack finds the
-         way out where they are already looking.
+         Page column 3, not column 1. The button reads as the first thing in
+         the row under the picture rather than as a mark hanging off its
+         corner, and column 3 is where the copy in an open project starts, so
+         it lands on a line the reader has already been given.
 
-         Both offsets are written inline by the dock from the last asset's live
-         rect. See placeBack.
+         Two tracks and two gutters from the section's own left edge, written
+         through --col, which is the one place the track width is defined.
+         top is written by the dock off the last asset's live rect.
 
          38 by 26.6, .collapse-circle's box exactly: same width, same 0.7 of
          it. The two ways out of a project are one object at two corners, one
          on the first image and one on the last. */
-      /* #indexBack is now only the positioned box. It has no size of its own
-         and no plate: it says where the control is and the button inside says
-         how big it is. */
       body.unified.has-open #indexBack {
-        /* This is what turns the control on. #indexBack is display:none by
-           default, a few rules up, and the old version of this block happened
-           to switch it on with the `display: flex` it needed for its own row.
-           The row moved to the button inside, the flex went with it, and the
-           none underneath came back. Stated on its own now, so the two are not
-           tied together again. */
-        display: block;
+        /* A row now, not a single plate: the arrow, then the word. The plate
+           keeps its own 38 by 26.6 box, so nothing about its size or its
+           relationship to .collapse-circle changes; the box around it stops
+           being 38 wide and becomes as wide as the pair. */
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
         position: absolute;
-        /* Fallback only, for the one frame before placeBack() first runs. Both
-           left and top are written inline from the last asset's own rect, so
-           the control lands a gutter inside its bottom left corner rather than
-           on a page column. */
-        left: var(--gap);
+        left: calc(2 * var(--col) + 2 * var(--gap));
         width: auto;
-        height: auto;
+        height: calc(38px * 0.7);
+        border-radius: var(--radius);
         /* Over the picture it sits on, under nothing else. The bands and the
            header are in another stacking context entirely. */
         z-index: 5;
         pointer-events: auto;
       }
-      /* ── THE BUTTON IS THE PLATE, AND THE WORD IS IN IT ──
-         The plate used to be a rect drawn inside SVG_BACK, fixed at 40 by 28,
-         with "Back" set beside it a full gutter away. So the control was two
-         objects: a square you could press and a word you could not, and its
-         width was decided by a viewBox rather than by what it said.
-
-         Background, hairline and radius are the same white, the same #BEBEBE
-         and the same --radius the rect drew, so nothing about how it looks
-         changes; only what decides its width. Height holds at 38 by 0.7, which
-         is .collapse-circle's box, so the two ways out of a project are still
-         the same height at opposite corners.
-
-         NO WORD, AND THE CLOSE BUTTON'S BOX. It grew a label and a padded
-         width for a build, on the reasoning that the only control on a page of
-         pictures should say what it does. In the footer it does not need to:
-         it sits on the line that already means the end of the page, beside the
-         copyright, and the arrow points the way it goes.
-
-         38 by 26.6, .collapse-circle's box exactly, so the two ways out of a
-         project are one object in two places rather than two objects. The
-         arrow is centred in it rather than set against a padding edge, since
-         with nothing beside it there is no second inset to match. */
       body.unified.has-open #indexBack .read-more-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0;
-        padding: 0;
+        flex: 0 0 38px;
         width: 38px;
-        height: calc(38px * 0.7);
-        background: #fff;
-        border: 0.5px solid #BEBEBE;
-        border-radius: var(--radius);
+        height: 100%;
         position: static;
       }
-      /* Kept in the DOM rather than dropped at the source: it carries the
-         control's accessible name for anything reading the tree, and the
-         button's own aria-label is the same string, so hiding it costs
-         nothing. */
-      body.unified.has-open #indexBack .ib-label { display: none; }
       /* Same face, size and grey as "See more projects", which is the only
          other word set beside a control on this page. Not a hit target: the
          plate is the button and the word is its name, so clicks pass through
          to whatever is under it rather than giving the reader two things to
          aim at that do the same job. */
-      /* Black, not the #999 it carried outside. It was grey because it was a
-         caption standing next to a control; inside the control it is the
-         control's own name and sits beside a black arrow on the same white,
-         so grey would read as a disabled button. */
       body.unified.has-open #indexBack .ib-label {
         font-family: var(--font);
         font-weight: 400;
         font-size: 16.2px;
         line-height: 1;
-        color: #000;
+        color: #999999;
         white-space: nowrap;
         pointer-events: none;
         user-select: none;
@@ -5180,13 +5185,9 @@
          already made. */
       /* .read-more-btn pins its svg at 24 by 18. The plate fills its wrapper
          instead, and the arrow inside it is carried up by the viewBox. */
-      /* A fixed glyph in a box that grows, so the arrow does not stretch with
-         the word beside it. 13.4 by 11.4 is the cropped viewBox's own ratio at
-         the height the arrow held inside the old 40 by 28 plate. */
       body.unified.has-open #indexBack .read-more-btn svg {
-        flex: 0 0 auto;
-        width: 13.4px;
-        height: 11.4px;
+        width: 100%;
+        height: 100%;
       }
 
       /* ── THE FOOTER IS PART OF THE INTERVAL, NOT AN EXTRA STOREY ON TOP ──
@@ -5545,176 +5546,6 @@
     @media (max-width: 768px) {
       :root { --typeScale: 0.98496; }
     }
-    @media (max-width: 768px) {
-      /* ══════════ ONE LINE, TWO PAGES ══════════
-
-         THE STATEMENT IS OFF THE WORK LANDING AGAIN. It was put back for a
-         build and read as what it was: the same thirty words the reader gets
-         one tap away on Info, with a screen of air under them before the work
-         starts. The authored display:none rule a few thousand lines up is left
-         to do its job; the override that turned it on is simply gone.
-
-         WHAT THE TWO PAGES SHARE IS A LINE, NOT A PARAGRAPH. "Selected works"
-         on Work and the opening paragraph on Info both start a sixth of the
-         viewport down, so switching views moves the eye sideways rather than
-         up or down.
-
-         Placed by rule on both sides, not by measurement. The machinery that
-         used to do this grew #aboutSpacer until Info's first line reached a y
-         published from the work view, which meant the figure only existed
-         after Work had been rendered and could only ever push Info DOWN. Two
-         identical calc()s cannot disagree, do not care which view loaded
-         first, and hold on a screen the script never ran on.
-
-         The 57px is the fixed header bar, which .main-content pads for and
-         which both columns therefore start below. Subtracted here so the sixth
-         is measured from the top of the VIEWPORT, as asked, rather than from
-         the top of the scroll box. */
-      body.view-work #view-work { padding-top: 0; }
-      #mobileWorksLabel { margin-top: calc(100vh / 6 - 57px) !important; }
-
-      body.view-about #view-about { padding-top: calc(100vh / 6 - 57px); }
-
-      /* ── THE SMALL COPY, UP A TENTH ──
-         --type is the size everything on this page actually renders at: the
-         global block a few thousand lines up pins font-size to it with
-         !important on p, div and span alike, so the record, the labels, the
-         contact lines and the footer all come off this one figure. Raised here
-         rather than by editing --typeScale, which the desktop shares.
-
-         --typeSmall is deliberately left alone. It is the header and the nav,
-         which are furniture rather than copy, and they are already sized
-         against a 57px bar. */
-      :root { --type: calc(14px * var(--typeScale) * 1.1); }
-
-      /* ══════════ THE LAST LINE, BOTH PAGES ══════════
-         The phone had no footer at all. #pageCopy is display:none outside the
-         unified desktop, on a comment saying the phone carries the same line
-         inside #workFooter, and #workFooter is not in the markup: the element
-         that was supposed to be doing this has not existed for some time.
-
-         One row, two ends. The mark holds the left edge of column 1 and the
-         reservation the right edge of column 12, which on a phone is the
-         measure itself, so this is space-between on a flex row rather than a
-         twelve-track grid it would only ever use the two outer columns of.
-
-         A TWELFTH OVER IT, THE HEADER'S OWN PAD UNDER IT. The air above was
-         the same sixth of the viewport that sets where each page begins, on
-         the reasoning that a column should open and close on one interval. Cut
-         in half: at a sixth the gap read as the page having ended twice. The
-         air below is
-         var(--pad), which is the top the fixed header sits at, so the
-         reservation stands off the bottom edge by exactly what "Roger Oddone"
-         stands off the top edge by, and the page is symmetrical about its own
-         content.
-
-         The 240px that used to pad the foot of the work column goes with it:
-         that was clearance invented for a footer that was never there. */
-      #view-about #pageCopy,
-      #view-work #workPageCopy {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: var(--gap);
-        /* ── THE AIR IS PADDING, NOT MARGIN ──
-           The two columns were not laying this out the same way and could not:
-           #view-about is a block box, where a margin-top collapses with the
-           previous sibling's margin-bottom and the larger of the two wins,
-           while #view-work is a flex column, where margins never collapse and
-           the two ADD. The same declaration therefore produced two different
-           gaps, which is the difference between the two footers.
-
-           Padding cannot collapse and cannot be added to by a neighbour, so
-           the figure written here is the figure on screen in both. The
-           neighbours are then dealt with one each, below. */
-        margin: 0;
-        padding: calc(100vh / 12) 0 var(--pad);
-        white-space: nowrap;
-        color: #000;
-      }
-      /* Info's last block is .about-contact-inner. Its bottom margin would have
-         collapsed into the gap above and set it wherever it happened to be. */
-      #view-about .about-contact-inner { margin-bottom: 0; }
-      /* Work's last block is a thumbnail, which carries four gutters under it
-         to separate it from the next one. There is no next one, and in a flex
-         column that margin sits on top of the padding above rather than inside
-         it, so it is taken back out here. Written as a subtraction rather than
-         by zeroing the section, because the sections are ordered visually and
-         the last one on screen is not the last one in the markup. */
-      #view-work #workPageCopy { padding-top: calc(100vh / 12 - var(--gap) * 4); }
-      #view-work #workPageCopy { order: 6; }
-      /* ── AND A PROJECT PAGE ENDS ON IT TOO ──
-         It was off here, on the reasoning that the view IS the project and the
-         landing's last line has no business under it. That was the wrong read:
-         the line is not the landing's, it is the page's, and a project on this
-         width is a page that scrolls to an end like any other. With the X back
-         as the way out and Back gone, the foot of a project had nothing on it
-         at all.
-
-         Same node, same rule, same two ends of the measure, so there is no
-         project version of the footer to keep in step with the home one. What
-         follows is the arithmetic that makes the interval above it the same on
-         both pages as well. */
-      body.view-work.has-open #workPageCopy { display: flex !important; }
-      #view-about #pageCopy .pc-name,
-      #view-work #workPageCopy .wpc-name { text-align: right; }
-
-      /* ── THE CLEARANCE HANGS OFF THE LINE, NOT OFF THE COLUMN ──
-         It was a padding-bottom on each column, and the two columns do not
-         agree about what that means. #view-work is a flex container and
-         #view-about is a block one; they also start from different authored
-         values, one gutter on #view-work and 240px on .scroll-content, both of
-         which this had to out-specify separately. Work came out short.
-
-         So neither column pads at all now and the air is written once, on the
-         element it is actually about. Same declaration, same element, both
-         pages: the reservation's own box carries var(--pad) under it, which is
-         the top the fixed header sits at, so the last line stands off the foot
-         of the screen by exactly what the name stands off the top by. Nothing
-         between that box and the end of the scroll can differ, because there
-         is nothing between them. */
-      body.view-work #view-work,
-      body.view-about #view-about { padding-bottom: 0; }
-      body.view-work .scroll-content { padding-bottom: 0; }
-      /* setAboutSpacer() writes an inline height here on every mobile pass to
-         chase the work view's first line. That target is what the padding
-         above now sets directly, so the spacer has nothing left to correct and
-         anything it writes is added on top of a figure that is already right.
-         !important, because an author rule with it beats an inline declaration
-         without one, and this one has to win against something written per
-         frame. */
-      #aboutSpacer { height: 0 !important; }
-
-      /* THE PLUS SITS UNDER THE COPY, NOT BESIDE IT. It was absolutely
-         positioned at the top right of .about-bio-text, which is why the lead
-         carried 2.4em of right padding: the copy had to keep out of its way.
-         In flow instead, after the block it opens, so it reads as the end of
-         the paragraph rather than as a control floating over it. The padding
-         goes with it and the measure runs full width again. */
-      #view-about .bio-more-mob {
-        position: static;
-        margin-top: var(--gap);
-        width: auto;
-      }
-      #view-about #bioLeadMob { padding-right: 0; }
-
-      /* TEN PERCENT OF THE SCREEN UNDER THE PLUS. The air between the last
-         line of the bio and the Contact rule, and so between the bio and
-         everything under it, since the record follows Contact down the column.
-
-         A margin on .about-bio-grid rather than a height on
-         #aboutStacksSpacer, which is the element that looks like the right
-         place: setAboutSpacer() writes an inline zero on that spacer on every
-         mobile pass, and an inline height beats a sheet rule however specific.
-         The margin sits outside the block the script measures and nothing
-         there has to know about it.
-
-         The size of this copy is not set here. It is set once, for both views
-         at the same time, in #bioScalePhotoOff at the foot of the document,
-         because a rule ending in an element beats one ending in the universal
-         and that sheet's own selector was always going to win this. */
-      #view-about .about-bio-grid { margin-bottom: 10vh; }
-    }
   </style>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -5811,20 +5642,12 @@ window.__errLog = [];
       </div>
       <div id="workBioMob" class="about-bio-grid">
         <div class="about-bio-text">
-          <!-- THE SAME PARAGRAPH AS INFO, AND ONLY THE FIRST ONE. Work opens
-               on the opening block of the bio and stops there; the other two
-               and the plus are a tap away on Info. Kept as a literal copy
-               rather than moved at runtime, because the two views are separate
-               scroll containers and a node cannot be in both: cloning on every
-               view switch would put a copy in the DOM on a timer, and the one
-               thing this has to be is identical, not merely similar.
-
-               So it is one paragraph, in two places, and the placement is
-               reconciled by measurement rather than by arithmetic. mobileFold()
-               publishes where this one lands and setAboutSpacer() grows the
-               Info column until its own first line sits on the same y. If this
-               copy is edited, edit it in both. -->
-          <p id="workBioLeadMob">Bay Area brand designer. Twenty years building brand identities and the systems that carry them. Criticized my whole career for leaving too much empty space. Still leaving it.</p>
+          <!-- The client line is phone only: the desktop drops the company
+               names because the cards sit on screen beside the statement, while
+               here they are a scroll away. Same paragraph as the claim, on its
+               own line, so it reads as the end of one thought rather than as a
+               caption under it. -->
+          <p>Hands-on designer. 20+ years defining brand identities<br>and building the systems that carry them.</p>
         </div>
       </div>
       <div id="bioCarSpacer"></div>
@@ -5855,8 +5678,7 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Cruise</div><div class="info-description">Autonomous vehicles</div></div>
-          <div class="col-claim"><div class="claim-role">Staff brand designer</div><div class="claim-line">Bridged brand and product</div></div>
+          <div class="col-title"><div class="info-title">Cruise</div><span class="info-line">Bridged brand and product</span><div class="info-description">Autonomous vehicles</div></div>
           <div class="col-list"><div class="info-list-para"><span>Iconography</span><span>Art direction</span><span>Guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -5865,7 +5687,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Iconography</span><span>• Art direction</span><span>• Guidelines</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Iconography<br>• Art direction<br>• Guidelines</span><br><br>Cruise was unlike most things I had worked on. In an Uber, the driver is there to answer questions. On a Cruise, the experience had to be intentional enough to anticipate every rider need. Down to an icon of a car with an arrow pointing to the correct exit door. Few precedents. Little to compare against.<br><br>I joined as Staff Brand Designer right before its transition from R&D to public rollout. The identity had been established before I arrived. My role was to scale it across a wide surface: consumer-facing product, internal tools, marketing, and a shared design system. All while infusing approachability into a highly advanced technology. Expressive lines with width variations in the feature icons and illustrations, and motion as a core part of the visual language.<br><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Bridged brand and product</span><span class="mob-tags">• Iconography<br>• Art direction<br>• Guidelines</span><br><br>Cruise was unlike most things I had worked on. In an Uber, the driver is there to answer questions. On a Cruise, the experience had to be intentional enough to anticipate every rider need. Down to an icon of a car with an arrow pointing to the correct exit door. Few precedents. Little to compare against.<br><br>I joined as Staff Brand Designer right before its transition from R&D to public rollout. The identity had been established before I arrived. My role was to scale it across a wide surface: consumer-facing product, internal tools, marketing, and a shared design system. All while infusing approachability into a highly advanced technology. Expressive lines with width variations in the feature icons and illustrations, and motion as a core part of the visual language.<br><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p></div></div>
         </div>
       </div>
 
@@ -5937,9 +5759,8 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Uber</div><div class="info-description">Mobility platform</div></div>
-          <div class="col-claim"><div class="claim-role">Brand design lead</div><div class="claim-line">Led the 2016 rebrand rollout across 65 countries</div></div>
-          <div class="col-list"><div class="info-list-para"><span>Global Rebrand</span></div></div>
+          <div class="col-title"><div class="info-title">Uber</div><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><div class="info-description">Mobility platform</div></div>
+          <div class="col-list"><div class="info-list-para"><span>Wordmark</span><span>Color system</span><span>Guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.</p></div></div>
@@ -5947,7 +5768,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Global Rebrand</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Global Rebrand</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><span class="mob-tags">• Wordmark<br>• Color system<br>• Guidelines</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p></div></div>
         </div>
       </div>
 
@@ -5981,9 +5802,8 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Google</div><div class="info-description">Material Design / Kennedy</div></div>
-          <div class="col-claim"><div class="claim-role">Senior designer</div><div class="claim-line">Built the color systems behind Material Design</div></div>
-          <div class="col-list"><div class="info-list-para"><span>Product icon</span><span>Color system</span><span>Guidelines</span></div></div>
+          <div class="col-title"><div class="info-title">Google</div><span class="info-line">Built the color systems behind Material Design</span><div class="info-description">Material Design / Kennedy</div></div>
+          <div class="col-list"><div class="info-list-para"><span>Product icon</span><span>Guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.</p></div></div>
@@ -5991,7 +5811,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Product icon</span><span>• Color system</span><span>• Guidelines</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Product icon<br>• Color system<br>• Guidelines</span><br><br>After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>2011–2014</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built the color systems behind Material Design</span><span class="mob-tags">• Product icon<br>• Guidelines</span><br><br>After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>2011–2014</p></div></div>
         </div>
       </div>
 
@@ -6022,8 +5842,7 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">HG26</div><div class="info-description">Particle system /<br>Textural typeface</div></div>
-          <div class="col-claim"><div class="claim-role">Independent</div><div class="claim-line">Built a typeface that draws itself from particles</div></div>
+          <div class="col-title"><div class="info-title">HG26</div><span class="info-line">Built a typeface that draws itself from particles</span><div class="info-description">Particle system /<br>Textural typeface</div></div>
           <div class="col-list"><div class="info-list-para"><span>Creative coding</span><span>Generative design</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -6032,7 +5851,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Creative coding</span><span>• Generative design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
         </div>
       </div>
 
@@ -6065,9 +5884,8 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Aero</div><div class="info-description">Airline</div></div>
-          <div class="col-claim"><div class="claim-role">Brand designer</div><div class="claim-line">Gave an airline its first coherent identity</div></div>
-          <div class="col-list"><div class="info-list-para"><span>Brand refresh</span><span>Jet livery design</span></div></div>
+          <div class="col-title"><div class="info-title">Aero</div><span class="info-line">Gave an airline its first coherent identity</span><div class="info-description">Airline</div></div>
+          <div class="col-list"><div class="info-list-para"><span>Livery</span><span>Color palette</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.</p></div></div>
@@ -6075,7 +5893,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Brand refresh</span><span>• Jet livery design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Brand refresh<br>• Jet livery design</span><br><br>Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.<br><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Gave an airline its first coherent identity</span><span class="mob-tags">• Livery<br>• Color palette</span><br><br>Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.<br><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p></div></div>
         </div>
       </div>
 
@@ -6099,9 +5917,8 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Oddone</div><div class="info-description">Brand studio</div></div>
-          <div class="col-claim"><div class="claim-role">Founder</div><div class="claim-line">Built identities from zero, straight with founders</div></div>
-          <div class="col-list"><div class="info-list-para"><span>Visual identity</span><span>Motion</span><span>Website</span></div></div>
+          <div class="col-title"><div class="info-title">Oddone</div><span class="info-line">Built identities from zero, straight with founders</span><div class="info-description">Brand studio</div></div>
+          <div class="col-list"><div class="info-list-para"><span>Motion</span><span>Website</span><span>Posters</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">After Uber, I started Oddone, a brand identity studio in San Francisco specializing in visual identities for forward-thinking businesses.<br><br>The studio's own identity was the first project, and being our own client is always hard. Partnering with brand strategist Caren Williams was essential in this process of self-discovery, forcing clarity about my values. The core idea that emerged: I explore every angle of an idea. The "O" is treated as a three-dimensional object that reveals a different form depending on the perspective, so that each view shows a different dimension of the same thinking. Strategy, design, and exploration, finally made visible.</p></div></div>
@@ -6109,7 +5926,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Visual identity</span><span>• Motion</span><span>• Website</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Visual identity<br>• Motion<br>• Website</span><br><br>After Uber, I started Oddone, a brand identity studio in San Francisco specializing in visual identities for forward-thinking businesses.<br><br>The studio's own identity was the first project, and being our own client is always hard. Partnering with brand strategist Caren Williams was essential in this process of self-discovery, forcing clarity about my values. The core idea that emerged: I explore every angle of an idea. The "O" is treated as a three-dimensional object that reveals a different form depending on the perspective, so that each view shows a different dimension of the same thinking. Strategy, design, and exploration, finally made visible.<br><br>After launching, I decided to push the system further, creating a series of expressive posters rooted in the same visual logic, developing a motion language for the brand in the process.<br><br>Creative Director / Designer: Roger Oddone · Brand Strategist: Caren Williams.<br><br>2018</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built identities from zero, straight with founders</span><span class="mob-tags">• Motion<br>• Website<br>• Posters</span><br><br>After Uber, I started Oddone, a brand identity studio in San Francisco specializing in visual identities for forward-thinking businesses.<br><br>The studio's own identity was the first project, and being our own client is always hard. Partnering with brand strategist Caren Williams was essential in this process of self-discovery, forcing clarity about my values. The core idea that emerged: I explore every angle of an idea. The "O" is treated as a three-dimensional object that reveals a different form depending on the perspective, so that each view shows a different dimension of the same thinking. Strategy, design, and exploration, finally made visible.<br><br>After launching, I decided to push the system further, creating a series of expressive posters rooted in the same visual logic, developing a motion language for the brand in the process.<br><br>Creative Director / Designer: Roger Oddone · Brand Strategist: Caren Williams.<br><br>2018</p></div></div>
         </div>
       </div>
 
@@ -6129,8 +5946,7 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Expa</div><div class="info-description">Company studio</div></div>
-          <div class="col-claim"><div class="claim-role">Principal brand designer</div><div class="claim-line">Founding identities for a venture studio</div></div>
+          <div class="col-title"><div class="info-title">Expa</div><span class="info-line">Founding identities for a venture studio</span><div class="info-description">Company studio</div></div>
           <div class="col-list"><div class="info-list-para"><span>Art direction</span><span>Iconography</span><span>Logo motion</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -6139,7 +5955,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Art direction</span><span>• Iconography</span><span>• Logo motion</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="mob-tags">• Art direction<br>• Iconography<br>• Logo motion</span><br><br>Expa is a company studio that partners with founders to build companies from zero.<br><br>This project evolved the website: expanding the case studies, sharpening how the studio articulates its approach with the highest level of design and technology craft.<br><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Founding identities for a venture studio</span><span class="mob-tags">• Art direction<br>• Iconography<br>• Logo motion</span><br><br>Expa is a company studio that partners with founders to build companies from zero.<br><br>This project evolved the website: expanding the case studies, sharpening how the studio articulates its approach with the highest level of design and technology craft.<br><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p></div></div>
         </div>
       </div>
 
@@ -6151,35 +5967,6 @@ window.__errLog = [];
       <!-- Info's Contact block, repeated at the foot of the work view so the
            two things a visitor genuinely needs, what Roger does and how to
            reach him, are never behind a click. One rule over one row of four. -->
-      <!-- ── THE WORK COLUMN'S LAST LINE ──
-           A second element rather than the one in #view-about moved or cloned:
-           the two views are separate scroll containers, both can be in the DOM
-           at once, and a node can only be in one of them. Same two spans, same
-           text, so the phone ends both pages on the same line. Styled by id
-           alongside #pageCopy in the mobile block, which is the one place the
-           two are guaranteed to agree.
-
-           ── AND THE CLASSES ARE NOT pc-mark AND pc-name ──
-           They were, for one build, and it put two reservations on Info and
-           none here. placeReservation() opens with
-           document.querySelector('.pc-name') and appends whatever it finds to
-           #pageCopy: an unscoped query for the FIRST match in the document,
-           written when there was only ever one. This block sits earlier in the
-           markup than #view-about, so the first match became this one and the
-           script carried it across to the other column on the next pass.
-
-           Renamed rather than the query scoped, because four functions read
-           .pc-name and .pc-base unscoped and any of them could take the wrong
-           node next. A name nothing else looks for cannot be taken. The strut
-           goes for the same reason: .pc-base exists so measureCopyright can
-           find a baseline, and this line is not measured by anything.
-
-           Desktop never sees it. #pageCopy is display:none outside the unified
-           desktop and this one is off everywhere except the phone. -->
-      <div id="workPageCopy">
-        <span class="wpc-mark">&copy; 2026 Roger Oddone</span>
-        <span class="wpc-name">All rights reserved.</span>
-      </div>
     </div><!-- /#view-work -->
 
     <!-- ═══════════ ABOUT VIEW ═══════════ -->
@@ -6215,13 +6002,12 @@ window.__errLog = [];
                taught to every one of them. Inside, the top does not move and
                only the block's bottom grows, which is the one thing those
                measurements already handle. -->
-          <p id="bioLeadMob">Bay Area brand designer. Twenty years building brand identities and the systems that carry them. Criticized my whole career for leaving too much empty space. Still leaving it.<i class="pc-base"></i></p>
+          <p id="bioLeadMob">Bay Area brand designer. Twenty years building brand identities and the systems that carry them.</p>
           <div id="bioRestMob">
-            <p>Space is a conviction, not a style. What matters gets seen when nothing competes with it.</p>
             <p>I do foundations. Find the idea a brand can stand on, then create the building blocks hundreds of people reach for, people who never meet, so what they make adds up to one feeling instead of scattering.</p>
             <p>Before design I was a mechanic, in my dad's motorcycle wheel garage in São Paulo. Truing rims, replacing worn parts, and the last step, balancing: small weights placed around the wheel until the ride runs smooth. Nobody notices a balanced wheel. Everyone feels the wobble, and they can't name it. Twenty years later that is still the job: place the weights until nothing wobbles.</p>
             <p>I've stayed hands-on my whole career, by choice. Nothing compares to finding the idea that holds everything up.</p>
-            <p>The toolbox keeps growing. Strategy, motion, product, 3D, and lately my own tools coded with AI, so an idea can be tested in a browser the same week it's sketched.<i class="pc-base"></i></p>
+            <p>The toolbox keeps growing. Strategy, motion, product, 3D, and lately my own tools coded with AI, so an idea can be tested in a browser the same week it's sketched.</p>
           </div>
           <!-- After the block it opens rather than before it, so the control
                sits under the last line of whatever is showing: under the
@@ -6270,69 +6056,68 @@ window.__errLog = [];
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle0">Independent<br>Brand Design and Creative Coding<br><span style="color:#000;">2026—Now</span></p>
-            <p class="about-job-desc" id="expaDesc0" style="display:none;">Independent<br>Brand Design and Creative Coding<br><span style="color:#000;">2026—Now</span><br><br><span class="jd-body">Rebuilt this site from scratch with AI as my coding partner: one HTML file, no framework and no template. Designed and built a trilingual portfolio for a documentary writer and producer, and a site for a healthcare executive. Started a Lab of generative work in Three.js and WebGL, including a particle typeface system, a sand simulation and signed distance field studies.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle0" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle1">Expa<br>Principal Brand Designer<br><span style="color:#000;">2024—Feb 2026</span></p>
-            <p class="about-job-desc" id="expaDesc1" style="display:none;">Expa<br>Principal Brand Designer<br><span style="color:#000;">2024—Feb 2026</span><br><br><span class="jd-body">Worked directly with founders to build brands from the ground up. Defined strategy, created identity systems and guidelines, and built the infrastructure for teams to execute independently. Advised on brand as a competitive advantage, supported launches with pitch decks, investor materials and digital presence.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle1" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle2">Cruise<br>Staff Brand Designer<br><span style="color:#000;">2021—2024</span></p>
-            <p class="about-job-desc" id="expaDesc2" style="display:none;">Cruise<br>Staff Brand Designer<br><span style="color:#000;">2021—2024</span><br><br><span class="jd-body">Led the expansion of the visual identity system, defined the icon style and oversaw the creation of hundreds of UI and feature icons. Extended the color system across disciplines. Built and managed the design org brand portal from zero. Worked across brand, product and marketing with product designers, UX writers and PMs. Held office hours and critiques to raise the bar on design quality.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle2" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle3">Oddone<br>Founder and Creative Director<br><span style="color:#000;">2018—2021</span></p>
-            <p class="about-job-desc" id="expaDesc3" style="display:none;">Oddone<br>Founder and Creative Director<br><span style="color:#000;">2018—2021</span><br><br><span class="jd-body">Ran all creative and business functions of the studio. Worked with clients through the full creative process from concept to complete visual identity systems and brand guidelines. Managed prospecting, proposals, contracts, budgets, timelines and client relationships.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle3" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle4">Uber<br>Lead Brand Designer<br><span style="color:#000;">2014—2017</span></p>
-            <p class="about-job-desc" id="expaDesc4" style="display:none;">Uber<br>Lead Brand Designer<br><span style="color:#000;">2014—2017</span><br><br><span class="jd-body">Part of the core team behind the 2016 global rebrand. Created and implemented the new design framework, most notably crafting the Uber wordmark. Maintained the brand guidelines portal and trained the broader design organization worldwide to ensure consistency. Collaborated with product, growth and marketing teams across brand initiatives.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle4" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle5">Google<br>Senior Graphic Designer<br><span style="color:#000;">2011—2014</span></p>
-            <p class="about-job-desc" id="expaDesc5" style="display:none;">Google<br>Senior Graphic Designer<br><span style="color:#000;">2011—2014</span><br><br><span class="jd-body">Defined the product icon visual style and created the 50 to 900 color naming system for the first version of Material Design, a convention that became standard practice across the industry. Led the creation of Google's first company-wide visual asset guidelines. Partnered with teams across the company on UI and product icons.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle5" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="about-contact-block about-contact-block-right short-line">
           <div class="about-contact-block-right-line"></div>
           <div class="about-contact-block-right-name"></div>
           <div class="about-contact-block-right-desc">
             <p class="about-job-desc" id="expaTitle6">Novartis / Design Studios<br>Graphic Designer / Studio Founder<br><span style="color:#000;">2001—2011 (Brazil)</span></p>
-            <p class="about-job-desc" id="expaDesc6" style="display:none;">Novartis / Design Studios<br>Graphic Designer / Studio Founder<br><span style="color:#000;">2001—2011 (Brazil)</span><br><br><span class="jd-body">Started in Novartis Pharmaceutical's packaging department, then worked at two prominent Brazilian design studios on packaging and visual identities for major local companies. Before relocating to the US, founded and ran an independent studio focused on visual identity for local and international clients.</span></p>
           </div>
-          <div class="about-contact-block-right-toggle"><button id="expaToggle6" class="read-more-btn" style="pointer-events:auto;"></button></div>
         </div>
         <div class="section-label">Press / Features</div>
         <div class="about-contact-block about-contact-block-right no-label">
           <div class="about-contact-block-right-line" data-stack="3"></div>
           <div class="about-contact-block-right-desc">
-            <p class="about-job-desc" style="font-size:29.33px; line-height:1.1;"><a href="https://www.wired.com/2016/02/the-inside-story-behind-ubers-colorful-redesign" target="_blank" style="color:inherit; text-decoration:none;">Wired</a><br><a href="https://www.fastcompany.com/3056258/a-first-look-at-ubers-new-logo-and-branding" target="_blank" style="color:inherit; text-decoration:none;">Fast Company</a><br><a href="https://www.behance.net/rogeroddone" target="_blank" style="color:inherit; text-decoration:none;">Behance</a>  20 feat. projects<br>Designing brand identity book<br>Logo lounge books<span class="pc-base" id="recordBase"></span></p>
+            <p class="about-job-desc" style="font-size:29.33px; line-height:1.1;"><a href="https://www.wired.com/2016/02/the-inside-story-behind-ubers-colorful-redesign" target="_blank" style="color:inherit; text-decoration:none;">Wired</a><br><a href="https://www.fastcompany.com/3056258/a-first-look-at-ubers-new-logo-and-branding" target="_blank" style="color:inherit; text-decoration:none;">Fast Company</a><br><a href="https://www.behance.net/rogeroddone" target="_blank" style="color:inherit; text-decoration:none;">Behance</a>  20 feat. projects<br>Designing brand identity book<br>Logo lounge books</p>
+          </div>
+        </div>
+        <div class="section-label">Education</div>
+        <div class="about-contact-block about-contact-block-right">
+          <div class="about-contact-block-right-line"></div>
+          <div class="about-contact-block-right-desc">
+            <p class="about-job-desc" style="font-size:29.33px; line-height:1.1;">MBA, Branding, brand management<br><span style="color:#000;">Faculdades Integradas Rio Branco<br>2005—2007 (Brazil)</span></p>
+          </div>
+        </div>
+        <div class="about-contact-block about-contact-block-right short-line">
+          <div class="about-contact-block-right-line"></div>
+          <div class="about-contact-block-right-desc">
+            <p class="about-job-desc" id="eduLast" style="font-size:29.33px; line-height:1.1;">Graphic design degree<br><span style="color:#000;">Centro Universitário Belas Artes de São Paulo<br>1998—2001 (Brazil)<span class="pc-base"></span></span></p>
           </div>
         </div>
       </div>
@@ -7011,7 +6796,11 @@ document.addEventListener('keydown', e => {
   }
 
   // Build about sidebar stack
-  const aboutLabels = ['Contact', 'Availability', 'Work experience', 'Press / Features', 'Education'];
+  /* Education came off the index. Four waypoints now, not five: the section
+     is still on the page, it is simply not one of the places the stack offers
+     to take you. The data-stack attribute on its rule went with it, so nothing
+     is left pointing at a label that is not built. */
+  const aboutLabels = ['Contact', 'Availability', 'Work experience', 'Press / Features'];
   const aboutItems = [];
   aboutLabels.forEach((label, i) => {
     const wrap = document.createElement('div');
@@ -7280,8 +7069,8 @@ document.addEventListener('keydown', e => {
     tuneParkPad();
     const sidebarRect = sidebar.getBoundingClientRect();
     const sidebarH = sidebar.offsetHeight;
-    const aboutTotal = aboutItems.length; // 5
-    // Contact, Availability, Work experience, Press/Features, Education
+    const aboutTotal = aboutItems.length; // 4
+    // Contact, Availability, Work experience, Press/Features
     /* Was an index into every hairline on the page, which meant adding or
        removing a single job silently re-pointed every label below it. The six
        section-opening rules now carry data-stack="0".."4" in the markup and
@@ -8025,7 +7814,7 @@ document.addEventListener('keydown', e => {
         // scrolls to 0 when already at 0, which fires no scroll event at all.
         // Setting the flag alone left the header exactly where it was.
         const hh = window.innerWidth <= 768
-          ? 57
+          ? 38
           : (parseFloat(getComputedStyle(document.documentElement)
               .getPropertyValue('--headerH')) || 70);
         setHeader(-hh, true);
@@ -8048,10 +7837,10 @@ document.addEventListener('keydown', e => {
         if (mbarEl) { mbarEl.classList.toggle('hdr-anim', animate); mbarEl.style.transform = t; }
         if (hdrEl)  { hdrEl.classList.toggle('hdr-anim', animate);  hdrEl.style.transform = t; }
       };
-      /* The phone bar is its own fixed 57, not --headerH. Travelling the
+      /* The phone bar is its own fixed 38, not --headerH. Travelling the
          desktop distance would leave a strip of it on screen or overshoot. */
       const headerH = () => window.innerWidth <= 768
-        ? 57
+        ? 38
         : (parseFloat(getComputedStyle(document.documentElement)
             .getPropertyValue('--headerH')) || 70);
 
@@ -8068,7 +7857,7 @@ document.addEventListener('keydown', e => {
         const hh = headerH();
         const dy = y - _lastY;
         /* One state machine for both now. The phone used to hold its bar
-           permanently fixed and skip all of this, which meant 57px of the
+           permanently fixed and skip all of this, which meant 38px of the
            screen was never available to the work and a project page could
            never own the top of the viewport. */
         if (_hdrForceHidden) {
@@ -8388,18 +8177,7 @@ const SVG_PLUS  = `<svg width="24" height="18" viewBox="0 0 38 28" fill="none" x
 
    14.4 wide by 12 tall in a 40 by 28 plate, which leaves the shaft ending
    6.4 units clear of the edge. */
-/* The arrow only. The white plate with the grey hairline used to be drawn
-   INSIDE this file, as the rect behind the path, which meant the plate was
-   fixed at 40 by 28 and the word had to sit outside it. The plate is CSS on
-   the button now, so it grows with whatever is in it, and this draws the one
-   thing that cannot be a border-radius and a background.
-
-   The viewBox is cropped to the path plus half a stroke, so the arrow fills
-   the box it is given and its left edge is the box's left edge. Left as the
-   original 0 0 40 28 the glyph would have carried a third of a plate's worth
-   of empty space on either side, and the padding asked for below would have
-   been that space plus the padding. */
-const SVG_BACK  = `<svg viewBox="12.05 7.25 15.9 13.5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27.2 14H12.8M12.8 14L18.8 8M12.8 14L18.8 20" stroke="#000" stroke-width="1.5"/></svg>`;
+const SVG_BACK  = `<svg viewBox="0 0 40 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.25" y="0.25" width="39.5" height="27.5" rx="3.9" ry="3.9" fill="#fff" stroke="#BEBEBE" stroke-width="0.5"/><path d="M27.2 14H12.8M12.8 14L18.8 8M12.8 14L18.8 20" stroke="#000" stroke-width="1.5"/></svg>`;
 window.SVG_BACK = SVG_BACK;
 const SVG_MINUS = `<svg width="24" height="18" viewBox="0 0 38 28" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip_minus)"><path d="M35.02 0H2.98C1.33419 0 0 1.33419 0 2.98V25.02C0 26.6658 1.33419 28 2.98 28H35.02C36.6658 28 38 26.6658 38 25.02V2.98C38 1.33419 36.6658 0 35.02 0Z" fill="white"/><path d="M30 13H8V15H30V13Z" fill="black"/></g><defs><clipPath id="clip_minus"><rect width="38" height="28" fill="white"/></clipPath></defs></svg>`;
 
@@ -8620,135 +8398,11 @@ window._fluidReveal = function (block, mutate, shown, hidden) {
       window._mobileAboutSanitize();
     }
   }
-  /* ── CLOSED UNTIL SOMETHING MEASURES THE WINDOW ──
-     This briefly opened on a min-width of 1601, the breakpoint the file calls
-     LAPTOP. That was the wrong question. A 1600px window is not a tall one and
-     a 1400px window on a tall display holds the essay comfortably; width is a
-     guess at the thing that actually decides this, which is whether four
-     paragraphs and the record fit in the column at once.
-
-     So there is no breakpoint here at all. The page starts closed, which is
-     the safe state because it cannot overlap anything, and fitBioToColumn
-     below opens it on the first frame if it fits. Every later change of size
-     goes through the same test, so the same window always produces the same
-     answer however it was arrived at. */
   btn.innerHTML = SVG_PLUS;
   rest.style.display = 'none';
   document.body.classList.remove('bio-open');
-  /* ── AND IT CLOSES ITSELF IF THE COLUMN STOPS FITTING IT ──
-     A large display is not a guarantee of a tall one, and a window dragged
-     shorter, or wider into a layout with a taller record beside it, can leave
-     the open essay pushing the Contact rule down the page rather than opening
-     into the air above it. alignFirstSection publishes exactly that condition
-     as _bioOverflows, because it is the one place both the parked figure and
-     the copy's own height are known.
-
-     IT PUTS BACK WHAT IT TOOK, AND ONLY THAT. `autoClosed` records that the
-     essay was closed by this function and not by the reader, and only an
-     essay closed that way is reopened when the room returns. A bio the reader
-     closed themselves stays closed at every width, which is the flapping this
-     was worried about; what was actually happening instead was worse, since
-     dragging a window narrow and back left the page permanently shorter than
-     the one it arrived as with no way to tell why.
-
-     TESTING WHETHER IT FITS MEANS OPENING IT. _bioOverflows is a comparison
-     against the copy's rendered height, and a closed essay has none, so the
-     flag is false whenever the bio is shut and cannot answer "would it fit".
-     The block below opens it, measures, and shuts it again if the answer is
-     no. All inside one animation frame, so nothing between the two states is
-     ever painted.
-
-     After a frame, and after a fresh alignment pass, so the figure being read
-     belongs to the window as it is now rather than to the one before the drag.
-     paint() rather than the fluid reveal: a resize is not a gesture the reader
-     made on this control, and animating in the middle of a drag reads as the
-     page fighting the mouse. */
-  /* True from the start, because the closed state the page loads in is this
-     function's doing and not the reader's: nothing has been decided yet, so
-     the first pass is free to open it. */
-  var autoClosed = true;
-  var fitPending = false;
-  function fitBioToColumn() {
-    if (fitPending) return;
-    fitPending = true;
-    requestAnimationFrame(function () {
-      fitPending = false;
-      if (window.innerWidth <= 768) return;
-      /* ── THE UNIFIED DESKTOP DECIDES THIS ELSEWHERE ──
-         Everything below judges the fit through _bioOverflow, which
-         alignFirstSection derives from the parked position of the sidebar
-         stack. That stack is display:none in this mode and the record's
-         position is set by measurement at the foot of the document instead,
-         so the figure this reads describes a layout that is no longer on the
-         screen. revealInfoIfItFits() asks the same question of the column
-         that is actually there. */
-      if (document.body.classList.contains('unified')) return;
-
-      /* ── TWO THRESHOLDS, NOT ONE ──
-         The test is self-referential: whether the essay fits is measured on a
-         column whose height the essay itself is part of. Opening it moves the
-         Contact rule, which moves the figure the fit is judged against, so at
-         the exact size where the answer changes, closing can make it fit and
-         opening can make it not, and a window parked on that size flips on
-         every frame it is dragged. That is the blink.
-
-         A deadband fixes it and nothing else does. Closing happens the moment
-         the copy actually overflows, at zero, because an overlap is visible
-         and must not be tolerated for a pixel. Opening requires a whole gutter
-         of room to spare on top of that. Between the two the state simply
-         holds, whichever it is in, so the boundary is a band the drag passes
-         through rather than a line it can sit on.
-
-         SLACK is a gutter because that is the smallest interval this page
-         considers meaningful anywhere else; anything smaller and the band is
-         narrower than the difference the two measurements disagree by. */
-      var SLACK = parseFloat(getComputedStyle(document.documentElement)
-        .getPropertyValue('--gap')) || 10.35;
-      var over = function () {
-        return typeof window._bioOverflow === 'number' ? window._bioOverflow : 0;
-      };
-
-      if (open) {
-        if (window._alignFirstSection) window._alignFirstSection();
-        if (over() <= 0.5) return;
-        open = false;
-        autoClosed = true;
-        paint();
-        return;
-      }
-
-      if (!autoClosed) return;
-      open = true;
-      rest.style.display = 'block';
-      document.body.classList.add('bio-open');
-      if (window._alignFirstSection) window._alignFirstSection();
-      /* Not `does it overflow`, but `does it clear by a gutter`. */
-      if (over() > -SLACK) {
-        open = false;
-        rest.style.display = 'none';
-        document.body.classList.remove('bio-open');
-        if (window._alignFirstSection) window._alignFirstSection();
-        return;
-      }
-      autoClosed = false;
-      paint();
-    });
-  }
-  window.addEventListener('resize', fitBioToColumn);
-  /* Immediately, so the answer lands on the first frame rather than after a
-     visible beat of collapsed copy. Again on load, since images settling
-     changes the record's height and therefore the room above it, and again
-     when the face resolves, because the essay's own height is a function of
-     the font and the fallback is not the same size. */
-  fitBioToColumn();
-  window.addEventListener('load', fitBioToColumn);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitBioToColumn);
-
   btn.addEventListener('click', e => {
     e.preventDefault();
-    /* The reader has taken the decision back. Whatever this function did to
-       the bio earlier is no longer something to undo. */
-    autoClosed = false;
     open = !open;
     /* Through the same fluid reveal the job toggles use, so every plus on the
        page answers a click the same way. paint() is the mutation, unchanged;
@@ -9131,61 +8785,6 @@ function initCarousel(sec) {
   const isHG26 = sec.id === 'notypeLab1Section';
   const mobileAssets = isCruise ? CRUISE_MOBILE : isAero ? AERO_MOBILE : isUber ? UBER_MOBILE : isGoogleIcon ? GOOGLE_ICON_MOBILE : isGoogleColors ? GOOGLE_COLORS_MOBILE : isOddone ? ODDONE_MOBILE : isGuideline ? GUIDELINE_MOBILE : isExpa ? EXPA_MOBILE : isHG26 ? HG26_MOBILE : null;
   const altText = isCruise ? 'Cruise' : isUber ? 'Uber' : isGoogleIcon ? 'Google Material' : isGoogleColors ? 'Google Guidelines' : isOddone ? 'Oddone' : isGuideline ? 'Guideline' : isExpa ? 'Expa' : isHG26 ? 'HG26' : 'Aero';
-
-  /* ── ONE PROJECT, ONE COVER ──
-     A card with no data-card-thumb shows its first slide, and the block below
-     throws the desktop slides away and rebuilds the wrapper from the mobile
-     list. So the same project was fronted by two different pictures depending
-     on the screen it was read on: uber_cube_desk on the desktop, uber_1_mobile
-     on the phone. The cover is the project's face and it should not change
-     with the width of the window.
-
-     The desktop first slide is read here, out of `orig`, which was taken
-     before the rebuild, and pinned as a .card-thumb overlay. That element sits
-     outside .rm-slide-wrapper, so the ratio reader, the slide indices and the
-     editor's source rewrite never see it, and the mobile slides underneath are
-     untouched: the card is the desktop picture, and opening the project still
-     runs the mobile sequence.
-
-     Only for sections that have not already answered this question. A
-     data-card-thumb is an explicit cover and a hand-written .card-thumb is the
-     same statement in markup; both are left exactly as they are. applyCardThumb
-     runs later and returns early on what is built here, because it holds a
-     hand-written thumb whenever there is no attribute to beat it.
-
-     Width is dropped to 800 where the URL carries a transform. The desktop
-     source is cut for a full-bleed frame at 2400 and this is a card on a
-     phone; the same asset at a third of the pixels is the same picture. */
-  if (isMobile && mobileAssets
-      && !sec.getAttribute('data-card-thumb')
-      && !el.querySelector(':scope > .card-thumb')) {
-    const d0   = orig[0];
-    const dImg = d0 && d0.querySelector('img');
-    const dVid = d0 && d0.querySelector('video');
-    const dSrc = dImg
-      ? (dImg.getAttribute('src') || '')
-      : dVid
-        ? ((dVid.querySelector('source') && dVid.querySelector('source').getAttribute('src'))
-            || dVid.getAttribute('src') || '')
-        : '';
-    if (dSrc) {
-      const useVid = !dImg && !!dVid;
-      const cover = document.createElement(useVid ? 'video' : 'img');
-      cover.className = 'card-thumb';
-      cover.setAttribute('aria-hidden', 'true');
-      if (useVid) {
-        cover.autoplay = true; cover.muted = true; cover.loop = true;
-        cover.playsInline = true;
-        cover.setAttribute('playsinline', '');
-        cover.setAttribute('preload', 'metadata');
-      } else {
-        cover.decoding = 'async';
-        cover.alt = '';
-      }
-      cover.src = dSrc.replace(/w-\d+/, 'w-800');
-      el.appendChild(cover);
-    }
-  }
 
   // Build mobile slides: replace wrapper content entirely
   if (isMobile && mobileAssets) {
@@ -9619,14 +9218,8 @@ function initCarousel(sec) {
             var fn = cur && window._sectionOpen && window._sectionOpen.get(cur);
             if (fn) fn(false);
           });
-          /* Into the BUTTON, not beside it. The word was a sibling of the
-             control with pointer-events off, which made the plate the only
-             thing a reader could hit and the label a caption next to it.
-             Inside, the whole pill is one target, the padding included, and
-             there is no second thing to aim at because there is no second
-             thing. #indexBack keeps its job of being the positioned box. */
-          hit.appendChild(lbl);
           back.appendChild(hit);
+          back.appendChild(lbl);
         }
         /* ── BACK IS PART OF THE PROJECT, SO IT LIVES IN THE PROJECT ──
            It rode in the footer row, then it was fixed to the window. It is a
@@ -9643,40 +9236,11 @@ function initCarousel(sec) {
            project and putting it inside the footer would make it a grid child
            of a row it has no business in the day it comes back. */
         if (openSec) {
-          /* ── AND BACK OUT OF THE PICTURE AGAIN ──
-             It sat on the last image's bottom left corner for a build. The X
-             is position:fixed and never leaves the screen, so that was a
-             second exit for an action that already had a visible one, and it
-             covered a corner of the work to do it.
-
-             In the footer row instead, beside the copyright, which is the one
-             line on the page that already means "this is the end". It is a
-             grid child of #pageCopy now rather than an absolutely placed child
-             of the section, so it takes a track like everything else in that
-             row and placeBack has nothing left to compute. */
-          /* ── THE PHONE CARRIES NEITHER ──
-             The label names an index that is display:none on this width, and
-             Back was a second exit for an action that already has a visible
-             one: the X is fixed to the screen for the whole of a project, so a
-             control at the very bottom only reachable by scrolling to it was
-             the worse of the two. Both nodes are removed rather than hidden,
-             so nothing is left in #view-work holding a slot in the flex order
-             above the footer.
-
-             The desktop path below is untouched. It hides the collapsed cards
-             the same way, but its Back sits in the footer row beside the
-             copyright, which is a line the phone's footer does not have the
-             tracks for. */
-          if (window.innerWidth <= 768) {
-            if (more.parentNode) more.remove();
-            if (back.parentNode) back.remove();
-          } else {
-            if (back.parentNode !== copy) copy.appendChild(back);
-            if (more.parentNode !== work || more.previousElementSibling !== openSec) {
-              openSec.insertAdjacentElement('afterend', more);
-            }
-          }
+          if (back.parentNode !== openSec) openSec.appendChild(back);
           if (window._updateCollapseDock) requestAnimationFrame(window._updateCollapseDock);
+          if (more.parentNode !== work || more.previousElementSibling !== openSec) {
+            openSec.insertAdjacentElement('afterend', more);
+          }
         }
       } else {
         if (more) more.remove();
@@ -10274,48 +9838,9 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
     /* Nothing open, or the stack not assembled yet, or the section still
        arriving: no rect worth reading. Left where it was rather than moved to
        a wrong place, and the next pass has the answer. */
-    /* ── NOTHING TO PLACE ONCE IT IS IN A GRID ──
-       The control lives in #pageCopy now and its position is a track, not a
-       pair of offsets. Anything written here would be an absolute figure on a
-       static box: ignored at best, and the stale `top` from the last opening
-       at worst. The inline values this used to write are cleared on the way
-       out, and the visibility held from birth is released, since the reason
-       for holding it was that top:auto put the control over the hero. */
-    /* The phone places it in the flow, after the open section, so it has no
-       offsets to compute either and the same clean-up applies: anything
-       written here would be an absolute figure on a static box, ignored at
-       best and a stale `top` from the last opening at worst. */
-    if ((b.parentNode && b.parentNode.id === 'pageCopy') || window.innerWidth <= 768) {
-      b.style.top = '';
-      b.style.left = '';
-      b.style.visibility = '';
-      return;
-    }
     if (!sec || !tail) return;
-    /* ── ON THE LAST PICTURE, NOT UNDER IT ──
-       It sat one gutter BELOW the last asset, reading as the next thing in the
-       sequence. It is the pair to the close button now, and that one is one
-       gutter inside the FIRST image's top right corner. So this one takes the
-       LAST image's bottom left corner, one gutter inside on both edges, and
-       the two ways out of a project are the same object at opposite corners of
-       the same stack.
-
-       Both offsets are read from the asset's own rect rather than written as
-       page columns. The close button already works this way, off the lead
-       image's right edge, for the same reason: the media is forced to the full
-       twelve tracks below 1600px, so a column figure is only correct on a wide
-       screen while an edge is correct on every one.
-
-       The height is measured rather than assumed. The row is a plate and a
-       word, so its box is 38 by 26.6 only until the label wraps or the face
-       loads at a different size, and the bottom edge is what has to land a
-       gutter up. offsetHeight is a layout read on an element that is already
-       laid out, so it costs nothing here. */
-    const tr = tail.getBoundingClientRect();
-    const sr = sec.getBoundingClientRect();
-    const h  = b.offsetHeight || (38 * 0.7);
-    b.style.top  = (tr.bottom - sr.top - gap - h).toFixed(1) + 'px';
-    b.style.left = (tr.left - sr.left + gap).toFixed(1) + 'px';
+    const foot = tail.getBoundingClientRect().bottom - sec.getBoundingClientRect().top;
+    b.style.top = (foot + gap).toFixed(1) + 'px';
     /* First real figure of this opening. Until now the control was held at
        visibility:hidden, because top:auto resolves to the section's own top
        left corner and that is over the hero image. */
@@ -11290,7 +10815,6 @@ document.addEventListener('visibilitychange', function() {
     var ly = 0, ln = label;
     while (ln && ln !== main) { ly += ln.offsetTop; ln = ln.offsetParent; }
     if (ly) window._mobWorksLabelY = ly;
-
   }
 
   function boot() {
@@ -11909,26 +11433,6 @@ document.addEventListener('visibilitychange', function() {
   function setPeek(on) {
     var left = document.getElementById('view-about');
     if (!left) return;
-    /* ── NO LIFT ON THIS LAYOUT ──
-       The peek raises the record so that the availability rule meets the
-       parked position of the first sidebar label. That stack is display:none
-       here and the record's own position is now a pair of 15vh intervals, so
-       peekShift() measures the distance between a live rule and a landmark
-       that is not on the screen. On this column it came out at 567px and
-       carried the whole record up out of view on load.
-
-       Zeroed rather than left alone, because --peekShift and --cueLift are
-       read by rules that do not know why they are being asked. Same reasoning
-       as the two other sidebar-era routines already switched off in this mode:
-       when the thing a measurement is taken against is gone, the measurement
-       is not conservative, it is wrong. */
-    if (document.body.classList.contains('unified') && window.innerWidth > 768) {
-      document.body.classList.remove('plate-peek');
-      document.documentElement.style.setProperty('--peekShift', '0px');
-      document.documentElement.style.setProperty('--cueLift', '0px');
-      _peekBooted = true;
-      return;
-    }
     var wasOn = document.body.classList.contains('plate-peek');
     var wasPx = parseFloat(getComputedStyle(document.documentElement)
       .getPropertyValue('--peekShift')) || 0;
@@ -12753,22 +12257,8 @@ document.addEventListener('visibilitychange', function() {
       }
       return;
     }
-    /* ── IT CAN FOLLOW THE STATEMENT DOWN. IT MAY NOT FOLLOW IT UP ──
-       This wrote the raw difference, so once the reader scrolled the Info
-       column far enough for the statement's top edge to pass above the header
-       line, dy went negative and the name was translated off the top of the
-       window. Nothing put it back: this function runs on view switches, on
-       project open and close, and on the right column's scroll, and none of
-       those is scrolling the left column back up. The name stayed gone for the
-       rest of the visit.
-
-       Clamped at zero. Where the statement sits below the header line the name
-       still drops to meet it, which is the alignment this exists for; where it
-       has scrolled above, the name holds the line it was authored on. The
-       targetTop branch a few lines up already clamps the same way, against the
-       same hazard, so this is the rule that was always intended here. */
-    var dy = Math.max(0, lead.getBoundingClientRect().top - natural);
-    nameWrap.style.transform = dy < 0.5
+    var dy = lead.getBoundingClientRect().top - natural;
+    nameWrap.style.transform = Math.abs(dy) < 0.5
       ? '' : 'translateY(' + dy.toFixed(1) + 'px)';
   }
 
@@ -13071,42 +12561,10 @@ document.addEventListener('visibilitychange', function() {
      a little on every resize. */
   /* Three gutters, the same clearance positionBio holds between the plus and
      this rule. Read from the custom property so it tracks the breakpoint. */
-  /* ── THE BUTTON SITS IN EQUAL AIR ──
-     Three gutters below, one gutter above. The plus was nearer the last line
-     of the copy than it was to the Contact rule, so it read as belonging to
-     the rule rather than to the paragraph it opens.
-
-     Both sides are measured from the same kind of edge now. Above, from the
-     BASELINE of the last visible line rather than from its box: a box bottom
-     carries a descender's worth of air the reader never sees, and matching to
-     it would leave the two sides looking unequal. The .pc-base strut at the
-     end of the last paragraph of each state reports that baseline, the same
-     trick measureCopyright already uses on the small print. Below, the same
-     figure, so the record is pushed down to put the button in the middle of
-     its own space.
-
-     Clamped and floored. This feeds `need`, which decides how far the record
-     is pushed, so a rect that has not settled yet must not be able to shove
-     the whole column off the page. Outside one to eight gutters the old three
-     gutters is used, which is never worse than what it replaces. */
   function BIO_CLEAR_PX() {
     var g = parseFloat(getComputedStyle(document.documentElement)
       .getPropertyValue('--gap')) || 10.35;
-    var fallback = g * 3;
-    var left = document.getElementById('view-about');
-    if (!left) return fallback;
-    var btn = left.querySelector('.bio-more-mob');
-    if (!btn) return fallback;
-    var host = document.body.classList.contains('bio-open')
-      ? document.getElementById('bioRestMob')
-      : document.getElementById('bioLeadMob');
-    if (!host) return fallback;
-    var struts = host.querySelectorAll('.pc-base');
-    if (!struts.length) return fallback;
-    var above = btn.getBoundingClientRect().top
-              - struts[struts.length - 1].getBoundingClientRect().bottom;
-    if (!isFinite(above) || above < g || above > g * 8) return fallback;
-    return above;
+    return g * 3;
   }
 
   function alignFirstSection() {
@@ -13214,21 +12672,7 @@ document.addEventListener('visibilitychange', function() {
        already keeps around its own read. */
     var keepTop = left.scrollTop;
     bio.style.minHeight = '0px';
-    /* ── THE LEVER BEING CLEARED IS THE ONE THAT WAS WRITTEN ──
-       The negative arm at the foot of this function writes marginTop. Every
-       clear in it wrote paddingTop, a property nothing here ever sets, so the
-       margin from the previous pass was still on the element while the rule's
-       position was being read.
-
-       That is what kept the record pulled up after a close. Opening the plus
-       wrote a negative margin; closing it re-measured a rule that was already
-       carrying that margin, computed a correction relative to the pulled-up
-       position, and wrote it back. The record held its relationship to the
-       button instead of returning to the parked slot it arrived on.
-
-       Both properties are cleared now, so what is measured below is the
-       natural position and a close lands exactly where the page opened. */
-    if (inner) { inner.style.marginTop = '0px'; inner.style.paddingTop = '0px'; }
+    if (inner) inner.style.marginTop = '0px';
     /* ── NOTHING TO ALIGN WHILE A PROJECT IS OPEN ──
        The record is not on screen in that state: the page under a project is
        the card grid and its copyright, and #view-about is display:none. Every
@@ -13244,7 +12688,7 @@ document.addEventListener('visibilitychange', function() {
        positive the open state's figure was left standing and the landing came
        back with the record pushed down. Cleared before anything is measured,
        which is also what makes the measurement below the natural one. */
-    if (inner) { inner.style.marginTop = '0px'; inner.style.paddingTop = '0px'; }
+    if (inner) inner.style.marginTop = '0px';
     var natural = bio.offsetHeight;
     var live = document.body.classList.contains('plate-peek')
       ? (parseFloat(getComputedStyle(document.documentElement)
@@ -13272,25 +12716,11 @@ document.addEventListener('visibilitychange', function() {
        the reveal animates an explicit height on that element and the rect is
        what is painting on this frame. Zero while the copy is closed, so the
        parked slot is the only thing deciding anything on arrival. */
-    /* ── THE FLOOR APPLIES CLOSED TOO ──
-       This was gated on bio-open, so a shut bio published a need of zero and
-       the negative arm below was free to haul the record as far up the column
-       as the parked slot asked for. That was safe exactly as long as the
-       bottom half of .about-bio-grid was .about-photo-ph, a spacer painting
-       nothing, which is what the comment above it says. The portrait is off
-       now, so the copy fills the block and there is nothing left to overlap
-       into: on a tall narrow window, where the statement wraps to many lines
-       and the Contact rule naturally falls well past its slot, the record was
-       being pulled up over the last lines of the bio.
-
-       Measured whichever state it is in. Three paragraphs plus the plus, or
-       seven, the record still may not come nearer than three gutters to the
-       last line of it, and the parked slot only decides where the record sits
-       in the room that leaves. */
-    var openText = left.querySelector('.about-bio-text');
-    var need = openText
-      ? openText.getBoundingClientRect().height + BIO_CLEAR_PX()
-      : 0;
+    var need = 0;
+    if (document.body.classList.contains('bio-open')) {
+      var openText = left.querySelector('.about-bio-text');
+      if (openText) need = openText.getBoundingClientRect().height + BIO_CLEAR_PX();
+    }
     var r0 = left.querySelector('[data-stack="0"]');
     if (r0 && typeof window._aboutParkTop === 'function') {
       /* ── MEASURED WITH THE SCROLL TAKEN BACK OUT ──
@@ -13320,40 +12750,12 @@ document.addEventListener('visibilitychange', function() {
          it up. `need` is inside the max, so the pull can never go past the
          last line of the copy. */
       var target = Math.max(natural + delta, need);
-      /* ── PUBLISH WHETHER THE COPY IS WINNING ──
-         `natural + delta` is where the block has to end for the Contact rule
-         to sit on its parked slot; `need` is the least it may be for the open
-         essay not to run into the small print. When need is the larger of the
-         two, the copy is no longer opening INTO the air above the record, it
-         is pushing the record down the page to make room it does not have.
-         That is the state that has to close the bio on a resized window, and
-         this is the one place both figures exist. Half a pixel of slack, so a
-         subpixel rounding difference is not read as an overflow. */
-      window._bioOverflow  = need - (natural + delta);
-      window._bioOverflows = window._bioOverflow > 0.5;
-      /* ── ONE OWNER ──
-         placeRecord() positions the record on the unified desktop: the last
-         baseline at nine tenths of the window, restored on every plus click.
-         This function was steering the same element toward a different target,
-         the parked slot, through minHeight and a margin, and whichever of the
-         two wrote last won. At load that was placeRecord; after a close the
-         resize observer let this one write last, and the record stayed
-         wherever the slot arithmetic put it instead of returning to the
-         arrival position.
-
-         So on the unified desktop this function measures and publishes but
-         does not steer: _bioOverflow still feeds fitBioToColumn, and the
-         levers are left cleared, which the top of this function has already
-         done. Off the unified layout nothing else owns the record and the two
-         arms behave exactly as before. */
-      if (!document.body.classList.contains('unified')) {
-        if (target >= natural) {
-          bio.style.minHeight = target.toFixed(1) + 'px';
-          if (inner) { inner.style.marginTop = '0px'; inner.style.paddingTop = '0px'; }
-        } else {
-          bio.style.minHeight = '0px';
-          if (inner) inner.style.marginTop = (target - natural).toFixed(1) + 'px';
-        }
+      if (target >= natural) {
+        bio.style.minHeight = target.toFixed(1) + 'px';
+        if (inner) inner.style.marginTop = '0px';
+      } else {
+        bio.style.minHeight = '0px';
+        if (inner) inner.style.marginTop = (target - natural).toFixed(1) + 'px';
       }
     } else {
       /* No stack to aim at. Fall back to the fold anchor this used to use, so
@@ -13366,10 +12768,8 @@ document.addEventListener('visibilitychange', function() {
         : trig.getBoundingClientRect().top - lTop + left.scrollTop;
       /* Same floor as the parked branch, or an open essay would run into the
          record on any page where the stack has not been found. */
-      var fallbackFit = Math.max(0, natural + (left.clientHeight - cur));
-      window._bioOverflow  = need - fallbackFit;
-      window._bioOverflows = window._bioOverflow > 0.5;
-      bio.style.minHeight = Math.max(fallbackFit, need) + 'px';
+      bio.style.minHeight =
+        Math.max(0, natural + (left.clientHeight - cur), need) + 'px';
     }
     if (left.scrollTop !== keepTop) left.scrollTop = keepTop;
     if (window._positionAboutItems) window._positionAboutItems();
@@ -16315,1211 +15715,276 @@ document.addEventListener('visibilitychange', function() {
 })();
 </script>
 
-<style id="bioScalePhotoOff">
-  /* ── BIO COPY, PHOTO REMOVED ──
-     Written last in the document so it beats the earlier declarations without
-     inventing new specificity. Both the lead statement and the essay live
-     inside .about-bio-text, so one rule carries both, and the paragraph rule
-     is here only because the global type override pins p and div with
-     !important further up the sheet. Line-height is untouched: it runs on
-     --leadingCopy, which is a ratio, so it scales with the face.
-
-     The arithmetic, in the order it was asked for: 29.33 up by half to 44,
-     then down by three tenths to 30.8, then a fifth to 24.64, then a tenth to
-     22.18. Phone the same way, 26.67 to 40 to 28 to 22.4 to 20.16.
-
-     Each step is a percentage of the step before it, not of the original, so
-     the four together are 0.756 of where this began: 22.18 against 29.33,
-     about a quarter smaller. If a figure is ever wanted directly, it is these
-     two declarations and nothing else. */
-  #view-about .about-bio-text,
-  #view-about .about-bio-text p {
-    font-size: 22.18px !important;
-  }
-  @media (max-width: 768px) {
-    /* ── ONE SCALE, BOTH VIEWS ──
-       The work landing's paragraph is the same paragraph as this column's
-       first one, so it has to be the same size, and the only way to be sure of
-       that is for one declaration to set both. A separate rule for the work
-       copy was written in the media query further up the sheet and lost here:
-       #view-about .about-bio-text p carries an element on the end of it and
-       beats a selector ending in the universal, whichever is written later.
-       Rather than out-specify it, the work selectors are added to it.
-
-       #mobileWorksLabel comes too. It is the only other type on that page and
-       a heading set smaller than the paragraph above it reads as a caption of
-       it. Its authored 26.67px is in the same position as every other size on
-       this page: written, and never reaching the screen. */
-    #view-about .about-bio-text,
-    #view-about .about-bio-text p,
-    #workBioMob .about-bio-text,
-    #workBioMob .about-bio-text p,
-    #mobileWorksLabel,
-    #mobileWorksLabel span {
-      /* 20.16 up 12 percent. A literal figure rather than a multiplication,
-         because this one is not derived from --type and never was: it is the
-         phone's own display size for the statement, and writing it as a
-         calc against a variable it does not depend on would imply a
-         relationship that is not there. */
-      font-size: 22.58px !important;
-    }
-  }
-
-  /* ── THE PORTRAIT IS OFF ──
-     Two elements, because the photo was two things. Above 769 it is
-     #aboutPlate, a fixed body child; below 769 the plate is off and
-     .about-photo-ph paints the same asset in the flow, eight columns wide
-     with 25vw of margin over and under it. Hiding only the plate would leave
-     the phone's photo, and hiding only the spacer would leave the desktop's.
-
-     ── AND WHY THE FIRST ATTEMPT DID NOT TAKE ──
-     A bare #aboutPlate was written here and the photo stayed on screen. Being
-     last in the document is not enough when the rule it is arguing with is
-     `body.unified #aboutPlate { display: block !important }`: that selector
-     carries an id, a class and an element, this one carried an id, and among
-     two !important declarations the more specific one wins no matter which is
-     written later. Matched here, so source order decides and this is later.
-     The second selector covers the same contest with body.view-about.
-
-     display:none rather than opacity, so the phone's 25vw margins go with it
-     and Contact comes up to meet the bio. The elements stay in the markup:
-     fitAboutPhoto(), setAboutSpacer() and the plate module all querySelector
-     them, and all three are written to read a rect rather than require one,
-     so a zero box is a state they already handle. Removing the tags would
-     turn those reads into nulls. */
-  /* ── THE LAST LINE, RE-ASSERTED ──
-     Both of these are already written in the main sheet, on body.unified
-     #pageCopy, and both were reported as not taking. Repeated here because
-     this sheet is the last in the document: at equal specificity source order
-     decides, and with !important nothing earlier can win whatever it is
-     scoped to. If the figures below are what is on screen, the pair in the
-     main sheet are being beaten by something and can be deleted; if they are
-     not, the file being loaded is not this one.
-
-     Column 3, one track left of the copy, and the two runs of type on a common
-     baseline rather than a common box bottom. */
-  body.unified #pageCopy { align-items: baseline !important; }
-  /* ── AND BOTH ON ROW 1 ──
-     This is the whole of the "wrong baseline". The mark spans 1 / 4 and the
-     reservation now starts at 3, so the two OVERLAP on track 3. Neither has a
-     row, so grid auto-placement resolves the collision the only way it can:
-     the reservation is pushed to row 2. What looked like a few pixels of
-     baseline drift was a second line of the grid.
-
-     The mark is trimmed to 1 / 3 so the two tracks no longer contend, and both
-     are pinned to row 1 so auto-placement has nothing left to decide. The mark
-     never needed three tracks; "© 2026 Roger Oddone" does not fill two. */
-  body.unified #pageCopy .pc-mark {
-    grid-column: 1 / 3 !important;
-    grid-row: 1 !important;
-    align-self: baseline !important;
-  }
-  body.unified #pageCopy .pc-name {
-    grid-column: 3 / -1 !important;
-    grid-row: 1 !important;
-    justify-self: start !important;
-    align-self: baseline !important;
-  }
-
-  /* ── ON A PROJECT PAGE THE RESERVATION GOES TO THE FAR EDGE ──
-     Column 3 is the landing's arrangement, where the mark and the reservation
-     read as one line of small print. Under an open project the row is the full
-     twelve tracks and the two belong at its two ends instead.
-
-     Written as the whole subgrid with justify-self: end rather than as track
-     12. A named track is a claim about how many there are, and this row's
-     count changes with the state: #pageCopy is a subgrid of whichever column
-     currently holds it. `1 / -1` is the same span whatever that number is, and
-     its end is the right edge of the last track by definition. text-align as
-     well as justify-self, or a string shorter than the track floats somewhere
-     inside a box that is itself at the right place. */
-  body.unified.has-open #pageCopy .pc-name {
-    grid-column: 1 / -1 !important;
-    justify-self: end !important;
-    text-align: right !important;
-  }
-
-  /* ── AND BACK TAKES THE TRACK THE RESERVATION LEFT ──
-     Column 3, which is where the copy in an open project starts and where the
-     reservation sits on the landing, so the footer reads as one row of three
-     things at the intervals the page already uses: the mark, the way out, and
-     the reservation at the far edge.
-
-     Static, because it was absolutely placed against the section it used to
-     sit on and is a grid child here. Centred rather than baseline-aligned: it
-     is a plate with a border, and a bordered box in a baseline group sets the
-     row's baseline from its own bottom edge, which would drag the two runs of
-     type off the line they share. */
-  body.unified.has-open #pageCopy #indexBack {
-    position: static !important;
-    grid-column: 3 / 4 !important;
-    grid-row: 1 !important;
-    justify-self: start !important;
-    align-self: center !important;
-    left: auto !important;
-    top: auto !important;
-  }
-
-  body.unified #aboutPlate,
-  body.view-about #aboutPlate { display: none !important; }
-  #view-about .about-photo-ph { display: none !important; }
-
-  /* ── COLUMN FOUR TO THE MIDDLE OF SIX ──
-     Two and a half tracks, starting on line 4: the whole of 4 and 5 and half
-     of 6. Said the way the sheet already says it a few hundred lines up,
-     where #bioRestMob carries this exact width and the comment calls it
-     "from column 4 to the middle of column 6".
-
-     The grid slot stays 4 / 6, two tracks, and the extra half track is width
-     that overflows the item rather than a re-placement onto the grid. That is
-     deliberate and it is the sheet's own reasoning: .about-bio-text is the
-     box alignName pins the header name to, positionBio pins the block to, and
-     alignFirstSection takes the natural height of. Moving it into a different
-     grid cell would put it outside all three. Overflowing keeps one box, one
-     top edge, one height, and nothing on this column clips.
-
-     The statement and the essay are the same measure now. The sheet used to
-     hold the statement at two tracks and open the essay to two and a half, on
-     the argument that a headline wants a tighter rag than five paragraphs do.
-     One width for both is what was asked for, so that split is off; restoring
-     it is deleting the width line on .about-bio-text below.
-
-     The column 1 experiment and its padding are gone with it. That padding
-     only existed to keep "Roger Oddone" off the first line once the copy sat
-     in the name's own track. Back at column 4 the name has tracks 1 to 3 to
-     itself again and the two sit side by side, which is what the layout was
-     built for. */
-  body.unified #view-about .about-bio-text {
-    grid-column: 3 / 6 !important;
-    width: calc(3.5 * var(--col) + 3 * var(--gap)) !important;
-    max-width: none !important;
-    padding-top: 0 !important;
-  }
-  body.unified #view-about #bioRestMob {
-    width: calc(3.5 * var(--col) + 3 * var(--gap)) !important;
-    max-width: none !important;
-  }
-
-  /* ── THE LABEL COLUMN NARROWS, THE CONTENT COLUMN WIDENS ──
-     Two tracks for the labels and their rules, four for everything they
-     label. The page was three and three.
-
-     The left side is the sidebar, not the markup. Every visible hairline over
-     Contact, Availability, Work experience, Press, Skills and Education is a
-     stack item inside .carousel-sidebar; the rules sitting in the content
-     tree next to those labels are [data-stack] anchors painted transparent,
-     kept only so the stack has something to measure against. So the sidebar
-     is what moves, and the anchors move with it or the stack lands on a
-     measurement taken from the old width.
-
-     The right side is six declarations because a section is built from six
-     pieces: the job separator between entries, the ::before rule that opens a
-     section, the description, its toggle, the contact links, and the bio. All
-     were 4 / 7 and all are 3 / 7, so the copy starts where the label ends.
-
-     The bio is the one exception to that alignment, and deliberately: it
-     starts on 3 with the rest but stops at the middle of 6 rather than the
-     end of it, so the paragraphs keep a measure rather than filling to the
-     seam. */
-  body.unified .carousel-sidebar { grid-column: 1 / 3 !important; }
-  body.unified #view-about [data-stack],
-  body.unified #view-about .about-contact-block:not(.about-contact-block-right) .work-contact-line {
-    grid-column: 1 / 3 !important;
-  }
-  body.unified #view-about .about-contact-block-right-line,
-  body.unified #view-about .about-contact-block-right.short-line .about-contact-block-right-line,
-  body.unified #view-about .has-section-rule::before,
-  body.unified #view-about .about-contact-block-right-desc,
-  body.unified #view-about .about-contact-block-right.no-label .about-contact-block-right-desc,
-  body.unified #view-about .about-contact-block-right-toggle,
-  body.unified #view-about .about-contact-block:not(.about-contact-block-right) .work-contact-links {
-    grid-column: 3 / 7 !important;
-  }
-
-  /* ── PHONE: THE END OF A PROJECT ──
-     Written here rather than in the phone block a few thousand lines up for
-     the reason the rest of this sheet exists: it is last in the document, so
-     at equal specificity it decides.
-
-     THE LABEL IS OFF. The cards it announced are display:none under an open
-     project on this width, so it was naming an index that is not there. That
-     is the one part of this that survived: the X is the way out again, Back is
-     gone, and the foot of a project now carries the copyright line instead of
-     a control. */
-  @media (max-width: 768px) {
-    body.view-work.has-open #seeMoreLabel { display: none !important; }
-  }
-
-  /* ══ FOUR AND EIGHT ══════════════════════════════════════════════════════
-     The unified desktop was two halves of a twelve column page, Info on 1-6
-     and the work on 7-12. It is four and eight now: Info on 1-4, the cards on
-     5-12. Written here, at the foot of the sheet, so it beats the block that
-     set the old split on source order rather than by out-specifying it. That
-     block is left intact and readable rather than edited in place, because
-     every figure in it was measured against six tracks and would have to be
-     re-argued line by line; here the numbers that changed are stated together
-     in one place.
-
-     Three things move: the page split, the inside of a card, and the whole of
-     Info, which stops being a two column record and becomes the phone's single
-     stack. */
-  @media (min-width: 769px) {
-
-    body.unified #view-about { grid-column: 1 / 5  !important; }
-    body.unified #view-work  { grid-column: 5 / 13 !important; }
-
-    /* ── INSIDE A CARD ──
-       Eight tracks now instead of six, and they are not divided evenly. The
-       name takes track 1 alone. Tracks 3 and 4 carry the copy: role at the
-       top, the claim under it, the disciplines on the bottom edge. The
-       thumbnail takes 5 through 8, which is page columns 9 to 12.
-
-       Track 2 is empty on purpose. It is the gap between the name and the
-       copy, and it is a whole column rather than a gutter so the name reads as
-       a label on the row rather than as the first word of the sentence beside
-       it. */
-    body.unified #view-work .carousel-section:not(.is-open) .carousel-media-wrap {
-      grid-column: 5 / -1 !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) > .info-grid {
-      grid-column: 1 / 5 !important;
-    }
-    /* The old block put both of these on 1 / -1, stacked down a two track
-       column. They are side by side now, so each takes its own tracks and the
-       max-width cap that block lifted stays lifted. */
-    body.unified #view-work .carousel-section:not(.is-open) .col-title {
-      grid-row: 1 !important;
-      grid-column: 1 / 2 !important;
-      align-self: start !important;
-      max-width: none !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim {
-      grid-row: 1 !important;
-      grid-column: 3 / 5 !important;
-      align-self: start !important;
-    }
-    /* Bottom of the second row, which is the card's own margin box, which is
-       the bottom edge of the image beside it. Same as before; only the tracks
-       changed. */
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      grid-row: 2 !important;
-      grid-column: 3 / 5 !important;
-      align-self: end !important;
-      max-width: none !important;
-    }
-
-    /* ── INFO IS ONE STACK ──
-       The desktop version ran labels down tracks 1-3 and content down 4-6, two
-       columns of the same record read across. At four tracks there is no room
-       for that and no reason for it: the phone already solved this page as a
-       single column with the label sitting on its own rule above the content,
-       and that is what the width here calls for.
-
-       So the phone's arrangement is restated for this mode. The subgrids that
-       the two column version needed are dropped back to block flow, which is
-       what the phone does, and every rule then runs the full four tracks
-       because a block-level hairline has nowhere else to go. The controller
-       still finds [data-stack] and .has-section-rule where it expects them;
-       only their boxes changed. */
-    body.unified #view-about .about-contact-inner { display: block !important; }
-    body.unified #view-about .about-contact-block,
-    body.unified #view-about .about-contact-block-right { display: block !important; }
-    body.unified #view-about .about-contact-block-right { position: relative; overflow: hidden; }
-    body.unified #view-about .about-contact-block-right-desc { display: block !important; }
-    body.unified #view-about .about-contact-block-right-line,
-    body.unified #view-about .about-contact-block-right.short-line .about-contact-block-right-line {
-      display: block !important;
-      width: 100% !important;
-      background: #7C7C7C !important;
-    }
-    /* The label carries the rule in this arrangement, so a block that opens
-       directly under one would draw a second hairline a few pixels below the
-       first. The phone hides it for the same reason. */
-    body.unified #view-about .section-label + .about-contact-block .work-contact-line,
-    body.unified #view-about .section-label + .about-contact-block-right .about-contact-block-right-line,
-    body.unified #view-about .work-experience-label + .about-contact-block-right .about-contact-block-right-line {
-      display: none !important;
-    }
-    /* The section rule the two column version painted on tracks 4-6 belonged to
-       the copy half of a split that no longer exists. The label's own border is
-       the rule now. */
-    body.unified #view-about .has-section-rule::before { display: none !important; }
-
-    /* The labels were the desktop's sidebar job and were hidden here. They are
-       the stack's own headings now: grey, on a hairline, one interval above the
-       copy they introduce. Figures taken from the phone so the two modes are
-       one design and not two. */
-    body.unified #view-about .section-label,
-    body.unified #view-about .work-experience-label {
-      display: block !important;
-      font-size: 16.2px;
-      font-weight: 400;
-      color: #999999;
-      line-height: 1;
-      margin-top: 0.63em;
-      margin-bottom: 0;
-      border-top: 0.5px solid #7C7C7C;
-      padding-top: 2.5px;
-      padding-bottom: 0.63em;
-      overflow: visible;
-    }
-    body.unified #view-about .about-bio-text .section-label { display: none !important; }
-    body.unified #view-about .about-contact-inner .section-label:first-of-type { margin-top: 0; }
-    /* The three gutter section opening and the one gutter between entries were
-       margins on the block in the two column version. The label sits above the
-       block now and carries the interval itself, so the block's own margins go
-       or the space is counted twice. */
-    body.unified #view-about .about-contact-block,
-    body.unified #view-about .has-section-rule { margin-top: 0 !important; }
-    /* Absolute, as on the phone: three tracks of measure is not enough to give
-       a column away to a toggle. */
-    body.unified #view-about .about-contact-block-right-toggle {
-      position: absolute !important;
-      top: 2.5px;
-      right: 0;
-      display: flex;
-      grid-column: auto !important;
-      grid-row: auto !important;
-    }
-
-    /* ── THE STATEMENT ──
-       Full width, and set at the page's small size rather than at 29px. At
-       four tracks the old headline setting ran to about four words a line and
-       the statement became a column of fragments. It is also no longer the
-       only thing on this half competing for the reader: every card now opens
-       with a claim in large type, and two sizes of headline facing each other
-       across the seam was one too many.
-
-       The middle paragraph, the one that listed Google and Uber and Expa, is
-       out of the markup. Those three sentences are now the first line of three
-       cards, in bigger type, next to the work they describe. */
-    body.unified #view-about .about-bio-text {
-      grid-column: 1 / -1 !important;
-      font-size: 16.2px !important;
-      line-height: 1.25 !important;
-      letter-spacing: 0 !important;
-    }
-    body.unified #view-about .about-bio-text p,
-    body.unified #view-about #bioLeadMob,
-    body.unified #view-about #bioRestMob p {
-      font-size: 16.2px !important;
-      line-height: 1.25 !important;
-      letter-spacing: 0 !important;
-    }
-    body.unified #view-about .about-photo-ph { display: none !important; }
-  }
-
-  /* ── THE CLAIM ──
-     Two lines that did not exist before: the role Roger held, and one sentence
-     saying what he did there. They sit between the client name and the
-     disciplines, which means the card now reads who, what, and in what
-     disciplines, left to right, before the image.
-
-     Off by default and switched on only for a collapsed card on the unified
-     desktop. The phone card has no room for a third block beside a thumbnail,
-     and an open project already says all of this at length in its own copy, so
-     neither should inherit it by accident.
-
-     ROLE at the page's small size, grey, which is the size and colour every
-     other piece of metadata on the page uses: the discipline lists, the
-     section labels down Info. CLAIM at the card title's own 29.33, black. Two
-     sizes, so the pair reads as a label over a headline rather than as one
-     sentence in two colours, which is what a colour-only difference gave.
-
-     The gutter and a half between them is the same interval the name holds
-     over the description it used to sit above. */
-  .col-claim { display: none; }
-  .claim-role {
-    font-weight: 400; font-size: 16.2px; line-height: 1.1;
-    letter-spacing: 0.2px; color: #999999;
-  }
-  .claim-line {
-    font-weight: 400; font-size: 29.33px; line-height: 1.05;
-    letter-spacing: -0.01em; color: #000;
-    margin-top: calc(var(--gap) * 1.5);
-  }
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim { display: block; }
-    /* Travels with the name, not with the disciplines: both sit at the top of
-       the card and the hover carries that whole corner up and in together. A
-       transform, as everywhere else in the card, so nothing below measures it
-       and nothing reflows. */
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim {
-      transition: transform var(--cardEase);
-      transform: translate(calc(-1 * var(--cardRestPx)), calc(-1 * var(--cardRestPx)));
-    }
-    body.unified #view-work .carousel-section:not(.is-open):hover .col-claim {
-      transform: translate(calc(-1 * var(--gap)), calc(-1 * var(--gap)));
-    }
-  }
-
-  /* ══ 1-3 AND 5-12 ════════════════════════════════════════════════════════
-     Two corrections and four moves, all of them keyed to one thing the block
-     above got wrong: #view-about and #view-work carry a hardcoded
-     repeat(6, 1fr) from when the page was split down the middle, and changing
-     the grid-column of each half did not change how many tracks it thinks it
-     has. So a card's "track 5" was the fifth of six across an eight column
-     box, which is why the thumbnail started nearer column 10 than column 9.
-     The counts are stated here to match the spans: three tracks for Info,
-     eight for the work. Every placement written above then lands where it
-     reads. */
-  @media (min-width: 769px) {
-
-    body.unified #view-about {
-      grid-column: 1 / 4 !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    }
-    body.unified #view-work {
-      grid-column: 5 / 13 !important;
-      grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
-    }
-
-    /* ── THE LABEL STACK IS GONE ──
-       Contact, Availability, Work experience, Press / Features, Education, the
-       fixed column of grey labels that used to run beside the record. It was
-       the desktop's answer to a two column Info: labels on one side, content
-       on the other. Info is one stack now and each section carries its own
-       label on its own rule, so the aside was a second set of the same words
-       sitting on top of the first. In the last build it was landing directly
-       over the statement.
-
-       display:none rather than removed from the markup. _getSidebarRestTop0()
-       reads .carousel-sidebar's offsetHeight, alignFirstSection() derives the
-       bio's minimum height from it, and the pointer router queries it by
-       class. A hidden element still answers all three; a missing one returns
-       null into arithmetic. */
-    body.unified .carousel-sidebar { display: none !important; }
-
-    /* ── THE STATEMENT OPENS A FIFTH OF THE WAY DOWN ──
-       Not on the header's line. The column starts on a band of white and the
-       first thing in it arrives at 20vh, which is roughly where the eye lands
-       on a page it has just opened rather than at the very top edge.
-
-       min-height is released with it. alignFirstSection() writes a floor onto
-       .about-bio-grid derived from the parked position of the first sidebar
-       item, and that aside no longer exists, so the figure it computes is
-       measured against something invisible and would hold the stack far below
-       where this margin puts it. */
-    body.unified #view-about .about-bio-grid {
-      margin-top: 15vh !important;
-      min-height: 0 !important;
-    }
-
-    /* ── THE CLAIM AT TWICE THE SIZE ──
-       58.66, which is 29.33 doubled. On two columns that is one to three words
-       a line and the longer claims run four and five lines deep, which is the
-       trade this size makes at this measure. Leading drops to 1 and the
-       tracking tightens, because both were set for a line of type a third of
-       this size.
-
-       The role above it does not move. It stays at the page's small size, so
-       the gap between the two widens rather than the pair scaling together. */
-    body.unified #view-work .carousel-section:not(.is-open) .claim-line {
-      font-size: 58.66px;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      margin-top: calc(var(--gap) * 2);
-    }
-  }
-
-  /* ══ INFO, SECOND PASS ═══════════════════════════════════════════════════
-     What the last build got wrong, in the order it was visible.
-
-     THE NAME LEFT THE HEADER. alignName() writes a translateY onto the name
-     so its cap meets the statement, which was the right move while the
-     statement opened on the header's line. The statement opens at 20vh now,
-     and the name followed it down the page. It stays where a name goes.
-
-     THE STACK SAT ON THE STATEMENT. #view-about is a grid, and inside it the
-     statement's block was reporting zero height to the row it sat in, so the
-     record began on the same line the statement did. Every rule that could
-     have caused it was read and none did; making the column block flow is
-     what fixes it, and block flow is what the phone stack was written for
-     anyway. The subgrids underneath resolve to single tracks in a block
-     parent, which is the arrangement every rule above already asked for.
-
-     THE TYPE DID NOT MOVE. The global override at the top of the sheet locks
-     every element to --type with !important and says so in a comment: the
-     scale written above it does not reach the screen. The claim's two sizes
-     were written without the flag and lost. They carry it now.
-
-     THE STATEMENT OVERRAN ITS COLUMN. An earlier rule set it to three and a
-     half tracks for a column that was six wide; here it is wider than the
-     column it sits in. Released to the block's own width.
-
-     FOUR TRACKS FOR THE RULES, THREE FOR THE COPY. The column takes 1-4. In
-     block flow the hairlines and the label borders are full width without
-     being told, and the toggle sits on the right edge, which is column 4's
-     outer line. The copy inside every block is held to three tracks: the
-     statement, the contact links, each job entry open or closed. So a rule
-     runs a track past the text it underlines, and the plus that opens an
-     entry sits out on that extra track rather than on the words. */
-  @media (min-width: 769px) {
-
-    body.unified .header-name-wrap { transform: none !important; }
-
-    body.unified #view-about {
-      grid-column: 1 / 5 !important;
-      display: block !important;
-    }
-    body.unified #view-about .about-bio-grid {
-      display: block !important;
-      width: 100% !important;
-    }
-    body.unified #view-about .about-bio-text,
-    body.unified #view-about #bioRestMob,
-    body.unified #view-about .about-contact-block:not(.about-contact-block-right) .work-contact-links,
-    body.unified #view-about .about-contact-block-right-desc,
-    body.unified #view-about .about-contact-block-right.no-label .about-contact-block-right-desc {
-      width: calc(3 * var(--col) + 2 * var(--gap)) !important;
-      max-width: none !important;
-      grid-column: auto !important;
-      grid-row: auto !important;
-    }
-    body.unified #view-about .about-contact-block,
-    body.unified #view-about .about-contact-block-right,
-    body.unified #view-about .about-contact-inner { width: 100% !important; }
-
-    body.unified #view-work .carousel-section:not(.is-open) .claim-role {
-      font-size: var(--type) !important;
-      color: #999999 !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .claim-line {
-      font-size: calc(var(--type) * 2) !important;
-      line-height: 1 !important;
-      letter-spacing: -0.02em !important;
-      color: #000 !important;
-    }
-  }
-
-  /* ══ ONE SMALL SIZE, AND THE CLAIM DOWN A FIFTH ══════════════════════════
-     Two sizes on the page and nothing between them.
-
-     THE SMALL SIZE. The global override at the top of the sheet already locks
-     everything to --type, and the statement obeyed it because the paragraph
-     that opens the column is a <p>. The paragraphs behind the plus are not:
-     they are written into #bioRestMob and were still carrying the 16.2 an
-     earlier pass wrote, so the copy changed size the moment the block opened.
-     Both halves are stated here, at --type, so the expanded statement is one
-     column of type rather than two.
-
-     THE CLAIM. Was twice the small size; it is 1.6 times it now, which is that
-     doubled figure less a fifth. Written against --type rather than as a fixed
-     pixel value so it tracks the small size at every breakpoint and the ratio
-     between the two holds wherever the page is read. */
-  @media (min-width: 769px) {
-    /* THE STATEMENT IS BIG COPY. Not the small size: the same 1.6 the claims
-       carry, so the two things on this page written to be read rather than
-       scanned are set at one size, one on each side of the seam. Everything
-       else on the page, labels, disciplines, roles, the record, stays at
-       --type. Two sizes still, they just divide the page differently now.
-       Both halves of the statement are named so it does not change size when
-       the plus opens it. */
-    body.unified #view-about .about-bio-text,
-    body.unified #view-about .about-bio-text p,
-    body.unified #view-about #bioLeadMob,
-    body.unified #view-about #bioRestMob,
-    body.unified #view-about #bioRestMob p {
-      font-size: calc(var(--type) * 1.6) !important;
-      line-height: 1.15 !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .claim-line {
-      font-size: calc(var(--type) * 1.6) !important;
-    }
-  }
-
-  /* ══ THE COPY STARTS ON COLUMN 6 ═════════════════════════════════════════
-     Was tracks 3-4 of the work column, which is page columns 7 and 8. It takes
-     2-4 now, page columns 6 through 8, so the block starts one column earlier
-     and ends where it did, on the line the thumbnail begins at.
-
-     Three columns of measure instead of two. The claim was breaking to three
-     lines on the longer projects at 1.6 and holds two on all of them at this
-     width, which is what makes the seven cards read as one column rather than
-     as seven different heights of type.
-
-     The empty track between the client name and the copy narrows to one from
-     two. It is still a whole column, so the name still reads as a label on the
-     row rather than as the first word of the claim beside it. */
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim,
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      grid-column: 2 / 5 !important;
-    }
-  }
-
-  /* ══ HALF A COLUMN IN ═══════════════════════════════════════════════════
-     The block still occupies tracks 2-4, page columns 6 through 8, and still
-     stops on the line the thumbnail starts at. It is indented half a column
-     from column 6's left edge, so the copy now begins at 6.5 while its
-     right-hand limit does not move.
-
-     A margin rather than a track, because 6.5 is not a line the grid has. The
-     twelve columns are the page's rhythm and the type is set against them,
-     not on them: this is the same kind of move as the optical offsets already
-     in the card, a measured distance from a known line rather than a new
-     division of the page.
-
-     What it buys is roughly a column and a half of clear space between the
-     client name and the copy instead of one, which is the gap that was about
-     to close on the longer role lines. What it costs is measure: two and a
-     half columns instead of three, so the longest claims may take a second
-     line again. */
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim,
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      margin-left: calc(var(--col) / 2) !important;
-    }
-  }
-
-  /* ══ AND IT STOPS AT 8.25 ═══════════════════════════════════════════════
-     The block still sits on tracks 2-4 and is still indented half a column, so
-     it begins at 6.5. What changes is where the line breaks: a width, not a
-     new placement, ending a quarter of the way into column 8.
-
-     1.75 columns and 2 gutters, which is the distance from 6.5 to 8.25 with
-     the two gutter crossings the span contains. Stated as a max-width so the
-     track assignment underneath is left alone: the block is still declared
-     against the grid and this only says how far the type may run inside it.
-
-     Roughly two and three quarter columns of measure. The claims that held one
-     line at three columns take two here, which is the point: two lines of
-     large type against a four column image reads as a paragraph set beside a
-     picture, where one long line reads as a caption running under it. The
-     disciplines take the same width so the two edges agree, though at that
-     size nothing in them reaches it. */
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim,
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      max-width: calc(1.75 * var(--col) + 2 * var(--gap)) !important;
-    }
-  }
-
-
-
-  /* ══ THE CLAIM COMES FIRST ══════════════════════════════════════════════
-     Claim on top, role underneath. The card row now reads client, then what
-     was done, then in what capacity, which puts the two pieces of large type,
-     the name and the claim, on the same line across the row and drops the
-     qualifier below both.
-
-     Done with order on a flex column rather than by moving the two divs in the
-     markup. The role is written first in every section because that is the
-     order the information was given in, and there are seven of them; a
-     property here is one place to change instead of seven, and the DOM keeps
-     saying what the copy is rather than where it sits.
-
-     The interval between them moves with them. It was a top margin on the
-     claim, holding the claim off the role; it is a top margin on the role now,
-     holding the role off the claim. Same figure, other side, so the pair
-     occupies the same height it did and the card does not shift. */
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim {
-      display: flex;
-      flex-direction: column;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .claim-line {
-      order: 1;
-      margin-top: 0 !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .claim-role {
-      order: 2;
-      margin-top: calc(var(--gap) * 2);
-    }
-  }
-
-
-  /* ══ THE COPYRIGHT SITS ON COLUMN 4 ═════════════════════════════════════
-     #pageCopy is a two track grid that was a subgrid of a six track column.
-     The column is block flow now, so the subgrid had nothing to inherit and
-     the second span's placement, 3 / -1, resolved onto a track that does not
-     exist: both halves of the line were stacked on top of each other at the
-     page margin.
-
-     Four tracks stated outright, one per column of the Info stack, measured
-     from --col and --gap so they are the page's own columns and not a
-     division of whatever width this element happens to have. The mark takes
-     1-3 and "All rights reserved." starts on column 4's line, which is the
-     line the section rules and the plus buttons already end on. */
-  @media (min-width: 769px) {
-    body.unified #view-about #pageCopy {
-      display: grid !important;
-      grid-template-columns: repeat(4, var(--col)) !important;
-      column-gap: var(--gap) !important;
-    }
-    body.unified #view-about #pageCopy .pc-mark { grid-column: 1 / 4 !important; }
-    body.unified #view-about #pageCopy .pc-name {
-      grid-column: 4 / 5 !important;
-      text-align: left !important;
-    }
-  }
-
-
-  /* ══ THE COLUMN IS TWO BLOCKS, 15VH APART ═══════════════════════════════
-     The statement opens at 15vh and the record opens 15vh below the plus that
-     ends the statement. One interval, stated twice, so the column reads as two
-     things separated by the same distance rather than as a list that happens
-     to start somewhere.
-
-     Proportional rather than fixed, for the same reason the first one is: on a
-     short window both intervals close up together and on a tall one they open
-     together, so the relationship between the two blocks survives the resize
-     instead of the first gap growing while the second stays put.
-
-     15VH IS THE CEILING, NOT THE FIGURE. --infoGap is written by the script at
-     the foot of the document, which closes the interval toward 5vh when doing
-     so brings the whole record onto the screen. 15vh is the fallback here so
-     the column is correct before the script runs and if it never does.
-
-     WHAT THIS REPLACES. The record's position used to be measured and written
-     by a script so that the bottom edge of the window cut the second line of
-     the first job entry. That rule is gone: the column arrives with one
-     paragraph showing and a plus under it at every height. Padding rather than margin, because a margin here
-     collapses with the statement block's own and lands the record short by
-     that amount. */
-  @media (min-width: 769px) {
-    /* Less the label's own top margin. Every label in the stack carries 0.63em
-       to hold its section off the one above it, and the first one carries it
-       too, directly under this padding, where it is a second interval nobody
-       asked for: it made the measured gap 15vh plus eight pixels.
-
-       Taken off here rather than zeroed on the label, because the label is not
-       addressable as the first of anything. The block opens with an empty div,
-       so it is neither the first child nor the first of its type, and every
-       selector that could reach it depends on that div staying where it is.
-       0.63em against this block's own font size is the same eight pixels by
-       the same arithmetic, and it holds if the type scale changes. */
-    body.unified #view-about .about-contact-inner {
-      padding-top: calc(var(--infoGap, 15vh) - 0.63em) !important;
-    }
-  }
-
-  /* ══ THE RECORD IS A LABEL AND A COLUMN ═════════════════════════════════
-     Every line that is not a section heading moves to column 3. The heading
-     stays on column 1, on the same line as the first line of what it names,
-     so the record reads across rather than down: Contact, then the addresses;
-     Work experience, then the jobs.
-
-     PAIRED BY ROW, NOT BY WRAPPER. A section is a heading followed by one or
-     more blocks, and nothing in the markup says where one section ends. Grid
-     auto-placement cannot pair them either: seven job blocks stack down seven
-     rows and the next heading lands beside the second job rather than beside
-     its own first block. The script at the foot of the document walks the
-     children in order and writes an explicit grid-row on each, which is the
-     one thing that gets a heading and its first block onto the same line
-     without touching the markup or the sibling relationships the rest of the
-     sheet reads.
-
-     THE BLOCK STILL SPANS THE COLUMN. It takes 1 / -1 and its inner text is
-     pushed across by padding, rather than the block itself being placed on
-     column 3. That keeps the section rules running the full width of Info,
-     which is what they were doing before and what makes the stack read as one
-     record instead of a narrow list with a caption beside it. The heading sits
-     in the same cell, in the space the padding opens up.
-
-     THE HEADING'S OWN RULE IS OFF. It was drawing the section line while the
-     stack was full width; the block's line does it now, at full width, and two
-     hairlines a pixel apart would read as a mistake. The heading is pushed down
-     instead to meet the first line of type beside it. */
-  @media (min-width: 769px) {
-    body.unified #view-about .about-contact-inner {
-      display: grid !important;
-      grid-template-columns: repeat(4, var(--col)) !important;
-      column-gap: var(--gap) !important;
-      grid-auto-rows: min-content;
-    }
-    body.unified #view-about .about-contact-inner > .section-label,
-    body.unified #view-about .about-contact-inner > .work-experience-label {
-      grid-column: 1 / 3 !important;
-      border-top: 0 !important;
-      margin-top: 0 !important;
-      padding-top: 6px !important;
-      padding-bottom: 0 !important;
-    }
-    body.unified #view-about .about-contact-inner > .about-contact-block {
-      grid-column: 1 / -1 !important;
-    }
-    /* Every line of content in the block, across the three shapes the record
-       uses: the address list, a job entry, a plain paragraph. The address list
-       carries a :not() in its selector purely to match the specificity of the
-       earlier rule that set its width to three columns; without it that rule
-       wins and the list keeps a box it no longer wants. */
-    body.unified #view-about .about-contact-inner .about-contact-block:not(.x) .work-contact-links,
-    body.unified #view-about .about-contact-inner .about-contact-block-right-desc,
-    body.unified #view-about .about-contact-inner .about-contact-block-right-name {
-      padding-left: calc(2 * var(--col) + 2 * var(--gap)) !important;
-      width: auto !important;
-      max-width: none !important;
-      margin-left: 0 !important;
-    }
-    /* The first block under a heading shows its own rule again: the heading no
-       longer carries one, so hiding this would leave the section unlined. */
-    body.unified #view-about .section-label + .about-contact-block .work-contact-line,
-    body.unified #view-about .section-label + .about-contact-block-right .about-contact-block-right-line,
-    body.unified #view-about .work-experience-label + .about-contact-block-right .about-contact-block-right-line {
-      display: block !important;
-    }
-
-    /* ── THE JOB DESCRIPTIONS ARE GONE ──
-       Each entry held a second paragraph behind a plus, describing the work.
-       That account belongs in the case study, next to the evidence for it, and
-       having it in both places gave a reader two thin versions of one job. The
-       record keeps what only it can give: the sequence, the titles, the dates.
-       The plus goes with the copy it opened. */
-    body.unified #view-about .about-contact-block-right-desc .about-job-desc:nth-child(2),
-    body.unified #view-about .about-contact-block-right-toggle {
-      display: none !important;
-    }
-  }
-
-  /* ── AN ARROW ON THE LINKS THAT LEAVE ──
-     Anything opening in a new tab says so. The mail address does not carry one:
-     it opens a mail client rather than a page, which is a different promise.
-     DRAWN, NOT SET. The character an external link usually gets, U+2197, is
-     mostly diagonal: a long stroke with two short ones clipped to its head.
-     At the size this sits next to a word that reads as a slash. The mark here
-     inverts those proportions. The head is a full horizontal and a full
-     vertical meeting at a corner, and the diagonal is cut back to about half
-     the box, so what a reader sees is a corner being pointed out of rather
-     than a line leaning over.
-
-     A mask rather than an image, so the fill is currentColor and the mark
-     takes the colour of whatever link it belongs to, black in the record and
-     inherited in Press. Sized in em so it scales with the type it sits in. */
-  #view-about a[target="_blank"]::after {
-    content: '';
-    display: inline-block;
-    width: 0.58em;
-    height: 0.58em;
-    margin-left: 0.24em;
-    background-color: currentColor;
-    -webkit-mask: var(--extArrow) no-repeat center / contain;
-    mask: var(--extArrow) no-repeat center / contain;
-  }
-
-  /* ══ ONE SIZE FOR NAMES, NO ROLE ON THE CARD ════════════════════════════
-     Roger Oddone and the seven client names go back to the page's small size
-     in black. Three things were set at 1.6 and it was one too many: with the
-     name, the client and the claim all large, the eye had no order to follow
-     down a row. The claim is the only large type on the right now, and the
-     statement the only large type on the left.
-
-     THE ROLE LINE IS OFF THE CARDS. The record on the left carries every title
-     against its company and its dates, in sequence, which is the one thing a
-     record does better than a set of cards. Repeating it under each claim gave
-     a reader the same fact twice in two wordings, and the two did not agree:
-     "Brand design lead" against "Lead Brand Designer", "Senior designer"
-     against "Senior Graphic Designer".
-
-     Hidden, not deleted. The markup keeps it, so the copy is there when it is
-     wanted; it just does not paint on a layout that has the record beside it. */
-  .header-name { font-size: var(--type) !important; line-height: 1.2 !important; }
-  @media (min-width: 769px) {
-    body.unified #view-work .carousel-section:not(.is-open) .info-title {
-      font-size: var(--type) !important;
-      line-height: 1.2 !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .claim-role {
-      display: none !important;
-    }
-  }
-
-  /* ══ TWO LENGTHS OF RULE ════════════════════════════════════════════════
-     A rule that opens a section runs the full four columns: above Contact,
-     above Availability, above Work experience, above Press. A rule that
-     divides one section into entries runs only over the copy, column 3 to
-     column 4: the six between the job listings.
-
-     So the long rule means a new subject and the short one means the next of
-     the same. The reader gets that from the length alone and the four headings
-     on column 1 are then confirming something the rules have already said.
-
-     .short-line is the whole test. The markup gives it to every job entry
-     except the first, and the first one opens the section, which is exactly
-     the distinction being drawn. Nothing else needs saying. */
-  @media (min-width: 769px) {
-    body.unified #view-about .about-contact-inner .short-line .about-contact-block-right-line {
-      margin-left: calc(2 * var(--col) + 2 * var(--gap)) !important;
-      width: calc(2 * var(--col) + var(--gap)) !important;
-    }
-  }
-
-  /* ══ THE COPYRIGHT IS THE LAST THING IN THE COLUMN ═════════════════════
-     It was position:fixed to the bottom left, with a matching padding-bottom
-     on the record so the last line cleared it. A page mark on the page's edge
-     was the argument; the cost was that it never moved, so it sat above the
-     record at every scroll position and the column had no visible end.
-
-     Back in the flow as the last block of #view-about, carrying the lead that
-     measureCopyright already publishes as --pcLeadL. The record's compensating
-     padding-bottom goes with it, since there is nothing overhead to clear.
-
-     .pc-name keeps column 3, the line every line of copy in the record starts
-     on, which is the one thing the fixed rule got right. */
-  @media (min-width: 769px) {
-    body.unified #view-about > #pageCopy .pc-name { grid-column: 3 / 5 !important; }
-  }
-  :root {
-    --extArrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><g fill="none" stroke="%23000" stroke-width="1.1" stroke-linecap="square"><path d="M2.4 7.6 L5.6 4.4"/><path d="M3.2 2.6 H7.4 V6.8"/></g></svg>');
-  }
-
-  /* ══ THE CONTACT RULE, THE STATEMENT, AND THE CARD COPY ═════════════════
-
-     THE RULE ABOVE CONTACT WAS BEING DRAWN AND WAS INVISIBLE. Every other
-     section rule is .about-contact-block-right-line, which carries its own
-     fill. Contact's is .work-contact-line, a different element that took its
-     colour from a rule further up the sheet that no longer reaches it, so it
-     was laid out at the right place and the right width with nothing in it.
-     Switching display on, which is what the last two passes did, could never
-     have shown it. It gets the same fill as the others, through a selector
-     carrying the same :not() as the rule that was painting it transparent,
-     because that rule holds !important and would otherwise outrank this.
-
-     THE STATEMENT MOVES TO COLUMN 2. It runs from column 2 to 3.5 and its
-     first line sits on the same line as the name, which is the only other
-     thing on the page at the top of the column. Two marks on one line, one of
-     them a name and one of them what the name does.
-
-     Aligned by a margin measured to the name's own box rather than to zero:
-     the column begins under the header band, so no margin at all would still
-     leave the statement below the name, not level with it.
-
-     THE CARD COPY MOVES TO COLUMN 6. It began half a column in from there,
-     which held it clear of the client name; the name is small type again now
-     and does not need the clearance. The block keeps the width it had, so its
-     right edge comes back from 8.25 to 7.75 with it. */
-  @media (min-width: 769px) {
-    body.unified #view-about .about-contact-inner
-      .about-contact-block:not(.about-contact-block-right) .work-contact-line {
-      background: #7C7C7C !important;
-      height: 0.5px !important;
-    }
-
-    body.unified #view-about .about-bio-grid {
-      margin-top: 0 !important;
-      margin-left: calc(var(--col) + var(--gap)) !important;
-    }
-    body.unified #view-about .about-bio-text,
-    body.unified #view-about #bioRestMob {
-      width: calc(1.5 * var(--col) + var(--gap)) !important;
-    }
-    /* The statement's first line meets the name's. --nameTop is written by the
-       controller from the name's live box, so this holds if the header band
-       changes height. */
-    body.unified #view-about .about-bio-text { padding-top: var(--nameTop, 7px) !important; }
-
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim,
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      margin-left: 0 !important;
-    }
-  }
-
-  /* ══ BOTH BLOCKS OF COPY MOVE ONE COLUMN RIGHT ══════════════════════════
-     The statement goes to 3 to 4.5 and the card copy to 7 to 8.5. Same width
-     as before in both cases, 1.5 columns and a gutter: only the start moves.
-
-     What it changes on the left is what sits beside the statement. At 2 it was
-     alongside the name with a column of white to its left; at 3 it lands on
-     the line every line of the record below it starts on, so the column reads
-     as one measure with the name hung off it, rather than as two blocks side
-     by side.
-
-     On the right the copy leaves the client name a clear column and a half
-     instead of a single one, and stops half a column short of the thumbnail
-     rather than a quarter. Both edges are now half-column figures, which is
-     the same interval the statement is placed on. */
-  @media (min-width: 769px) {
-    body.unified #view-about .about-bio-grid {
-      margin-left: calc(2 * var(--col) + 2 * var(--gap)) !important;
-    }
-    body.unified #view-work .carousel-section:not(.is-open) .col-claim,
-    body.unified #view-work .carousel-section:not(.is-open) .col-list {
-      grid-column: 3 / 5 !important;
-      max-width: calc(1.5 * var(--col) + var(--gap)) !important;
-    }
-  }
-</style>
-
-
 <script>
-/* ── THE RECORD IS PLACED BY ITS LAST BASELINE ──
-   The interval between the plus and the record is not chosen, it is whatever
-   puts the baseline of "Logo lounge books", the last line of the whole record,
-   one tenth of the window's height up from the bottom edge.
+/* ══ MOSAIC HOME v4 ══════════════════════════════════════════════════════════
+   Landing layer, fourth pass. Three columns, four grid columns each, filling
+   the viewport exactly.
 
-   Placing a column by its foot rather than its head is the right way round
-   here. The head is already fixed by the statement at 15vh; if the interval
-   were also fixed, where the record ended would be an accident of how many
-   jobs are listed and how the copy happens to wrap. Anchoring the foot means
-   the record and the copyright mark below it hold a constant relationship at
-   every window height, and the interval absorbs the difference.
+     column 1   About .33   Uber .66
+     column 2   .33  .33  .33
+     column 3   .33  .33  .33
 
-   ONE PASS, NOT A SEARCH. The interval and the baseline move together, one
-   pixel for one pixel, so the correction is the error: measure where the
-   baseline lands at the interval currently set, and add the shortfall. No
-   loop, no convergence, nothing to oscillate.
+   Every card is a white panel with an internal padding of TWO GUTTERS, so the
+   card's inset is a multiple of the page grid rather than a number of its own.
+   The media fills the whole padded interior on object-fit:cover, cropping
+   where it must, and the caption sits on the bottom-left of that padding with
+   two gutters of air between the image's lower edge and the top of the copy.
+   Name black, one line gray, site type size.
 
-   THE BASELINE, NOT THE LINE BOX. #recordBase is a zero-sized inline-block
-   sitting at the end of that last line with vertical-align:baseline, so its
-   bottom edge IS the baseline. The file already uses this trick for the same
-   reason elsewhere: a rect's bottom is the descender, which moves with the
-   font and is not what anyone means by where a line sits.
+   The About card is one of the eight and carries no project treatment: name at
+   the top left with the logo flush right beside it, the twenty-years line at
+   the bottom left. No expand, no Learn more, no click-through.
 
-   FLOOR AT ZERO. On a window too short to hold the column, the interval closes
-   to nothing and the record simply starts under the plus. It cannot pull the
-   record up into the statement. */
+   Hover grows a card ten percent in both axes, siblings giving way in
+   proportion to their own shares. Click hands off to _setOpen(true), so the
+   open project keeps today's layout. One appended block; delete the script tag
+   and the site is back to build 746. */
 (function () {
-  function placeRecord() {
-    var body = document.body;
-    if (!body.classList.contains('unified') || window.innerWidth <= 768) {
-      body.style.removeProperty('--infoGap');
-      return;
+  if (window.__mosaicInit) return; window.__mosaicInit = true;
+  if (!window.matchMedia) return;
+
+  const IK = 'https://ik.imagekit.io/rfi7kdlxzn/';
+  const T = 1 / 3, TT = 2 / 3;
+  const COLS = [
+    [
+      { about: true, size: T },
+      { id: 'uberCarouselSection', size: TT, name: 'Uber', line: 'Led the 2016 rebrand rollout across 65 countries',
+        media: [{ i: IK + 'uber_cube_desk.jpg?tr=q-85,w-1400,f-avif' }] }
+    ],
+    [
+      { id: 'firstCarouselSection', size: T, name: 'Cruise', line: 'Bridged brand and product',
+        media: [{ v: IK + 'cruise_1_desk_1.mp4?updatedAt=1782946695362&tr=q-60,w-1200' }] },
+      { id: 'oddoneCarouselSection', size: T, name: 'Oddone', line: 'Built identities from zero, straight with founders',
+        media: [{ v: IK + 'oddone_gallery.mp4?tr=q-60,w-1200' }] },
+      { id: 'googleIconCarouselSection', size: T, name: 'Google', line: 'Built the color systems behind Material Design',
+        media: [{ i: IK + 'google_material_produtc_icon_2_desk.jpg?updatedAt=1777414506579&tr=q-85,w-1400,f-avif' }] }
+    ],
+    [
+      { id: 'notypeLab1Section', size: T, name: 'HG26', line: 'Built a typeface that draws itself from particles',
+        media: [{ v: IK + 'hg26_2.mp4?updatedAt=1783366105600&tr=q-60,w-1200' }] },
+      { id: 'aeroCarouselSection', size: T, name: 'Aero', line: 'Gave an airline its first coherent identity',
+        media: [{ v: IK + 'aero_plane_footage.mp4?tr=q-60,w-1200' }] },
+      { id: 'expaCarouselSection', size: T, name: 'Expa', line: 'Founding identities for a venture studio',
+        media: [{ v: IK + 'expa_flat.mp4?tr=q-60,w-1200' }] }
+    ]
+  ];
+
+  const LOGO_D = document.getElementById('header-logo-path')
+    ? document.getElementById('header-logo-path').getAttribute('d') : '';
+
+  const css = `
+  @media (min-width: 769px) {
+    #mosaicHome {
+      position: fixed;
+      /* Anchored at 0, not at --pad. The strip above the layer was not a gap
+         in the design, it was a window onto the old landing scrolling past
+         underneath. The pad comes back as padding, so the cards sit exactly
+         where they did while nothing shows above them. */
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 500;
+      background: #F5F5F5;
+      padding: var(--pad) var(--pad) 10px;
+      display: none;
+      gap: 0 var(--gap);
+      font-family: var(--font);
+      /* The card's internal inset, stated once as a multiple of the gutter.
+         Everything inside a card, and the air between image and copy, reads
+         this. Change the multiplier here, not in the rules below. */
+      --cardInset: calc(var(--gap) * 2);
     }
-    var about = document.getElementById('view-about');
-    var inner = about && about.querySelector('.about-contact-inner');
-    var base  = document.getElementById('recordBase');
-    if (!about || !inner || !base) return;
-
-    var st = about.scrollTop; about.scrollTop = 0;
-    var vh   = window.innerHeight;
-    var want = vh * 0.90;
-    var have = parseFloat(getComputedStyle(body).getPropertyValue('--infoGap'));
-    if (!isFinite(have)) have = vh * 0.15;
-
-    body.style.setProperty('--infoGap', have + 'px');
-    void inner.offsetHeight;
-
-    var at   = base.getBoundingClientRect().bottom;
-    var next = Math.max(0, have + (want - at));
-    /* ── THE FLOOR IS THE AIR ABOVE THE BUTTON, NOT ZERO ──
-       Floored at zero, an open essay pushed the interval shut and the record
-       started hard against the plus: one gutter of air above the button, none
-       below, and the control read as the record's rather than the copy's.
-
-       The floor is measured instead. The .pc-base strut at the end of the
-       last visible paragraph reports that line's baseline, the air above the
-       button runs from there to its top, and the record may come no nearer to
-       the button's bottom than that same figure. The interval and the rule
-       move one for one, the same arithmetic as the correction above it, so
-       this is a second one-pass adjustment, not a loop. On a resting window
-       the nine-tenths answer leaves far more air than this and the floor is
-       inert; it only speaks when the essay has spent the interval. */
-    var btnEl  = about.querySelector('.bio-more-mob');
-    var ruleEl = about.querySelector('[data-stack="0"]');
-    var host   = document.getElementById(
-      body.classList.contains('bio-open') ? 'bioRestMob' : 'bioLeadMob');
-    var struts = host ? host.querySelectorAll('.pc-base') : [];
-    var strut  = struts.length ? struts[struts.length - 1] : null;
-    if (btnEl && ruleEl && strut) {
-      var b = btnEl.getBoundingClientRect();
-      var above = b.top - strut.getBoundingClientRect().bottom;
-      var below = ruleEl.getBoundingClientRect().top - b.bottom;
-      if (isFinite(above) && isFinite(below) && above > 0) {
-        var minNext = have + (above - below);
-        if (isFinite(minNext)) next = Math.max(next, minNext);
-      }
+    body.mosaic-home.view-work:not(.has-open) #mosaicHome { display: flex; }
+    /* The old landing still exists underneath and still holds the sections the
+       mosaic opens, so it cannot be display:none. visibility:hidden takes it
+       off the screen while leaving every box measurable and every _setOpen
+       intact. It comes back the moment a project opens, which is also the
+       moment the mosaic layer goes away. */
+    /* OPACITY, NOT VISIBILITY. visibility:hidden on the container was the
+       obvious move and it did nothing, because #view-work carries an inline
+       visibility:visible written by script, and a descendant that declares
+       visibility beats an ancestor that hid it. opacity does not work that
+       way: it composites the whole subtree and no child can undo it. The
+       boxes stay measurable and every _setOpen still works. */
+    body.mosaic-home.view-work:not(.has-open) #mainContent {
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
     }
-    body.style.setProperty('--infoGap', Math.round(next) + 'px');
-    about.scrollTop = st;
+    body.mosaic-home.view-work:not(.has-open) #carouselSidebar,
+    body.mosaic-home.view-work:not(.has-open) #workHero { opacity: 0; pointer-events: none; }
+    body.mosaic-home.view-work:not(.has-open) #heroImage { display: none; }
+    body.mosaic-home.view-work:not(.has-open) .header-bar,
+    body.mosaic-home.view-work:not(.has-open) .header-name-wrap,
+    body.mosaic-home.view-work:not(.has-open) #bioSubtitleWrap { display: none; }
+
+    .m-col {
+      display: flex; flex-direction: column;
+      flex: 100 1 0; min-width: 0;
+      gap: var(--gap);
+      transition: flex-grow .45s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .m-cell {
+      flex: 0 0 auto; min-height: 0;
+      display: flex;
+      transition: flex-basis .45s cubic-bezier(0.22, 0.61, 0.36, 1);
+      cursor: pointer;
+    }
+    .m-card {
+      flex: 1 1 auto; min-height: 0; width: 100%;
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      padding: var(--cardInset);
+      display: flex; flex-direction: column;
+      /* The two gutters between the image's bottom edge and the copy. */
+      gap: var(--cardInset);
+    }
+    /* Media takes every pixel the caption does not, and crops rather than
+       letterboxes. The wrap carries the radius so a cropped video does not
+       square off the card's corners. */
+    .m-media {
+      flex: 1 1 auto; min-height: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: calc(var(--radius) / 2);
+    }
+    .m-media img, .m-media video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* Caption on the bottom-left padding. */
+    .m-cap { flex: 0 0 auto; text-align: left; }
+    .m-cap .m-name { color: #131312; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .m-cap .m-line { color: #7C7C7C; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── ABOUT CARD ── name top left, logo flush right on the same line, the
+       one bio line at the bottom left. Nothing else. */
+    .m-about-cell { cursor: default; }
+    .m-about-inner {
+      position: absolute; inset: 0;
+      padding: var(--cardInset);
+      display: flex; flex-direction: column;
+    }
+    .m-about-top {
+      flex: 0 0 auto;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: var(--gap);
+    }
+    .m-about-top .m-name { color: #131312; }
+    .m-about-logo { height: 22px; width: auto; flex: 0 0 auto; }
+    .m-about-bio { margin-top: auto; flex: 0 0 auto; color: #131312; }
   }
-  window._placeRecord = placeRecord;
-  placeRecord();
-  window.addEventListener('load', placeRecord);
-  window.addEventListener('resize', placeRecord);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeRecord);
-  var mb = document.getElementById('bioMore');
-  if (mb) mb.addEventListener('click', function () {
-    requestAnimationFrame(function () { requestAnimationFrame(placeRecord); });
+  @media (max-width: 768px) { #mosaicHome { display: none !important; } }
+  `;
+  const styleEl = document.createElement('style');
+  styleEl.id = 'mosaic-style';
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  const host = document.createElement('div');
+  host.id = 'mosaicHome';
+  host.setAttribute('aria-label', 'Selected works');
+
+  const cells = [];
+
+  COLS.forEach(colData => {
+    const col = document.createElement('div');
+    col.className = 'm-col';
+    col.dataset.n = colData.length;
+    colData.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'm-cell' + (d.about ? ' m-about-cell' : '');
+      const card = document.createElement('div');
+      card.className = 'm-card';
+
+      if (d.about) {
+        const inner = document.createElement('div');
+        inner.className = 'm-about-inner';
+        inner.innerHTML =
+          '<div class="m-about-top"><span class="m-name">Roger Oddone</span>' +
+          '<svg class="m-about-logo" viewBox="0 0 617 685" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="' + LOGO_D + '" fill="#131312"></path></svg></div>' +
+          '<div class="m-about-bio">Twenty years building brand identities and the systems that carry them.</div>';
+        card.appendChild(inner);
+      } else {
+        const media = document.createElement('div');
+        media.className = 'm-media';
+        d.media.forEach(m => {
+          if (m.v) {
+            const v = document.createElement('video');
+            v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true;
+            v.preload = 'auto';
+            v.src = m.v;
+            media.appendChild(v);
+          } else {
+            const im = document.createElement('img');
+            im.src = m.i; im.alt = d.name; im.loading = 'eager'; im.decoding = 'async';
+            media.appendChild(im);
+          }
+        });
+        const cap = document.createElement('div');
+        cap.className = 'm-cap';
+        cap.innerHTML = '<span class="m-name">' + d.name + '</span><span class="m-line">' + d.line + '</span>';
+        card.appendChild(media);
+        card.appendChild(cap);
+      }
+
+      cell.appendChild(card);
+      col.appendChild(cell);
+      cells.push({ el: cell, col: col, data: d });
+    });
+    host.appendChild(col);
   });
-})();
-</script>
+  document.body.appendChild(host);
 
-<script>
-/* ── A HEADING SITS BESIDE ITS OWN FIRST BLOCK ──
-   The record is a flat list: heading, block, block, heading, block. Nothing in
-   it says where a section ends, and grid cannot infer it, so the pairing is
-   written here as explicit rows. Each block takes the next row; a heading takes
-   the row of the first block that follows it. Seven jobs stack under one
-   heading and the heading stays level with the first of them.
+  /* ── SIZING ──
+     A cell's basis is its share of the layer height less its proportional
+     share of the column's gaps, so a column summing to 1 lands exactly on the
+     viewport. Hover multiplies the hovered share by 1.1 and takes the
+     difference off the siblings in proportion to their own shares. */
+  const GROW = 1.1;
+  const basis = (share, n) => 'calc(' + (share * 100) + '% - ' + (share * (n - 1)) + ' * var(--gap))';
+  const apply = (cell, share) => { cell.el.style.flexBasis = basis(share, +cell.col.dataset.n); };
 
-   Rows only. The columns are in the sheet, where they can be read next to the
-   padding that opens the space they sit in. Re-run on resize because nothing
-   here depends on width, but a mode change between the phone and this layout
-   does, and the phone wants no rows at all. */
-(function () {
-  function pairInfoRows() {
-    var inner = document.querySelector('#view-about .about-contact-inner');
-    if (!inner) return;
-    var on = document.body.classList.contains('unified') && window.innerWidth > 768;
-    var kids = inner.children, row = 0, pending = null;
-    for (var i = 0; i < kids.length; i++) {
-      var el = kids[i];
-      if (!on) { el.style.removeProperty('grid-row'); continue; }
-      var isLabel = el.classList.contains('section-label')
-                 || el.classList.contains('work-experience-label');
-      if (isLabel) { pending = el; continue; }
-      if (!el.classList.contains('about-contact-block')) continue;
-      row++;
-      el.style.gridRow = row;
-      if (pending) { pending.style.gridRow = row; pending = null; }
-    }
+  function rest() {
+    cells.forEach(c => apply(c, c.data.size));
+    host.querySelectorAll('.m-col').forEach(col => { col.style.flexGrow = 100; });
   }
-  window._pairInfoRows = pairInfoRows;
-  pairInfoRows();
-  window.addEventListener('load', pairInfoRows);
-  window.addEventListener('resize', pairInfoRows);
-})();
-</script>
-
-<script>
-/* ── THE STATEMENT STARTS ON THE NAME'S LINE ──
-   The name is fixed in the header band and the statement is the first thing in
-   a column that begins below it, so the two cannot be levelled by a margin of
-   zero. The offset between them is measured here and published as --nameTop,
-   which the sheet turns into the statement's own top padding.
-
-   Measured from the text, not the box: a Range over the name gives the first
-   line's rect, which is where the type actually starts rather than where its
-   element does. Re-run on resize and after the fonts land, since both move it. */
-(function () {
-  function levelStatement() {
-    var name  = document.querySelector('.header-name');
-    var about = document.getElementById('view-about');
-    if (!name || !about) return;
-    var r = document.createRange();
-    r.selectNodeContents(name);
-    var rect = r.getClientRects()[0];
-    if (!rect) return;
-    var top = rect.top - about.getBoundingClientRect().top + about.scrollTop;
-    document.documentElement.style.setProperty('--nameTop', Math.max(0, Math.round(top)) + 'px');
-
-    /* ── AND THEN THE HALF-LEADING ──
-       The padding puts the statement's BOX where the name's text starts, and a
-       paragraph's first line sits a few pixels below its own box: the leading
-       is split above and below every line, and the name at 1.2 and the
-       statement at 1.15 do not split it by the same amount. Measuring the two
-       first lines against each other and taking the difference off is the only
-       way to level type set at two leadings without hard-coding either.
-       Second pass, not a loop: the correction moves the statement and nothing
-       else, so it cannot change the figure it was measured from. */
-    var lead = document.getElementById('bioLeadMob');
-    if (lead) {
-      var lr = document.createRange();
-      lr.selectNodeContents(lead);
-      var lrect = lr.getClientRects()[0];
-      if (lrect) {
-        var drop = lrect.top - rect.top;
-        document.documentElement.style.setProperty('--nameTop',
-          Math.max(0, Math.round(top - drop)) + 'px');
-      }
-    }
-    if (window._placeRecord) window._placeRecord();
+  function hover(cell) {
+    if (cell.data.about) return;
+    const sibs = cells.filter(c => c.col === cell.col && c !== cell);
+    const grown = Math.min(cell.data.size * GROW, .9);
+    const borrowed = grown - cell.data.size;
+    const sibSum = sibs.reduce((a, c) => a + c.data.size, 0) || 1;
+    apply(cell, grown);
+    sibs.forEach(c => apply(c, c.data.size - borrowed * (c.data.size / sibSum)));
+    host.querySelectorAll('.m-col').forEach(col => {
+      col.style.flexGrow = (col === cell.col) ? 110 : 190 / 2;
+    });
   }
-  window._levelStatement = levelStatement;
-  levelStatement();
-  window.addEventListener('load', levelStatement);
-  window.addEventListener('resize', levelStatement);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(levelStatement);
+
+  cells.forEach(c => {
+    c.el.addEventListener('mouseenter', () => {
+      hover(c);
+      c.el.querySelectorAll('video').forEach(v => v.play().catch(() => {}));
+    });
+    c.el.addEventListener('mouseleave', () => {
+      rest();
+      c.el.querySelectorAll('video').forEach(v => v.pause());
+    });
+    if (!c.data.about) {
+      c.el.addEventListener('click', () => {
+        const sec = document.getElementById(c.data.id);
+        if (sec && typeof sec._setOpen === 'function') sec._setOpen(true);
+        else if (sec) sec.click();
+      });
+    }
+  });
+
+  rest();
+  document.body.classList.add('mosaic-home');
 })();
 </script>
 
