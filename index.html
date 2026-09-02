@@ -2724,10 +2724,12 @@
         margin-bottom: calc(var(--gap) * 8) !important;
       }
       body.has-open .carousel-section:not(.is-open) { order: 1; }
-      /* Same rule as the unified layout: an open project is followed by its
-         footer and nothing else. Kept beside the order it overrides so the two
-         are read together. */
-      body.has-open .carousel-section:not(.is-open) { display: none !important; }
+      /* The index of the other projects runs under an open one again, so the
+         display:none that used to sit here is gone. There were two of these,
+         one for this layout and one for the unified layout further down;
+         removing only the other one left this to win on the cascade and the
+         cards stayed hidden with every rule aimed at them applying correctly
+         to nothing. */
 
       /* ── TWO UP, COLUMNS 3 TO 12 ──
          Ten columns divide by two, so unlike the three-up version this lands on
@@ -3237,11 +3239,17 @@
         --cardRestPx: calc(var(--gap) * var(--cardRest));
       }
 
-      /* Panel back, spanning the whole card. */
+      /* Panel back, spanning the whole card: row 1 the image, row 2 the
+         caption band. span 2 rather than 1 / -1 because the section's rows are
+         implicit and -1 would resolve against the explicit grid and collapse
+         the span. This is what puts the copy inside the panel. */
+      /* White panel deleted. The thumbnail and its caption now sit straight on
+         the page ground, no container behind them. Kept as a rule that turns
+         the pseudo off rather than removing it, so the CARD INTERIOR base above
+         (which still paints and rounds a ::before) is overridden on source
+         order in one place. */
       .carousel-section:not(.is-open)::before {
-        display: block;
-        grid-row: 1;
-        grid-column: 1 / -1;
+        display: none;
       }
 
       /* ── IMAGE ──
@@ -3258,8 +3266,15 @@
         /* One shape for every card on the column, published onto the root by
            publishThumbRatio() once the first work thumbnail reports its natural
            size. 16:9 until it does, which is what this was fixed at before and
-           is close enough that nothing jumps visibly on load. */
-        aspect-ratio: var(--thumbRatio, 16 / 9);
+           is close enough that nothing jumps visibly on load.
+
+           --cardRatio is the per-card escape from that. A section carrying one
+           as an inline custom property sets its own shape and leaves every
+           other card on the shared figure. Cruise uses it: its thumbnail is a
+           2.514:1 Vimeo cut, not the 16:9 the rest of the column is. Unset
+           everywhere else, so the fallback chain lands straight back on
+           --thumbRatio and nothing changes for a card that has not asked. */
+        aspect-ratio: var(--cardRatio, var(--thumbRatio, 16 / 9));
       }
       /* The image is taken out of flow inside that box, so hover can grow it
          without changing the row height and shoving every card below down the
@@ -3411,16 +3426,42 @@
        So the mark is the height of the lowercase beside it at every size on
        the site without a single measurement, and it follows --typeScale for
        free. currentColor through a mask rather than a fill, so it inherits the
-       link's own colour and its hover fade with it. */
+       link's own colour and its hover fade with it.
+
+       THE ARMS AND THE DIAGONAL ARE SET SEPARATELY. Each arm runs 8.64 units
+       from the corner, the diagonal 9.84 on each axis, so the 45 degree line
+       now runs past the corner's reach rather than being contained by it.
+
+       The stroke runs 1.68, 5% up from the original 1.6. 20% was tried and read
+       heavy, 10% still did: the diagonal is the mark's longest line and a 45
+       degree stroke shows more of its width to the eye than a vertical stem of
+       the same value, so weight added here lands harder than the number
+       suggests. This is nearly back to where it started, which says the mark
+       was close to right on weight and the heaviness was coming from the
+       diagonal's length instead. A thicker stroke spreads half its extra width
+       past the ink on every side, so the viewBox and the mask box are refitted
+       to it: leaving either at the old figure would have lifted the diagonal
+       off the baseline by the half stroke it just gained. One unit still
+       renders at the same size, 1.152ex against 11.52 units, so only the weight
+       changed.
+
+       The viewBox is fitted to the ink, not left at a round number, and that
+       fit is what lands the mark on the baseline. An empty inline-block takes
+       its baseline from its bottom margin edge, so the box's bottom edge IS the
+       baseline of the words beside it; putting the bottom edge exactly half a
+       stroke below the diagonal's lowest point means the diagonal terminates on
+       that line. */
     :root {
-      --extArrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M0.9 9.1 L9.1 0.9 M3.1 0.9 L9.1 0.9 L9.1 6.9' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='butt' stroke-linejoin='miter'/></svg>");
+      --extArrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-1.58 0.06 11.52 11.52'><path d='M-0.74 10.74 L9.1 0.9 M0.46 0.9 L9.1 0.9 L9.1 9.54' fill='none' stroke='black' stroke-width='1.68' stroke-linecap='butt' stroke-linejoin='miter'/></svg>");
     }
     a[target="_blank"]::after {
       content: '';
       display: inline-block;
-      width: 1ex;
-      height: 1ex;
-      margin-left: 0.5ex;
+      width: 1.152ex;
+      height: 1.152ex;
+      /* Half an x-height opened to three quarters, 50% more air between the
+         word and the mark. */
+      margin-left: 0.75ex;
       /* The mark sits on the x-height, so its box bottom is the baseline. */
       vertical-align: baseline;
       background-color: currentColor;
@@ -3531,6 +3572,195 @@
          says. */
       .carousel-section.is-open .col-para-a { grid-column: 7 / 10; }
       .carousel-section.is-open .col-para-b { grid-column: 7 / 10; }
+    }
+
+    /* ══ CARD: IMAGE OVER CAPTION ════════════════════════════════════════════
+       Was image right, copy left, both on one row at the card's full height.
+       Now the image is the whole card width on top and the copy sits in a
+       caption band beneath it, inside the same white panel: the name flush left
+       on the card's first track, the claim starting on page column 10, left
+       aligned and free to wrap down as many lines as it needs. The disciplines
+       come off the card entirely.
+
+       Card width is untouched; only the internal placement changes. Keyed on
+       :not(.is-open) and set after both CARD INTERIOR and LAPTOP GRID, so it
+       carries on source order rather than restating either.
+
+       .info-description is parked into .col-list by placeDescription() and
+       .col-list is hidden here, so hiding the list takes the company line and
+       the disciplines together. The claim (.info-line) is a child of .col-title,
+       so .col-title becomes a subgrid and drops the name and the claim onto real
+       column lines with no change to any project's HTML. */
+    @media (min-width: 769px) {
+      /* Image spans the column edge to edge, col 7 through 12, no side inset now
+         that there is no panel to sit inside. Its own ratio sets the height.
+         content-box, against the sheet's global border-box, is what makes the
+         hover below work: with aspect-ratio on a content box, the derived
+         height is the CONTENT height, so padding added underneath grows the
+         element's outer box instead of being absorbed inside a fixed one. */
+      .carousel-section:not(.is-open) .carousel-media-wrap {
+        grid-row: 1;
+        grid-column: 1 / -1;
+        box-sizing: content-box;
+        /* Doubled again, 0.7 of a gutter to 1.4. This is the separation doing
+           the work the type cannot: the artwork carries display type of its
+           own, so the page's caption has to sit far enough off the image's edge
+           to read as a different layer rather than as a line of the picture.
+           Still well inside the run below it, so the caption stays grouped with
+           its own thumbnail. */
+        margin: 0 0 calc(var(--gap) * 1.4) 0;
+        padding-bottom: 0;
+        overflow: visible;
+        transform: none;
+        transition: padding-bottom var(--cardEase);
+      }
+      /* Media flush to the wrap. Absolute insets resolve against the PADDING
+         box, so the image fills the extra height the hover adds without a
+         second rule and without stretching: object-fit still crops it. */
+      .carousel-section:not(.is-open) .rm-main-container {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      }
+      /* HOVER: 5% taller, downward only. The top edge is the grid row's start
+         and never moves, so the thumbnail stays on the margin it sits on; the
+         growth is real height, not a transform, which is what carries the
+         caption underneath down with it instead of sliding the image over it.
+
+         5% of the thumbnail's HEIGHT expressed as padding: percentage padding
+         resolves against the container's width, and height is width divided by
+         the ratio, so width × 5% ÷ ratio is that same 5% of height.
+         --thumbRatio is published as a plain number by publishThumbRatio(),
+         which is what lets it divide here. */
+      body.unified #view-work .carousel-section:not(.is-open):hover .carousel-media-wrap {
+        padding-bottom: calc(5% / var(--cardRatio, var(--thumbRatio, 1.7778)));
+      }
+      .carousel-section:not(.is-open):hover .rm-main-container {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      }
+      /* Caption band on row 2, full width. No side margins now that the panel
+         is gone: the name's left edge is the card's first column line, which is
+         page column 7, the same line the thumbnail starts on, so the two align.
+
+         The bottom margin is the space under the description. It was cut to 67%
+         of --cardPad + --gap, then a further quarter to 0.464, and is now
+         opened 50% wider than that, which lands it above where it started. The
+         factor is fitted against the measured run rather than derived, because
+         the visible distance starts at the claim's last baseline and the box it
+         sits in carries descender space the margin does not know about. The
+         inline gutter updateSpacing() writes on the section is subtracted,
+         since it is part of the same run. */
+      .carousel-section:not(.is-open) > .info-grid {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        grid-template-rows: auto;
+        align-self: start;
+        height: auto;
+        margin: 0 0 calc((var(--cardPad) + var(--gap)) * 0.78 - var(--gap)) 0;
+      }
+      /* .col-title carries both the name and the claim on the card's own tracks.
+         Subgrid rather than flex, so the claim lands on a column line, page 10,
+         not at a distance measured off the name. Top aligned, no hover
+         translate: the image carries the hover and the caption holds still. */
+      .carousel-section:not(.is-open) .col-title {
+        grid-row: 1;
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: subgrid;
+        align-items: start;
+        transform: none !important;
+        margin-top: 0;
+      }
+      .carousel-section:not(.is-open) .col-title .info-title {
+        grid-column: 1 / 4;
+        align-self: start;
+      }
+      /* The claim starts on page column 10, the card's fourth track, left
+         aligned, running to the card edge so it wraps within those three
+         tracks. Size and colour are the .info-line default, which IS the bio
+         lead's setting, 1.5×--type and black, so the two match. Only the block
+         margin and the open-project measure cap are dropped. */
+      .carousel-section:not(.is-open) .col-title .info-line {
+        grid-column: 4 / -1;
+        align-self: start;
+        margin: 0 !important;
+        max-width: none;
+        text-align: left;
+        /* EVERY CARD RESERVES TWO LINES.
+           The gutter under each description is already identical on every
+           project, 31.5px, and was never the problem. What differed was the
+           height of the block itself: Uber's claim wraps to two lines and every
+           other one sits on a single line, so the run from one thumbnail's
+           bottom edge to the next thumbnail's top was a line taller under Uber
+           than under Cruise. Measured edge to edge that is 84.7 against 61.7,
+           and it is the image to image distance the eye actually reads down the
+           column, not the gap under the type.
+
+           So the claim holds two lines' worth of height whether it fills them
+           or not. The one line cards keep their single line of type and carry
+           an empty second line beneath it, which makes the rhythm between all
+           seven projects identical and leaves room for any future claim that
+           needs the second line.
+
+           2lh is exactly two of this element's own line boxes. The em value
+           above it is the same figure, this line-height against this font size,
+           for anything that does not know the unit. */
+        min-height: 2.3em;
+        min-height: 2lh;
+      }
+      /* Disciplines off the card. Node stays for the open project. */
+      .carousel-section:not(.is-open) .col-list { display: none !important; }
+    }
+
+    /* NARROW WINDOWS STEP THE CLAIM DOWN.
+       The claim sits in the card's last three tracks, so its measure shrinks
+       with the window while its type size does not. Below 1200 the
+       measure drops toward 215px and the longer claims break to a third
+       line, which overflows the two-line reserve above and puts the projects
+       back out of rhythm with each other, the exact thing that reserve fixes.
+
+       So the claim gives up its 1.5×--type step here and runs at --type, the
+       same size as every other piece of copy on the page: the company name
+       beside it, the contact lines, the experience entries. Not an intermediate
+       step. At a fraction like 1.15 the claim sits a hair above the name it
+       shares a line with, which reads as a mistake rather than as hierarchy,
+       and the point of stepping down is that the small size is ONE size.
+
+       !important because the site-wide .info-line size above carries it, to
+       hold the claim and the bio lead at one setting; without it here this
+       rule loses on the flag rather than on the cascade.
+
+       The bio lead steps with it, for the same reason and to the same size. Its
+       own column narrows faster than the card's, and at 800 it is down to about
+       124px of measure, so the full size was costing it lines it cannot spare.
+       The .section-label exception is a more specific selector and keeps its
+       own size through this, which is now the same size anyway. */
+    @media (min-width: 769px) and (max-width: 1200px) {
+      .carousel-section:not(.is-open) .col-title .info-line,
+      #view-about .about-bio-text,
+      #view-about .about-bio-text * {
+        font-size: var(--type) !important;
+      }
+    }
+
+    /* LAPTOP RUNS THEM 10% SMALLER. Between the step-down at 1200 and the
+       large screens at 1600 the claim and the bio were still at their full
+       1.5×--type, a size set for a 1728 measure and carried unchanged onto a
+       laptop's narrower one. 1.35× is that figure less a tenth. Only this band:
+       below 1200 they are already at --type, matched to the company name and
+       the rest of the copy, and taking a tenth off THAT would break the match
+       by making them smaller than the name they sit beside. Above 1600 nothing
+       changes. */
+    @media (min-width: 1201px) and (max-width: 1600px) {
+      .carousel-section:not(.is-open) .col-title .info-line,
+      #view-about .about-bio-text,
+      #view-about .about-bio-text * {
+        font-size: calc(var(--type) * 1.35) !important;
+      }
     }
 
     /* ══════════ MOBILE WORK VIEW ══════════
@@ -4096,7 +4326,12 @@
          is nothing above the right column to clear. A gutter puts the first
          card on the same line the clip-path cuts at, which is where the
          left column's first rule sits too. */
-      body.unified #view-work  { padding-top: var(--gap); }
+      /* The column opens on the name's cap, not on a gutter. --workCapTop is
+         measured and published by capAlign(); the gutter is the fallback for
+         the frame before it runs. This is what puts the first thumbnail's top
+         edge on the same line as the top of "Roger Oddone" rather than a few
+         pixels above it. */
+      body.unified #view-work  { padding-top: var(--workCapTop, var(--gap)); }
 
       /* ── NOTHING PASSES THE NAME ──
          Cut both columns at the name's own top edge. A rule on columns 4 to 6
@@ -4673,18 +4908,19 @@
          reads it now, and it is left in place because it is the cheapest hook
          for the next thing that wants to know which half the pointer is in. */
 
-      /* Thumbnail on the last four tracks. Line 3 is its left edge, which is
-         why the card interior gives it no left margin. Was three, an even split
-         with the copy, which gave the image less width than the two lines of
-         type beside it needed and left the card half empty. */
+      /* Thumbnail over the whole column, row 1. Was the last four tracks with
+         the copy beside it on the left; now the image is the full width of the
+         card and the copy drops beneath it. The CARD: IMAGE OVER CAPTION block
+         further up does the rest, the caption line and the hover that no longer
+         grows the image downward into it. */
       body.unified #view-work .carousel-section:not(.is-open) .carousel-media-wrap {
         grid-row: 1 !important;
-        grid-column: 3 / -1 !important;
+        grid-column: 1 / -1 !important;
       }
-      /* Copy on the first two, ending a gutter short of the image. */
+      /* Copy on its own row under the image, full width: name left, claim right. */
       body.unified #view-work .carousel-section:not(.is-open) > .info-grid {
-        grid-row: 1 !important;
-        grid-column: 1 / 3 !important;
+        grid-row: 2 !important;
+        grid-column: 1 / -1 !important;
       }
       /* Name and disciplines take the whole copy column. The laptop block caps
          the list at --cardListW and holds the name to a single track, both
@@ -5159,6 +5395,20 @@
         z-index: 5;
         pointer-events: auto;
       }
+      /* ── ON A LAPTOP IT GOES TO THE FIRST COLUMN ──
+         Page column 3 is where an open project's copy starts, so on a wide
+         screen the button lands on a line the reader has already been given.
+         In the laptop range the tracks are narrower and those two tracks plus
+         two gutters no longer read as an indent off a known line, only as the
+         button sitting adrift of the picture's left edge. So it goes flush to
+         the section's own edge, page column 1, and reads as the corner mark it
+         is. Large screens keep the indent. Bounded at 1600 rather than left
+         open, so it applies to the laptop range only, and that is the same
+         1600 the LAPTOP block at the head of this sheet uses. */
+      @media (min-width: 769px) and (max-width: 1600px) {
+        body.unified.has-open #indexBack { left: 0; }
+      }
+
       body.unified.has-open #indexBack .read-more-btn {
         flex: 0 0 38px;
         width: 38px;
@@ -5448,9 +5698,42 @@
 
          #view-work spans all twelve tracks while a project is open, so these
          are page columns, not column-relative ones. */
+      /* TWO PROJECTS, HALF THE MEASURE EACH. One on page columns 1 to 6, one on
+         7 to 12. The index was showing all six remaining projects, which made
+         the tail of a project longer than most projects; two is a pointer to
+         what else there is, not a second landing page.
+
+         Six tracks each also gives the description room to set on one line at
+         every project, which is what the three-across version was already
+         relying on and the six-across version could not manage. */
       body.unified.has-open .carousel-section:not(.is-open) {
         order: 1;
         grid-column: span 6 !important;
+      }
+      /* ── ONLY THE TWO THAT FOLLOW ──
+         Everything collapsed is hidden and the two the ring picked are put
+         back. The sibling-chain selector that used to live here showed the
+         first two collapsed cards in the document, which meant most projects
+         ended on the same pair; which two follow the open one is a count from
+         a moving point and is marked in the open handler instead.
+
+         The orders are what make the pair read forward. Both classes carry a
+         grid-column of their own too, so the successor is on the left and the
+         one after it on the right no matter where either sits in the markup. */
+      body.unified.has-open .carousel-section:not(.is-open) {
+        display: none !important;
+      }
+      body.unified.has-open .carousel-section.is-peer-a,
+      body.unified.has-open .carousel-section.is-peer-b {
+        display: grid !important;
+      }
+      body.unified.has-open .carousel-section.is-peer-a {
+        order: 1;
+        grid-column: 1 / 7 !important;
+      }
+      body.unified.has-open .carousel-section.is-peer-b {
+        order: 2;
+        grid-column: 7 / -1 !important;
       }
 
       /* ── A PROJECT PAGE ENDS ON ITS FOOTER ──
@@ -5461,8 +5744,71 @@
          with the grid it announced: it names something that is no longer
          there. The placement rules above are left intact rather than deleted,
          so restoring the index is one line, not a rebuild. */
-      body.unified.has-open .carousel-section:not(.is-open),
+      /* ── THE INDEX COMES BACK ──
+         Every project except the open one runs underneath it again. Only
+         #seeMoreLabel stays hidden: the cards below now carry the company name
+         and a line of description each, so a label announcing them would be a
+         fourth piece of type saying what the first three already show. */
       body.unified.has-open #seeMoreLabel { display: none !important; }
+
+      /* ── THE PROJECT CLOSES ON A RULE ──
+         A hairline the full measure, page column 1 to 12, between the end of
+         the project and the index of the others. The open section spans 1 / -1
+         and is position:relative, so a pseudo pinned to its left and right
+         edges IS that span, with no track arithmetic to keep in step.
+
+         The interval above it is a tenth of the viewport HEIGHT, not a gutter
+         count, so the band that ends a project scales with the screen it is
+         read on rather than with the page's horizontal rhythm. The same figure
+         runs UNDER the line, so the rule sits centred in its own break rather
+         than hanging closer to the project than to the index. Two tenths of
+         the viewport in total, with the line at the midpoint.
+
+         Both live in the section's own padding-bottom, which was 0 to keep the
+         two columns ending on one measure. That is given up on purpose here:
+         the page no longer ends at the project, it continues into the index. */
+      body.unified.has-open .carousel-section.is-open {
+        padding-bottom: 20vh !important;
+      }
+      body.unified.has-open .carousel-section.is-open::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 10vh;
+        height: 0.5px;
+        background: #7C7C7C;
+      }
+
+      /* ── INDEX CARDS STACK THEIR COPY ──
+         On the landing a card sets the name on the left and the claim out on
+         page column 10, one line, because it has the full measure to do it in.
+         An index card has half that, so the same line would either wrap badly
+         or crowd the name it sits beside.
+
+         So the copy stacks instead: the company name on the left, the
+         description directly under it, at the site's own copy size and in the
+         record's grey. The name leads on colour rather than on size, which is
+         what keeps six of these reading as a list rather than as six more
+         headlines competing with the project above them.
+
+         The subgrid the landing card uses is dropped for a plain block, so the
+         two lines run in source order with nothing placing them. */
+      body.unified.has-open .carousel-section:not(.is-open) .col-title {
+        display: block !important;
+      }
+      body.unified.has-open .carousel-section:not(.is-open) .col-title .info-line {
+        font-size: var(--type) !important;
+        line-height: 1.25 !important;
+        color: #7C7C7C !important;
+        /* The two-line reserve is a landing-page device, for holding one row of
+           cards level with the next. Here the cards are already even and the
+           reserve would only add a blank line under every one-line
+           description. */
+        min-height: 0 !important;
+        margin: 0.25em 0 0 0 !important;
+        text-align: left !important;
+      }
 
       /* ── THE FOOTER ROW IS THE LAST THING, NOT THE SECOND ──
          #workTail is built by placeReservation() and carries no order of its
@@ -5658,7 +6004,7 @@ window.__errLog = [];
       <div id="worksLabel">Selected works (6)<br>&amp; Lab [Interactive] (1)</div>
 
       <!-- CAROUSEL 1: Cruise -->
-      <div class="carousel-section" id="firstCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/cruise_1_desk_1.mp4">
+      <div class="carousel-section" id="firstCarouselSection" style="--cardRatio:2.514" data-card-thumb="https://player.vimeo.com/video/1221472670?background=1&amp;autoplay=1&amp;loop=1&amp;muted=1&amp;autopause=0&amp;badge=0&amp;player_id=0&amp;app_id=58479">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper">
@@ -7931,6 +8277,27 @@ document.addEventListener('keydown', e => {
           const baseline = probe.getBoundingClientRect().bottom;
           nameEl2.removeChild(probe);
 
+          /* THE THUMBNAIL COLUMN STARTS ON THE NAME'S CAP.
+             The right column used to open one gutter from the page top, which
+             put the first thumbnail's edge ABOVE the name it sits beside: a
+             line box's top is not its cap, and the difference, half the leading
+             plus the font's own space over the capital, is the few pixels that
+             read as the two being out of line.
+
+             Same measurement the header type already uses, applied the other
+             way. The name is pulled UP to its cap by the loop above; here the
+             cap's resulting position is published so the column can be pushed
+             DOWN onto it. #view-work's top is the page top, so the cap's
+             viewport y IS the padding it needs. Recomputed whenever capAlign
+             runs, so it follows the breakpoint rather than being pinned to one
+             hand-measured number. */
+          const nameCS = getComputedStyle(nameEl2);
+          const capLead = gapOf(nameEl2)
+            + (parseFloat(nameCS.lineHeight) - parseFloat(nameCS.fontSize)) / 2;
+          const capTop = nameEl2.getBoundingClientRect().top + capLead;
+          document.documentElement.style
+            .setProperty('--workCapTop', capTop.toFixed(2) + 'px');
+
           // The protected rectangle: top of page to three gutters under the
           // baseline. It was one. The extra two open air between the small type
           // and the content passing beneath the band, so the header reads as a
@@ -8645,11 +9012,28 @@ window.applyCardThumb = function applyCardThumb(sec) {
   if (!src) return;
 
   const isVid = /\.(mp4|webm|mov|m4v)$/i.test(src.split('?')[0]);
-  const node = document.createElement(isVid ? 'video' : 'img');
+  /* A player URL rather than a file. Vimeo and the like serve an embed page,
+     not a media file, so the extension test above never matches one and the
+     builder would have made an <img> pointing at an HTML document. Detected on
+     the host, not on a file extension it does not have.
+
+     .card-thumb already carries pointer-events:none, which is what keeps the
+     card clickable: an iframe otherwise swallows the click and the project
+     stops opening. The frame is decorative here, so it is hidden from the
+     accessibility tree along with every other thumbnail. */
+  const isEmbed = /^https?:\/\/(?:player\.vimeo\.com\/video\/|(?:www\.)?youtube(?:-nocookie)?\.com\/embed\/)/i.test(src);
+  const node = document.createElement(isEmbed ? 'iframe' : (isVid ? 'video' : 'img'));
   node.className = 'card-thumb';
   node.dataset.rmedAuto = '1';
   node.setAttribute('aria-hidden', 'true');
-  if (isVid) {
+  if (isEmbed) {
+    node.setAttribute('frameborder', '0');
+    node.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+    node.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    node.setAttribute('tabindex', '-1');
+    node.setAttribute('title', '');
+    node.src = src;
+  } else if (isVid) {
     node.autoplay = true; node.muted = true; node.loop = true;
     node.playsInline = true;
     node.setAttribute('playsinline', '');
@@ -9122,6 +9506,35 @@ function initCarousel(sec) {
     const anyOpen = !!document.querySelector('#view-work .carousel-section.is-open');
     window._readMoreOpen = anyOpen;
     document.body.classList.toggle('has-open', anyOpen);
+
+    /* ── THE INDEX IS THE NEXT TWO, AND IT WRAPS ──
+       The tail of a project shows the two that FOLLOW it in the running order,
+       not the first two in the document. Open the fifth and the tail is the
+       sixth and the seventh; open the sixth and it is the seventh and the
+       first; open the last and it is the first and the second. The order is a
+       ring, so the end of the list leads back to its start and no project ever
+       ends on an empty tail.
+
+       This cannot be a selector. CSS can say "the third collapsed card onward"
+       and did, which is why every project was showing the same two. Which two
+       follow the open one is a position in a sequence, and only script can
+       count from a moving origin.
+
+       Two classes rather than one, because the pair have to read left to right
+       in sequence order and the grid places by `order` before it places by
+       document position: without them, opening the sixth would put the first
+       on the left and the seventh on the right, running the ring backwards
+       across the page. Cleared from every section first so nothing carries
+       over from the project opened before this one. */
+    const ring = [...document.querySelectorAll('#view-work > .carousel-section')];
+    ring.forEach(s => s.classList.remove('is-peer-a', 'is-peer-b'));
+    if (anyOpen && ring.length > 2) {
+      const i = ring.findIndex(s => s.classList.contains('is-open'));
+      if (i > -1) {
+        ring[(i + 1) % ring.length].classList.add('is-peer-a');
+        ring[(i + 2) % ring.length].classList.add('is-peer-b');
+      }
+    }
     /* ── THE TAILS ARE RECOMPUTED ON BOTH EDGES ──
        alignColumnTails and alignArrowToCopyright run from positionAboutItems,
        which runs on a LEFT column scroll. Closing a project is not a scroll of
@@ -15712,279 +16125,6 @@ document.addEventListener('visibilitychange', function() {
   });
   setTimeout(tick, 600);
   setTimeout(tick, 1500);
-})();
-</script>
-
-<script>
-/* ══ MOSAIC HOME v4 ══════════════════════════════════════════════════════════
-   Landing layer, fourth pass. Three columns, four grid columns each, filling
-   the viewport exactly.
-
-     column 1   About .33   Uber .66
-     column 2   .33  .33  .33
-     column 3   .33  .33  .33
-
-   Every card is a white panel with an internal padding of TWO GUTTERS, so the
-   card's inset is a multiple of the page grid rather than a number of its own.
-   The media fills the whole padded interior on object-fit:cover, cropping
-   where it must, and the caption sits on the bottom-left of that padding with
-   two gutters of air between the image's lower edge and the top of the copy.
-   Name black, one line gray, site type size.
-
-   The About card is one of the eight and carries no project treatment: name at
-   the top left with the logo flush right beside it, the twenty-years line at
-   the bottom left. No expand, no Learn more, no click-through.
-
-   Hover grows a card ten percent in both axes, siblings giving way in
-   proportion to their own shares. Click hands off to _setOpen(true), so the
-   open project keeps today's layout. One appended block; delete the script tag
-   and the site is back to build 746. */
-(function () {
-  if (window.__mosaicInit) return; window.__mosaicInit = true;
-  if (!window.matchMedia) return;
-
-  const IK = 'https://ik.imagekit.io/rfi7kdlxzn/';
-  const T = 1 / 3, TT = 2 / 3;
-  const COLS = [
-    [
-      { about: true, size: T },
-      { id: 'uberCarouselSection', size: TT, name: 'Uber', line: 'Led the 2016 rebrand rollout across 65 countries',
-        media: [{ i: IK + 'uber_cube_desk.jpg?tr=q-85,w-1400,f-avif' }] }
-    ],
-    [
-      { id: 'firstCarouselSection', size: T, name: 'Cruise', line: 'Bridged brand and product',
-        media: [{ v: IK + 'cruise_1_desk_1.mp4?updatedAt=1782946695362&tr=q-60,w-1200' }] },
-      { id: 'oddoneCarouselSection', size: T, name: 'Oddone', line: 'Built identities from zero, straight with founders',
-        media: [{ v: IK + 'oddone_gallery.mp4?tr=q-60,w-1200' }] },
-      { id: 'googleIconCarouselSection', size: T, name: 'Google', line: 'Built the color systems behind Material Design',
-        media: [{ i: IK + 'google_material_produtc_icon_2_desk.jpg?updatedAt=1777414506579&tr=q-85,w-1400,f-avif' }] }
-    ],
-    [
-      { id: 'notypeLab1Section', size: T, name: 'HG26', line: 'Built a typeface that draws itself from particles',
-        media: [{ v: IK + 'hg26_2.mp4?updatedAt=1783366105600&tr=q-60,w-1200' }] },
-      { id: 'aeroCarouselSection', size: T, name: 'Aero', line: 'Gave an airline its first coherent identity',
-        media: [{ v: IK + 'aero_plane_footage.mp4?tr=q-60,w-1200' }] },
-      { id: 'expaCarouselSection', size: T, name: 'Expa', line: 'Founding identities for a venture studio',
-        media: [{ v: IK + 'expa_flat.mp4?tr=q-60,w-1200' }] }
-    ]
-  ];
-
-  const LOGO_D = document.getElementById('header-logo-path')
-    ? document.getElementById('header-logo-path').getAttribute('d') : '';
-
-  const css = `
-  @media (min-width: 769px) {
-    #mosaicHome {
-      position: fixed;
-      /* Anchored at 0, not at --pad. The strip above the layer was not a gap
-         in the design, it was a window onto the old landing scrolling past
-         underneath. The pad comes back as padding, so the cards sit exactly
-         where they did while nothing shows above them. */
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 500;
-      background: #F5F5F5;
-      padding: var(--pad) var(--pad) 10px;
-      display: none;
-      gap: 0 var(--gap);
-      font-family: var(--font);
-      /* The card's internal inset, stated once as a multiple of the gutter.
-         Everything inside a card, and the air between image and copy, reads
-         this. Change the multiplier here, not in the rules below. */
-      --cardInset: calc(var(--gap) * 2);
-    }
-    body.mosaic-home.view-work:not(.has-open) #mosaicHome { display: flex; }
-    /* The old landing still exists underneath and still holds the sections the
-       mosaic opens, so it cannot be display:none. visibility:hidden takes it
-       off the screen while leaving every box measurable and every _setOpen
-       intact. It comes back the moment a project opens, which is also the
-       moment the mosaic layer goes away. */
-    /* OPACITY, NOT VISIBILITY. visibility:hidden on the container was the
-       obvious move and it did nothing, because #view-work carries an inline
-       visibility:visible written by script, and a descendant that declares
-       visibility beats an ancestor that hid it. opacity does not work that
-       way: it composites the whole subtree and no child can undo it. The
-       boxes stay measurable and every _setOpen still works. */
-    body.mosaic-home.view-work:not(.has-open) #mainContent {
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-    }
-    body.mosaic-home.view-work:not(.has-open) #carouselSidebar,
-    body.mosaic-home.view-work:not(.has-open) #workHero { opacity: 0; pointer-events: none; }
-    body.mosaic-home.view-work:not(.has-open) #heroImage { display: none; }
-    body.mosaic-home.view-work:not(.has-open) .header-bar,
-    body.mosaic-home.view-work:not(.has-open) .header-name-wrap,
-    body.mosaic-home.view-work:not(.has-open) #bioSubtitleWrap { display: none; }
-
-    .m-col {
-      display: flex; flex-direction: column;
-      flex: 100 1 0; min-width: 0;
-      gap: var(--gap);
-      transition: flex-grow .45s cubic-bezier(0.22, 0.61, 0.36, 1);
-    }
-    .m-cell {
-      flex: 0 0 auto; min-height: 0;
-      display: flex;
-      transition: flex-basis .45s cubic-bezier(0.22, 0.61, 0.36, 1);
-      cursor: pointer;
-    }
-    .m-card {
-      flex: 1 1 auto; min-height: 0; width: 100%;
-      position: relative;
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #fff;
-      padding: var(--cardInset);
-      display: flex; flex-direction: column;
-      /* The two gutters between the image's bottom edge and the copy. */
-      gap: var(--cardInset);
-    }
-    /* Media takes every pixel the caption does not, and crops rather than
-       letterboxes. The wrap carries the radius so a cropped video does not
-       square off the card's corners. */
-    .m-media {
-      flex: 1 1 auto; min-height: 0;
-      position: relative;
-      overflow: hidden;
-      border-radius: calc(var(--radius) / 2);
-    }
-    .m-media img, .m-media video {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    /* Caption on the bottom-left padding. */
-    .m-cap { flex: 0 0 auto; text-align: left; }
-    .m-cap .m-name { color: #131312; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .m-cap .m-line { color: #7C7C7C; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* ── ABOUT CARD ── name top left, logo flush right on the same line, the
-       one bio line at the bottom left. Nothing else. */
-    .m-about-cell { cursor: default; }
-    .m-about-inner {
-      position: absolute; inset: 0;
-      padding: var(--cardInset);
-      display: flex; flex-direction: column;
-    }
-    .m-about-top {
-      flex: 0 0 auto;
-      display: flex; align-items: flex-start; justify-content: space-between;
-      gap: var(--gap);
-    }
-    .m-about-top .m-name { color: #131312; }
-    .m-about-logo { height: 22px; width: auto; flex: 0 0 auto; }
-    .m-about-bio { margin-top: auto; flex: 0 0 auto; color: #131312; }
-  }
-  @media (max-width: 768px) { #mosaicHome { display: none !important; } }
-  `;
-  const styleEl = document.createElement('style');
-  styleEl.id = 'mosaic-style';
-  styleEl.textContent = css;
-  document.head.appendChild(styleEl);
-
-  const host = document.createElement('div');
-  host.id = 'mosaicHome';
-  host.setAttribute('aria-label', 'Selected works');
-
-  const cells = [];
-
-  COLS.forEach(colData => {
-    const col = document.createElement('div');
-    col.className = 'm-col';
-    col.dataset.n = colData.length;
-    colData.forEach(d => {
-      const cell = document.createElement('div');
-      cell.className = 'm-cell' + (d.about ? ' m-about-cell' : '');
-      const card = document.createElement('div');
-      card.className = 'm-card';
-
-      if (d.about) {
-        const inner = document.createElement('div');
-        inner.className = 'm-about-inner';
-        inner.innerHTML =
-          '<div class="m-about-top"><span class="m-name">Roger Oddone</span>' +
-          '<svg class="m-about-logo" viewBox="0 0 617 685" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-          '<path d="' + LOGO_D + '" fill="#131312"></path></svg></div>' +
-          '<div class="m-about-bio">Twenty years building brand identities and the systems that carry them.</div>';
-        card.appendChild(inner);
-      } else {
-        const media = document.createElement('div');
-        media.className = 'm-media';
-        d.media.forEach(m => {
-          if (m.v) {
-            const v = document.createElement('video');
-            v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true;
-            v.preload = 'auto';
-            v.src = m.v;
-            media.appendChild(v);
-          } else {
-            const im = document.createElement('img');
-            im.src = m.i; im.alt = d.name; im.loading = 'eager'; im.decoding = 'async';
-            media.appendChild(im);
-          }
-        });
-        const cap = document.createElement('div');
-        cap.className = 'm-cap';
-        cap.innerHTML = '<span class="m-name">' + d.name + '</span><span class="m-line">' + d.line + '</span>';
-        card.appendChild(media);
-        card.appendChild(cap);
-      }
-
-      cell.appendChild(card);
-      col.appendChild(cell);
-      cells.push({ el: cell, col: col, data: d });
-    });
-    host.appendChild(col);
-  });
-  document.body.appendChild(host);
-
-  /* ── SIZING ──
-     A cell's basis is its share of the layer height less its proportional
-     share of the column's gaps, so a column summing to 1 lands exactly on the
-     viewport. Hover multiplies the hovered share by 1.1 and takes the
-     difference off the siblings in proportion to their own shares. */
-  const GROW = 1.1;
-  const basis = (share, n) => 'calc(' + (share * 100) + '% - ' + (share * (n - 1)) + ' * var(--gap))';
-  const apply = (cell, share) => { cell.el.style.flexBasis = basis(share, +cell.col.dataset.n); };
-
-  function rest() {
-    cells.forEach(c => apply(c, c.data.size));
-    host.querySelectorAll('.m-col').forEach(col => { col.style.flexGrow = 100; });
-  }
-  function hover(cell) {
-    if (cell.data.about) return;
-    const sibs = cells.filter(c => c.col === cell.col && c !== cell);
-    const grown = Math.min(cell.data.size * GROW, .9);
-    const borrowed = grown - cell.data.size;
-    const sibSum = sibs.reduce((a, c) => a + c.data.size, 0) || 1;
-    apply(cell, grown);
-    sibs.forEach(c => apply(c, c.data.size - borrowed * (c.data.size / sibSum)));
-    host.querySelectorAll('.m-col').forEach(col => {
-      col.style.flexGrow = (col === cell.col) ? 110 : 190 / 2;
-    });
-  }
-
-  cells.forEach(c => {
-    c.el.addEventListener('mouseenter', () => {
-      hover(c);
-      c.el.querySelectorAll('video').forEach(v => v.play().catch(() => {}));
-    });
-    c.el.addEventListener('mouseleave', () => {
-      rest();
-      c.el.querySelectorAll('video').forEach(v => v.pause());
-    });
-    if (!c.data.about) {
-      c.el.addEventListener('click', () => {
-        const sec = document.getElementById(c.data.id);
-        if (sec && typeof sec._setOpen === 'function') sec._setOpen(true);
-        else if (sec) sec.click();
-      });
-    }
-  });
-
-  rest();
-  document.body.classList.add('mosaic-home');
 })();
 </script>
 
