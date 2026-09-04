@@ -1766,6 +1766,14 @@
          the two. dvh would track the bar exactly but reflows the whole column
          while you scroll. */
       .main-content { display: block; height: 100svh; }
+      /* ── NO LEAD IMAGE ON THE PHONE ──
+         An open project starts with its copy. The container is the card's
+         thumbnail while collapsed, so it is hidden by the open state only;
+         the collapsed card is untouched. The lead slide still exists in the
+         markup and on desktop, and still feeds the card thumbnail. */
+      .carousel-section.is-open .rm-main-container { display: none !important; }
+      /* The wrap's 10px keeps a hairline of nothing above the copy otherwise. */
+      .carousel-section.is-open .carousel-media-wrap { margin-bottom: 0; }
       .scroll-content { display: block; }
       .header-fixed { grid-template-columns: 1fr 1fr; }
       /* ── THE TYPE RIDES THE BAND ──
@@ -9586,7 +9594,10 @@ function initCarousel(sec) {
      asked for them. */
   function mobileVideoURL(u) {
     if (!u || u.indexOf('ik.imagekit') === -1) return u;
-    return u.replace(/(tr=[^&#]*?)w-(?:1280|1600|1920|2000|2400)/, '$1w-1200');
+    /* w-900, the width the hero reel already uses on the phone. 1200 was
+       nearly half again the bytes of every clip in Oddone for pixels a
+       390pt screen mostly throws away. */
+    return u.replace(/(tr=[^&#]*?)w-(?:1200|1280|1600|1920|2000|2400)/, '$1w-900');
   }
 
   if (isMobile) {
@@ -9936,7 +9947,14 @@ function initCarousel(sec) {
        and play() fired. That is the cold start behind the long wait inside a
        project. Bumping preload and calling load() here starts the download in
        parallel with the open animation. */
-    if (open) sec.querySelectorAll('.rest-media video, .rm-slide-item video').forEach(v => {
+    /* Phone: two clips, not all of them. Twelve parallel downloads on a
+       phone link is each one arriving at a twelfth of the speed, and the
+       lead is hidden there anyway. The play sweep pulls the rest in one at
+       a time as each earlier clip starts. */
+    const warm = window.innerWidth <= 768
+      ? Array.from(sec.querySelectorAll('.rest-media video')).slice(0, 2)
+      : Array.from(sec.querySelectorAll('.rest-media video, .rm-slide-item video'));
+    if (open) warm.forEach(v => {
       v.preload = 'auto';
       /* load() resets the element and throws away everything it has buffered.
          That is wanted for a cold .rest-media video that has never fetched a
@@ -10481,8 +10499,20 @@ function initCarousel(sec) {
     // anchor: keep this section's media top where it was on screen
     if (mainEl) {
       requestAnimationFrame(() => {
-        const after = el.getBoundingClientRect().top;
-        mainEl.scrollTop += (after - before);
+        if (window.innerWidth <= 768) {
+          /* The lead has no box inside an open project on the phone, so its
+             top cannot anchor anything. Open scrolls to the page top below
+             regardless. Close puts the card back under the header, which is
+             where the reader left the list, rather than wherever the
+             collapse happened to leave the scroll. */
+          if (!open) {
+            const pad = parseFloat(getComputedStyle(mainEl).paddingTop) || 0;
+            mainEl.scrollTop += sec.getBoundingClientRect().top - pad;
+          }
+        } else {
+          const after = el.getBoundingClientRect().top;
+          mainEl.scrollTop += (after - before);
+        }
         if (open) {
           // then settle it just under the header
           setTimeout(() => {
@@ -11212,6 +11242,22 @@ document.addEventListener('visibilitychange', function() {
       if (isMobile && closestSec && !closestSec.contains(v)) { want(v, false); return; }
       want(v, true);
     });
+    /* Phone: preload is none, so a clip starts loading when it comes within
+       the play margin, and on a slow link that is the wait Oddone showed,
+       twelve clips each fetched only once it was nearly on screen. Keep the
+       pipe one clip ahead instead: whichever clip in this section is the
+       last one playing, the next one in reading order is told to load now.
+       One at a time, so it never becomes the thirty-at-once it replaced. */
+    if (isMobile && closestSec) {
+      const secVids = Array.from(closestSec.querySelectorAll('video'));
+      let last = -1;
+      secVids.forEach((v, i) => { if (v._pvvPlaying) last = i; });
+      const nx = last >= 0 ? secVids[last + 1] : null;
+      if (nx && nx.preload === 'none') {
+        nx.preload = 'auto'; nx.setAttribute('preload', 'auto');
+        try { nx.load(); } catch (e) {}
+      }
+    }
   }
   /* ── SCROLL THROTTLE ──
      playVisibleVideos walks every <video> on the page, reads a rect off each
