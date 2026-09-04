@@ -9593,6 +9593,14 @@ function initCarousel(sec) {
       }
     });
 
+    /* preload="metadata" on every slide video means that on open, thirty
+       requests go out at once and WebKit pulls well past the header on each,
+       and that is the scroll that stutters and waits. The poster already
+       paints the first frame, and the play sweep calls play() as a video
+       nears the viewport, which loads it then. So on the phone nothing
+       loads until it is about to be seen. */
+    wrapper.querySelectorAll('video').forEach(v => { v.preload = 'none'; v.setAttribute('preload', 'none'); });
+
     wrapper.querySelectorAll('video source[src]').forEach(s => {
       const was = s.getAttribute('src');
       const now = mobileVideoURL(was);
@@ -11062,8 +11070,12 @@ document.addEventListener('visibilitychange', function() {
      other's in alternation. The incumbent keeps the slot until a challenger is
      clearly closer, so a boundary scroll position settles instead of thrashing. */
   let _stickySec = null;
+  let _pvvSections = null;
   function getClosestSection() {
-    const sections = document.querySelectorAll('.carousel-section');
+    if (!_pvvSections || !_pvvSections.length || !document.contains(_pvvSections[0])) {
+      _pvvSections = Array.from(document.querySelectorAll('.carousel-section'));
+    }
+    const sections = _pvvSections;
     const mid = window.innerHeight / 2;
     let closest = null, closestDist = Infinity, stickyDist = Infinity;
     sections.forEach(sec => {
@@ -11116,10 +11128,34 @@ document.addEventListener('visibilitychange', function() {
     }
   }
 
+  /* Phone: only the closest section may play, so only its videos are worth a
+     rect read each frame. Every other section was paused on the frame it
+     stopped being closest, and stays paused until it is closest again.
+     Videos outside any section (the hero reel) are still swept, from a
+     list built once, since nothing adds to it after load. Sixty rect reads
+     a frame become a handful. */
+  let _pvvActiveSec = null, _pvvLoose = null;
+  const MOB_PLAY_MARGIN  = 500;   // preload is none on the phone, so start the load a little earlier
+  const MOB_PAUSE_MARGIN = 900;   // roughly one screen: two or three decoders at most, not five
   function playVisibleVideos() {
     const isMobile = window.innerWidth <= 768;
     const closestSec = isMobile ? getClosestSection() : null;
-    document.querySelectorAll('video').forEach(v => {
+    const playM  = isMobile ? MOB_PLAY_MARGIN  : PLAY_MARGIN;
+    const pauseM = isMobile ? MOB_PAUSE_MARGIN : PAUSE_MARGIN;
+    let vids;
+    if (isMobile && closestSec) {
+      if (_pvvActiveSec && _pvvActiveSec !== closestSec && document.contains(_pvvActiveSec)) {
+        _pvvActiveSec.querySelectorAll('video').forEach(v => want(v, false));
+      }
+      _pvvActiveSec = closestSec;
+      if (!_pvvLoose) {
+        _pvvLoose = Array.from(document.querySelectorAll('video')).filter(v => !v.closest('.carousel-section'));
+      }
+      vids = Array.from(closestSec.querySelectorAll('video')).concat(_pvvLoose);
+    } else {
+      vids = document.querySelectorAll('video');
+    }
+    vids.forEach(v => {
       const r = v.getBoundingClientRect();
       /* A collapsed project's .rest-media is display:none, so its videos have
          a zero rect. A zero rect passes the proximity test below (0 < vh, 0 >
@@ -11128,10 +11164,10 @@ document.addEventListener('visibilitychange', function() {
       if (!r.width && !r.height) { want(v, false); return; }
       // Vertical AND horizontal: a swiped-away carousel slide is offscreen
       // sideways even though its vertical box still overlaps the viewport.
-      const near = r.top < window.innerHeight + PLAY_MARGIN && r.bottom > -PLAY_MARGIN
-                && r.left < window.innerWidth + PLAY_MARGIN && r.right > -PLAY_MARGIN;
-      const far  = r.top > window.innerHeight + PAUSE_MARGIN || r.bottom < -PAUSE_MARGIN
-                || r.left > window.innerWidth + PAUSE_MARGIN || r.right < -PAUSE_MARGIN;
+      const near = r.top < window.innerHeight + playM && r.bottom > -playM
+                && r.left < window.innerWidth + playM && r.right > -playM;
+      const far  = r.top > window.innerHeight + pauseM || r.bottom < -pauseM
+                || r.left > window.innerWidth + pauseM || r.right < -pauseM;
       if (far) { want(v, false); return; }
       if (!near) return;                  // in the dead band, leave it alone
       /* Desktop: a collapsed thumbnail is still until the pointer is on it.
@@ -14429,6 +14465,7 @@ document.addEventListener('visibilitychange', function() {
          pointing at this block loses its target on the next save. */
       return '<div class="rm-slide-item"'
         + (item.copyId ? ' data-copy-id="' + esc(item.copyId) + '"' : '')
+        + (item.copyFrom ? ' data-copy-from="' + esc(item.copyFrom) + '"' : '')
         + ' data-rmed-block="text"'
         + (side ? ' data-rmed-layout="side"' : '')
         + '><div class="rest-copy">' + inner + '</div></div>';
@@ -14680,6 +14717,9 @@ document.addEventListener('visibilitychange', function() {
         kind: 'text', urls: [], parts: parts, layout: side ? 'side' : 'below',
         colStart: parts[0].colStart, colEnd: parts[0].colEnd,
         copyId: el.getAttribute('data-copy-id') || '',
+        /* A mobile block that was detached from a shared one remembers which,
+           so Relink can put the reference back without guessing. */
+        copyFrom: el.getAttribute('data-copy-from') || '',
         raw: el.outerHTML, dirty: false
       };
     }
@@ -15276,6 +15316,158 @@ document.addEventListener('visibilitychange', function() {
     });
   }
 
+  /* The copy dialog, shared by the in-place bar on desktop and by the
+     modal grid on either tab. Mutates the item's parts and layout and
+     marks it dirty; the caller decides what to refresh afterwards, since
+     a live desktop node, a mobile list and a modal card each need a
+     different follow-up. */
+  function openCopyDialog(it, i, m, done) {
+    /* Column numbers are CSS grid lines, the same as this editor has
+       always taken, so 1 / 7 is columns one through six. Paired, the
+       left column is held inside lines 1 to 7 and the right inside 7
+       to 13, so the two can never overlap however they are nudged. */
+    function colFields(n, p, lo, hi) {
+      var lbl = n === 1 ? '' : ', right';
+      return '<div class="rmed-dlg-part" data-p="' + n + '">'
+        + '<label>Title' + lbl + '. Uppercase, black.</label>'
+        + '<input data-f="title" type="text" spellcheck="true" lang="en" value="' + esc(p.title || '') + '">'
+        + '<div class="rmed-title-cols" style="display:flex;gap:8px">'
+          + '<div style="flex:1"><label>Title start line</label>'
+            + '<input data-f="ts" type="number" min="' + lo + '" max="' + (hi - 1) + '" value="' + (p.titleStart || lo) + '"></div>'
+          + '<div style="flex:1"><label>Title end line</label>'
+            + '<input data-f="te" type="number" min="' + (lo + 1) + '" max="' + hi + '" value="' + (p.titleEnd || (lo + 1)) + '"></div>'
+        + '</div>'
+        + '<label>Copy' + lbl + '. Sentence case, grey. Enter starts a new line, a blank line leaves a gap. &lt;b&gt; allowed.</label>'
+        + '<textarea data-f="body" spellcheck="true" lang="en">' + esc(p.body || '') + '</textarea>'
+        + '<label style="display:flex;align-items:center;gap:7px;margin-top:7px;color:#c9c9c9">'
+          + '<input data-f="bul" type="checkbox" style="width:auto"' + (p.bullets ? ' checked' : '') + '>'
+          + 'Bullet list. One item per line, set with a dash.</label>'
+        + '<div style="display:flex;gap:8px">'
+          + '<div style="flex:1"><label>Copy start line</label>'
+            + '<input data-f="cs" type="number" min="' + lo + '" max="' + (hi - 1) + '" value="' + (p.colStart || lo) + '"></div>'
+          + '<div style="flex:1"><label>Copy end line</label>'
+            + '<input data-f="ce" type="number" min="' + (lo + 1) + '" max="' + hi + '" value="' + (p.colEnd || hi) + '"></div>'
+        + '</div>'
+        + '</div>';
+    }
+    var cur = textParts(it);
+    var hasTwo = cur.length > 1;
+    var wasSide = it.layout === 'side';
+    var right = cur[1] || { titleStart: 7, titleEnd: 8, colStart: 7, colEnd: 13, title: '', body: '', bullets: false };
+    /* Snapshot for Revert, so a long edit can be abandoned without
+       unwinding the whole page through the global undo. */
+    var before = JSON.stringify({ parts: cur, layout: it.layout || 'below' });
+    openDlg({
+      title: 'Edit copy block ' + (i + 1),
+      okLabel: 'Apply',
+      extraButtons: '<button data-a="revert">Revert</button>',
+      body: '<div style="display:flex;gap:8px">'
+          + '<div style="flex:1"><label>Blocks</label>'
+            + '<select id="rmedDlgCopyMode">'
+              + '<option value="one"' + (hasTwo ? '' : ' selected') + '>One block</option>'
+              + '<option value="two"' + (hasTwo ? ' selected' : '') + '>Two side by side</option>'
+            + '</select></div>'
+          + '<div style="flex:1"><label>Copy sits</label>'
+            + '<select id="rmedDlgCopyPlace">'
+              + '<option value="below"' + (wasSide ? '' : ' selected') + '>Below the title</option>'
+              + '<option value="side"' + (wasSide ? ' selected' : '') + '>Beside the title</option>'
+            + '</select></div>'
+        + '</div>'
+        + '<div id="rmedDlgP1">' + colFields(1, cur[0], 1, 13) + '</div>'
+        + '<div id="rmedDlgP2">' + colFields(2, right, 7, 13) + '</div>'
+        + '<div id="rmedDlgNote"></div>',
+      onMount: function (w) {
+        var mode = w.querySelector('#rmedDlgCopyMode');
+        var place = w.querySelector('#rmedDlgCopyPlace');
+        function box(scope, f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); }
+        function applyPreset(scope, key) {
+          var P = SIDE_PRESET[key];
+          box(scope, 'ts').value = P.titleStart; box(scope, 'te').value = P.titleEnd;
+          box(scope, 'cs').value = P.colStart;   box(scope, 'ce').value = P.colEnd;
+        }
+        function sync(fromPlace) {
+          var two = mode.value === 'two';
+          var sideNow = place.value === 'side';
+          w.querySelector('#rmedDlgP2').classList.toggle('rmed-hidden', !two);
+          /* Below places the title in the copy's own columns, so its
+             own range is meaningless and hidden. */
+          Array.prototype.forEach.call(w.querySelectorAll('.rmed-title-cols'), function (n) {
+            n.classList.toggle('rmed-hidden', !sideNow);
+          });
+          var hi1 = two ? 7 : 13;
+          ['ts', 'te', 'cs', 'ce'].forEach(function (f) {
+            var el1 = box('rmedDlgP1', f);
+            el1.max = /e$/.test(f) ? hi1 : hi1 - 1;
+            if (+el1.value > +el1.max) el1.value = el1.max;
+          });
+          if (fromPlace && sideNow) {
+            applyPreset('rmedDlgP1', two ? 'left' : 'one');
+            if (two) applyPreset('rmedDlgP2', 'right');
+          }
+          w.querySelector('#rmedDlgNote').textContent = sideNow
+            ? (two ? 'Titles at lines 1 and 7, copy at 4 to 7 and 10 to 13.'
+                   : 'Title in the first column, copy across the right half.')
+            : (two ? 'Left stays within lines 1 to 7, right within 7 to 13. On mobile they stack.'
+                   : 'Lines 1 to 13 span the full 12 columns.');
+        }
+        mode.addEventListener('change', function () { sync(place.value === 'side'); });
+        place.addEventListener('change', function () { sync(true); });
+        /* Revert needs to re-run the show and hide pass without the
+           preset step, which would overwrite the values it restored. */
+        w._rmedSync = sync;
+        sync(false);
+      },
+      onAction: function (w, a) {
+        if (a !== 'revert') return false;
+        /* Apply closes the dialog, so there is nothing applied to roll
+           back. What Revert is for is abandoning typing in progress
+           and starting again from the values the block opened with. */
+        var prev = JSON.parse(before);
+        w.querySelector('#rmedDlgCopyMode').value = prev.parts.length > 1 ? 'two' : 'one';
+        w.querySelector('#rmedDlgCopyPlace').value = prev.layout === 'side' ? 'side' : 'below';
+        function fill(scope, p) {
+          if (!p) return;
+          var g = function (f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); };
+          g('title').value = p.title || '';
+          g('body').value = p.body || '';
+          g('bul').checked = !!p.bullets;
+          g('ts').value = p.titleStart || 1; g('te').value = p.titleEnd || 2;
+          g('cs').value = p.colStart || 1;   g('ce').value = p.colEnd || 13;
+        }
+        fill('rmedDlgP1', prev.parts[0]);
+        fill('rmedDlgP2', prev.parts[1]);
+        if (w._rmedSync) w._rmedSync(false);
+        return false;                        /* stays open */
+      },
+      onOK: function (w, fail) {
+        var sideNow = w.querySelector('#rmedDlgCopyPlace').value === 'side';
+        function read(scope, lo, hi) {
+          var g = function (f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); };
+          var cs = Math.max(lo, Math.min(hi - 1, parseInt(g('cs').value, 10) || lo));
+          var ce = Math.max(cs + 1, Math.min(hi, parseInt(g('ce').value, 10) || hi));
+          var ts = Math.max(lo, Math.min(hi - 1, parseInt(g('ts').value, 10) || lo));
+          var te = Math.max(ts + 1, Math.min(hi, parseInt(g('te').value, 10) || (ts + 1)));
+          return {
+            titleStart: sideNow ? ts : cs, titleEnd: sideNow ? te : ce,
+            colStart: cs, colEnd: ce,
+            title: g('title').value.trim(), body: g('body').value,
+            bullets: g('bul').checked
+          };
+        }
+        var two = w.querySelector('#rmedDlgCopyMode').value === 'two';
+        var out = [read('rmedDlgP1', 1, two ? 7 : 13)];
+        if (two) out.push(read('rmedDlgP2', 7, 13));
+        var any = out.some(function (p) { return p.title || p.body.trim(); });
+        if (!any) { fail('Nothing to show. Add a title or some copy.'); return false; }
+        pushHistory();
+        it.parts = out; it.layout = sideNow ? 'side' : 'below';
+        it.colStart = out[0].colStart; it.colEnd = out[0].colEnd;
+        delete it.p2; delete it.html; delete it.case; delete it.color;
+        it.dirty = true; if (done) done();
+      }
+    });
+  }
+
   function paintInplace() {
     clearInplace();
     if (!inplace) return 0;
@@ -15350,150 +15542,7 @@ document.addEventListener('visibilitychange', function() {
               return;
             }
             if (isCopy) {
-              /* Column numbers are CSS grid lines, the same as this editor has
-                 always taken, so 1 / 7 is columns one through six. Paired, the
-                 left column is held inside lines 1 to 7 and the right inside 7
-                 to 13, so the two can never overlap however they are nudged. */
-              function colFields(n, p, lo, hi) {
-                var lbl = n === 1 ? '' : ', right';
-                return '<div class="rmed-dlg-part" data-p="' + n + '">'
-                  + '<label>Title' + lbl + '. Uppercase, black.</label>'
-                  + '<input data-f="title" type="text" spellcheck="true" lang="en" value="' + esc(p.title || '') + '">'
-                  + '<div class="rmed-title-cols" style="display:flex;gap:8px">'
-                    + '<div style="flex:1"><label>Title start line</label>'
-                      + '<input data-f="ts" type="number" min="' + lo + '" max="' + (hi - 1) + '" value="' + (p.titleStart || lo) + '"></div>'
-                    + '<div style="flex:1"><label>Title end line</label>'
-                      + '<input data-f="te" type="number" min="' + (lo + 1) + '" max="' + hi + '" value="' + (p.titleEnd || (lo + 1)) + '"></div>'
-                  + '</div>'
-                  + '<label>Copy' + lbl + '. Sentence case, grey. Enter starts a new line, a blank line leaves a gap. &lt;b&gt; allowed.</label>'
-                  + '<textarea data-f="body" spellcheck="true" lang="en">' + esc(p.body || '') + '</textarea>'
-                  + '<label style="display:flex;align-items:center;gap:7px;margin-top:7px;color:#c9c9c9">'
-                    + '<input data-f="bul" type="checkbox" style="width:auto"' + (p.bullets ? ' checked' : '') + '>'
-                    + 'Bullet list. One item per line, set with a dash.</label>'
-                  + '<div style="display:flex;gap:8px">'
-                    + '<div style="flex:1"><label>Copy start line</label>'
-                      + '<input data-f="cs" type="number" min="' + lo + '" max="' + (hi - 1) + '" value="' + (p.colStart || lo) + '"></div>'
-                    + '<div style="flex:1"><label>Copy end line</label>'
-                      + '<input data-f="ce" type="number" min="' + (lo + 1) + '" max="' + hi + '" value="' + (p.colEnd || hi) + '"></div>'
-                  + '</div>'
-                  + '</div>';
-              }
-              var cur = textParts(it);
-              var hasTwo = cur.length > 1;
-              var wasSide = it.layout === 'side';
-              var right = cur[1] || { titleStart: 7, titleEnd: 8, colStart: 7, colEnd: 13, title: '', body: '', bullets: false };
-              /* Snapshot for Revert, so a long edit can be abandoned without
-                 unwinding the whole page through the global undo. */
-              var before = JSON.stringify({ parts: cur, layout: it.layout || 'below' });
-              openDlg({
-                title: 'Edit copy block ' + (i + 1),
-                okLabel: 'Apply',
-                extraButtons: '<button data-a="revert">Revert</button>',
-                body: '<div style="display:flex;gap:8px">'
-                    + '<div style="flex:1"><label>Blocks</label>'
-                      + '<select id="rmedDlgCopyMode">'
-                        + '<option value="one"' + (hasTwo ? '' : ' selected') + '>One block</option>'
-                        + '<option value="two"' + (hasTwo ? ' selected' : '') + '>Two side by side</option>'
-                      + '</select></div>'
-                    + '<div style="flex:1"><label>Copy sits</label>'
-                      + '<select id="rmedDlgCopyPlace">'
-                        + '<option value="below"' + (wasSide ? '' : ' selected') + '>Below the title</option>'
-                        + '<option value="side"' + (wasSide ? ' selected' : '') + '>Beside the title</option>'
-                      + '</select></div>'
-                  + '</div>'
-                  + '<div id="rmedDlgP1">' + colFields(1, cur[0], 1, 13) + '</div>'
-                  + '<div id="rmedDlgP2">' + colFields(2, right, 7, 13) + '</div>'
-                  + '<div id="rmedDlgNote"></div>',
-                onMount: function (w) {
-                  var mode = w.querySelector('#rmedDlgCopyMode');
-                  var place = w.querySelector('#rmedDlgCopyPlace');
-                  function box(scope, f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); }
-                  function applyPreset(scope, key) {
-                    var P = SIDE_PRESET[key];
-                    box(scope, 'ts').value = P.titleStart; box(scope, 'te').value = P.titleEnd;
-                    box(scope, 'cs').value = P.colStart;   box(scope, 'ce').value = P.colEnd;
-                  }
-                  function sync(fromPlace) {
-                    var two = mode.value === 'two';
-                    var sideNow = place.value === 'side';
-                    w.querySelector('#rmedDlgP2').classList.toggle('rmed-hidden', !two);
-                    /* Below places the title in the copy's own columns, so its
-                       own range is meaningless and hidden. */
-                    Array.prototype.forEach.call(w.querySelectorAll('.rmed-title-cols'), function (n) {
-                      n.classList.toggle('rmed-hidden', !sideNow);
-                    });
-                    var hi1 = two ? 7 : 13;
-                    ['ts', 'te', 'cs', 'ce'].forEach(function (f) {
-                      var el1 = box('rmedDlgP1', f);
-                      el1.max = /e$/.test(f) ? hi1 : hi1 - 1;
-                      if (+el1.value > +el1.max) el1.value = el1.max;
-                    });
-                    if (fromPlace && sideNow) {
-                      applyPreset('rmedDlgP1', two ? 'left' : 'one');
-                      if (two) applyPreset('rmedDlgP2', 'right');
-                    }
-                    w.querySelector('#rmedDlgNote').textContent = sideNow
-                      ? (two ? 'Titles at lines 1 and 7, copy at 4 to 7 and 10 to 13.'
-                             : 'Title in the first column, copy across the right half.')
-                      : (two ? 'Left stays within lines 1 to 7, right within 7 to 13. On mobile they stack.'
-                             : 'Lines 1 to 13 span the full 12 columns.');
-                  }
-                  mode.addEventListener('change', function () { sync(place.value === 'side'); });
-                  place.addEventListener('change', function () { sync(true); });
-                  /* Revert needs to re-run the show and hide pass without the
-                     preset step, which would overwrite the values it restored. */
-                  w._rmedSync = sync;
-                  sync(false);
-                },
-                onAction: function (w, a) {
-                  if (a !== 'revert') return false;
-                  /* Apply closes the dialog, so there is nothing applied to roll
-                     back. What Revert is for is abandoning typing in progress
-                     and starting again from the values the block opened with. */
-                  var prev = JSON.parse(before);
-                  w.querySelector('#rmedDlgCopyMode').value = prev.parts.length > 1 ? 'two' : 'one';
-                  w.querySelector('#rmedDlgCopyPlace').value = prev.layout === 'side' ? 'side' : 'below';
-                  function fill(scope, p) {
-                    if (!p) return;
-                    var g = function (f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); };
-                    g('title').value = p.title || '';
-                    g('body').value = p.body || '';
-                    g('bul').checked = !!p.bullets;
-                    g('ts').value = p.titleStart || 1; g('te').value = p.titleEnd || 2;
-                    g('cs').value = p.colStart || 1;   g('ce').value = p.colEnd || 13;
-                  }
-                  fill('rmedDlgP1', prev.parts[0]);
-                  fill('rmedDlgP2', prev.parts[1]);
-                  if (w._rmedSync) w._rmedSync(false);
-                  return false;                        /* stays open */
-                },
-                onOK: function (w, fail) {
-                  var sideNow = w.querySelector('#rmedDlgCopyPlace').value === 'side';
-                  function read(scope, lo, hi) {
-                    var g = function (f) { return w.querySelector('#' + scope + ' [data-f="' + f + '"]'); };
-                    var cs = Math.max(lo, Math.min(hi - 1, parseInt(g('cs').value, 10) || lo));
-                    var ce = Math.max(cs + 1, Math.min(hi, parseInt(g('ce').value, 10) || hi));
-                    var ts = Math.max(lo, Math.min(hi - 1, parseInt(g('ts').value, 10) || lo));
-                    var te = Math.max(ts + 1, Math.min(hi, parseInt(g('te').value, 10) || (ts + 1)));
-                    return {
-                      titleStart: sideNow ? ts : cs, titleEnd: sideNow ? te : ce,
-                      colStart: cs, colEnd: ce,
-                      title: g('title').value.trim(), body: g('body').value,
-                      bullets: g('bul').checked
-                    };
-                  }
-                  var two = w.querySelector('#rmedDlgCopyMode').value === 'two';
-                  var out = [read('rmedDlgP1', 1, two ? 7 : 13)];
-                  if (two) out.push(read('rmedDlgP2', 7, 13));
-                  var any = out.some(function (p) { return p.title || p.body.trim(); });
-                  if (!any) { fail('Nothing to show. Add a title or some copy.'); return false; }
-                  pushHistory();
-                  it.parts = out; it.layout = sideNow ? 'side' : 'below';
-                  it.colStart = out[0].colStart; it.colEnd = out[0].colEnd;
-                  delete it.p2; delete it.html; delete it.case; delete it.color;
-                  it.dirty = true; refreshNode(it, m); m._deskDirty = true; refreshBar(); paintInplace();
-                }
-              });
+              openCopyDialog(it, i, m, function () { refreshNode(it, m); m._deskDirty = true; refreshBar(); paintInplace(); });
               return;
             }
             openDlg({
@@ -15693,7 +15742,7 @@ document.addEventListener('visibilitychange', function() {
         + 'lists are independent for media: mobile gets its own images, order '
         + 'and slide count. Copy blocks are not duplicated. They stay authored '
         + 'on desktop and mobile holds a reference, so a typo is still fixed '
-        + 'in one place.'
+        + 'in one place. Detach a block on this tab when the phone needs different words.'
         + '<div style="margin-top:12px"><button data-a="forkmob">Fork mobile from desktop</button></div></div>';
       var fb = grid.querySelector('[data-a="forkmob"]');
       if (fb) fb.addEventListener('click', function () {
@@ -15823,8 +15872,13 @@ document.addEventListener('visibilitychange', function() {
       } else if (it.urls[0]) {
         thumbHtml = '<div class="rmed-multi"><i style="background-image:url(' + esc(thumbFor(it.urls[0])) + ')"></i></div>';
       } else if (it.kind === 'copyref') {
+        var refSrc = null;
+        m.desktop.forEach(function (d) { if (d.kind === 'text' && d.copyId === it.copyRef) refSrc = d; });
+        var refPlain = refSrc ? textParts(refSrc).map(function (p) {
+          return String((p.title ? p.title + ' ' : '') + (p.body || '')).replace(/<[^>]+>/g, ' '); }).join(' ').slice(0, 40) : '';
         thumbHtml = '<div style="color:#8a8a8a;font-size:11px;line-height:1.4;padding:6px">'
-          + 'shared copy<br><span style="color:#555">' + esc(it.copyRef) + '</span></div>';
+          + 'shared copy<br><span style="color:#555">' + esc(it.copyRef) + '</span>'
+          + (refPlain ? '<br><span style="color:#666">' + esc(refPlain) + '</span>' : '') + '</div>';
       } else {
         thumbHtml = '<div style="color:#555;font-size:11px">no preview</div>';
       }
@@ -15833,6 +15887,7 @@ document.addEventListener('visibilitychange', function() {
         '<div class="rmed-thumb">' + thumbHtml +
           '<span class="rmed-idx">' + (idx + 1) + '</span>' +
           '<span class="rmed-kind">' + (it.kind === 'copyref' ? 'copy (shared)'
+            : it.kind === 'text' && openTab === 'mobile' ? (it.copyFrom ? 'copy (mobile only)' : 'copy')
             : esc(layoutByKey(layoutKeyOf(it)).label.toLowerCase())) + '</span>' +
           /* Slide 1 is the big image at the top of the open project. Replacing
              it here changes that image, on purpose. The card thumbnail field
@@ -15842,8 +15897,17 @@ document.addEventListener('visibilitychange', function() {
             ? '<span class="rmed-lead">lead image in open project' + (openTab === 'mobile' ? ' (mobile)' : '') + '</span>' : '') +
         '</div>' +
         '<div class="rmed-acts">' +
-          '<button data-a="edit"' + ((it.locked || it.kind === 'copyref' || it.kind === 'text' || it.kind === 'rule' || it.kind === 'spacer')
-            ? ' disabled style="opacity:.35;cursor:not-allowed"' : '') + '>Replace</button>' +
+          /* Copy: shared by default. On the mobile tab a shared block can be
+             detached into a block of its own, edited there, and relinked
+             later if the fork was a mistake. A detached block is the only
+             place mobile copy differs from desktop, and the label says so. */
+          (it.kind === 'copyref' && openTab === 'mobile'
+            ? '<button data-a="detach" title="Give mobile its own copy of this block">Detach</button>'
+          : it.kind === 'text'
+            ? '<button data-a="copy">Edit</button>'
+              + (it.copyFrom && openTab === 'mobile' ? '<button data-a="relink" title="Drop the mobile copy and share the desktop block again">Relink</button>' : '')
+          : '<button data-a="edit"' + ((it.locked || it.kind === 'copyref' || it.kind === 'rule' || it.kind === 'spacer')
+            ? ' disabled style="opacity:.35;cursor:not-allowed"' : '') + '>Replace</button>') +
           '<button data-a="left">&larr;</button>' +
           '<button data-a="right">&rarr;</button>' +
           '<button data-a="del" class="rmed-del">Delete</button>' +
@@ -15863,6 +15927,30 @@ document.addEventListener('visibilitychange', function() {
         var a = b.dataset.a;
         var form = card.querySelector('.rmed-form');
         if (a === 'edit') { form.classList.toggle('rmed-hidden'); return; }
+        if (a === 'copy') {
+          openCopyDialog(it, idx, m, function () {
+            if (it.node) refreshNode(it, m);
+            markDirty(); renderModal(); if (inplace) syncLive(openSection);
+          });
+          return;
+        }
+        if (a === 'detach') {
+          var srcIt = null;
+          m.desktop.forEach(function (d) { if (d.kind === 'text' && d.copyId === it.copyRef) srcIt = d; });
+          if (!srcIt) { alert('The shared block "' + it.copyRef + '" is not on the desktop list, so there is nothing to detach from.'); return; }
+          pushHistory();
+          var own = cloneItem(srcIt);
+          own.copyId = ''; own.copyFrom = it.copyRef; own.raw = ''; own.dirty = true;
+          delete own.node; delete own.locked;
+          list[idx] = own;
+          markDirty(); renderModal(); if (inplace) syncLive(openSection); return;
+        }
+        if (a === 'relink') {
+          if (!confirm('Drop the mobile-only copy and share the desktop block "' + it.copyFrom + '" again?')) return;
+          pushHistory();
+          list[idx] = { kind: 'copyref', copyRef: it.copyFrom, urls: [], raw: '', dirty: true, locked: true };
+          markDirty(); renderModal(); if (inplace) syncLive(openSection); return;
+        }
         if (a === 'apply') {
           var raw = form.querySelector('textarea').value.split('\n')
             .map(function (s) { return s.trim(); }).filter(Boolean);
@@ -16157,7 +16245,7 @@ document.addEventListener('visibilitychange', function() {
      boot, so a stale cached copy of the page identifies itself instead of
      producing a mystery: 'the fix is in but nothing changed' has so far always
      meant an old file was still being served. */
-  var RMED_BUILD = 'b33';
+  var RMED_BUILD = 'b34';
 
   function buildBar() {
     var bar = document.createElement('div');
