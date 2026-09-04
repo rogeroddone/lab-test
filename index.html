@@ -9393,10 +9393,19 @@ window.applyCardThumb = function applyCardThumb(sec) {
      merely predates the attribute. */
   if (existing && existing.dataset.rmedAuto !== '1' && !wide && !mob) return;
 
-  const src  = (window.innerWidth <= 768 && mob) ? mob : wide;
+  const onPhone = window.innerWidth <= 768;
+  let src  = (onPhone && mob) ? mob : wide;
 
   if (existing) existing.remove();
   if (!src) return;
+
+  /* HG26's card is a live WebGL sketch. Inside the project the phone
+     already gets the recorded capture instead of the sketch; the card
+     follows the same rule, or the landing page carries a GPU sketch on a
+     phone before anything else has painted. */
+  if (onPhone && !mob && /\.html?(?:[?#]|$)/i.test(src)) {
+    src = 'https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4';
+  }
 
   const isVid = /\.(mp4|webm|mov|m4v)$/i.test(src.split('?')[0]);
   /* A player URL rather than a file. Vimeo and the like serve an embed page,
@@ -9432,6 +9441,20 @@ window.applyCardThumb = function applyCardThumb(sec) {
     node.playsInline = true;
     node.setAttribute('playsinline', '');
     node.setAttribute('preload', 'metadata');
+    /* A card video with no poster is a blank card until it has buffered
+       enough to decode a frame, and on the phone that was the original
+       file, whatever size it was uploaded at, so the landing sat white for
+       fifteen seconds. Two things, ImageKit only: the poster is the same
+       ik-thumbnail every slide video uses, so the first frame paints from
+       an image; and the phone gets the file cut to w-900, the width the
+       hero reel already uses on the phone. Desktop keeps the URL as typed. */
+    const ik = src.match(/^(https:\/\/ik\.imagekit\.io\/[^/]+\/)(?:tr:[^/]+\/)?([^?#]+)(\?[^#]*)?$/i);
+    if (ik) {
+      node.setAttribute('poster', ik[1] + 'tr:q-80,w-800/' + ik[2] + '/ik-thumbnail.jpg');
+      if (onPhone && !/[?&]tr=/.test(src)) {
+        src = ik[1] + ik[2] + (ik[3] ? ik[3] + '&' : '?') + 'tr=q-60,w-900';
+      }
+    }
     node.src = src;
   } else {
     node.decoding = 'async';
@@ -10478,7 +10501,15 @@ function initCarousel(sec) {
       setTimeout(window._updateCollapseDock, 260);
       setTimeout(window._updateCollapseDock, 620);
     }
-    if (window._playVisibleVideos) setTimeout(window._playVisibleVideos, 80);
+    if (window._playVisibleVideos) {
+      setTimeout(window._playVisibleVideos, 80);
+      /* On the phone only the section nearest the middle of the screen may
+         play, and the sweep runs on scroll. 80ms in, a close is still in
+         flight and the rects are mid-animation, so the sweep could settle on
+         the wrong section and nothing corrected it until the reader moved
+         the page. Once more after the 620ms flight, from the settled rects. */
+      if (!open) setTimeout(window._playVisibleVideos, 700);
+    }
   }
 
   // Clicking the media opens it. Closing is the fixed circle's job now,
