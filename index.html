@@ -1055,9 +1055,8 @@
       opacity: 1; visibility: visible;
       transition: opacity 0.25s ease, visibility 0s;
     }
-    @media (max-width: 768px) {
-      .collapse-name { display: block; }
-    }
+    /* Off: the name scrolls away with the copy; only the X pins. The element
+       stays so the dock's bookkeeping has something to toggle. */
 
     /* open section: no custom X cursor, the circle is the close affordance */
     .carousel-section.is-open .rm-main-container,
@@ -2076,7 +2075,8 @@
          the plus handler for the rule alignment, so this costs nothing but a
          selector. Quick, because it is getting out of the way rather than
          making an entrance. */
-      body.bio-open .about-photo-ph { opacity: 0; }
+      /* Retired: the photo stays put when the bio opens and scrolls with the
+         column like everything else. */
       .about-photo-ph { transition: opacity 0.18s ease; }
 
       /* Work bio overlay */
@@ -3897,11 +3897,15 @@
       body.view-work.has-open .carousel-section:not(.is-open),
       body.view-work.has-open #mobileWorksLabel { display: none !important; }
       body.view-work.has-open #workFooter { order: 2; }
-      /* One gutter from the top of the viewport, not from under the bar. The
-         bar is force-hidden on open and slides back on the first upward
-         scroll, so its 57px belongs to the project while it is away. The lead
-         image is the project's opening line and it owns the screen. */
-      body.view-work.has-open .main-content { padding-top: 0; }
+      /* ── THE BAR KEEPS ITS 57 NOW ──
+         This used to be zero: the lead image was the project's opening line
+         and it owned the whole screen, bar space included. There is no lead
+         image on the phone any more, so zero meant the project's NAME started
+         at the very top of the scroll box, and the bar sliding back on an
+         upward scroll landed straight on top of it. That is the vanishing
+         name. The project starts under the bar's line like every other page,
+         and the push does the rest once you are further down. */
+      body.view-work.has-open .main-content { padding-top: 57px; }
       body.view-work.has-open #view-work { padding-top: var(--gap); }
       /* A card carries 10px of padding on its top so the thumbnail sits inside
          its box in the grid. On the open project that padding is the second
@@ -6303,19 +6307,19 @@ window.__errLog = [];
             <div class="rm-slide-wrapper" data-surface="desktop">
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
-              <div class="rm-slide-item" data-copy-id="uber-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Challenges</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Uber began six years ago as a way for 100 friends in San Francisco to get luxury rides—everyone’s private driver. Today, we’re a transportation network spanning 450 cities in 72 countries. That network delivers food and packages, as well as people, all at the push of a button. It became clear that a limited set of visual identity components was not enough to engage with different audiences and price points.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Challenges</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Uber began six years ago as a way for 100 friends in San Francisco to get luxury rides—everyone’s private driver. Today, we’re a transportation network spanning 450 cities in 72 countries. That network delivers food and packages, as well as people, all at the push of a button. It became clear that a limited set of visual identity components was not enough to engage with different audiences and price points.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="4" style="--rmed-units:4;height:calc(4 * var(--gap));min-height:calc(4 * var(--gap));"></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_before.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_before.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_before.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_before.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_before.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_after.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_after.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_after.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_after.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_laptop_after.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
               <div class="rm-slide-item" data-copy-id="uber-2" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Before</p><p class="info-paragraph" data-rmed-p="body" data-rmed-bullets="1" style="grid-column:4 / 7;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">—&nbsp;Luxury rides<br>—&nbsp;Moving people<br>—&nbsp;Serving a handful of markets</p><p class="info-paragraph" data-rmed-p="title" style="grid-column:7 / 8;grid-row:1;text-transform:none !important;color:#000 !important;">After</p><p class="info-paragraph" data-rmed-p="body" data-rmed-bullets="1" style="grid-column:10 / 13;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">—&nbsp;A range of economy and luxury options<br>—&nbsp;Moving people, food, and packages<br>—&nbsp;Serving 72 countries and 450 cities</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_previous_system_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_previous_system_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_previous_system_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_previous_system_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_previous_system_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="uber-3" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Previous visual identity</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Uber’s previous visual identity was too rigid and limitedIt didn’t allow us to express the nuances necessary to communicate with different audiences and price points.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-3" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Previous visual identity</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Uber’s previous visual identity was too rigid and limitedIt didn’t allow us to express the nuances necessary to communicate with different audiences and price points.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_bits_atoms_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_bits_atoms_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_bits_atoms_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_bits_atoms_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_bits_atoms_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="uber-4" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Concept</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">With a push of a button, Uber offers reliable and affordable rides, as well as food and delivery services. Our technology (Bits) helps move the physical world (Atoms).<br><br>Uber exists in the place where Bits &amp; Atoms come together. That is Uber. Not just technology, but technology that moves cities. That’s the story of Bits &amp; Atoms.<br><br>Bits &amp; Atoms is the core idea that inspired our new visual identity</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
-              <div class="rm-slide-item" data-copy-id="uber-5" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Visual identity components</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Our visual identity caters to our complex needs as a brand at every touch-point. It’s made up of  primary and secondary design components.Connecting Bits &amp; Atoms to create a dynamic visual identity system</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-5" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Visual identity components</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Our visual identity caters to our complex needs as a brand at every touch-point. It’s made up of primary and secondary design components.Connecting Bits &amp; Atoms to create a dynamic visual identity system</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_primary_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_primary_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_primary_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_primary_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_primary_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="uber-6" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Primary components</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">These are the foundation of our visual identity. They lean close to the Bit, our logical side, and create consistency across our brand visual expressions.<br><br>— Bits - high tech<br>— Monochromatic<br>— Consistent</p></div></div>
@@ -6329,27 +6333,27 @@ window.__errLog = [];
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_evolution_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_evolution_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_evolution_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_evolution_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_evolution_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_logobit.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_logobit.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_logobit.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_logobit.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_logobit.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_bw.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_bw.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_bw.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_bw.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_bw.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_grid.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_grid.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_grid.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_grid.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_grid.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
-              <div class="rm-slide-item" data-copy-id="uber-8" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Black &amp; white</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Since the bit is binary, we represent technology with two colors: black &amp; white. These colors act as grounding elements, both reflecting Uber’s past and providing consistency within our variable visual identity.</p><p class="info-paragraph" data-rmed-p="title" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:#000 !important;">Grid</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">The grid represents our logical side. It’s the foundation  for organizing all the design components. You won’t see it, but it’s always there, keeping the different components of the visual identity clear, cohesive, and beautiful. Like our technology, it’s invisible.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-8" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Black &amp; white</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Since the bit is binary, we represent technology with two colors: black &amp; white. These colors act as grounding elements, both reflecting Uber’s past and providing consistency within our variable visual identity.</p><p class="info-paragraph" data-rmed-p="title" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:#000 !important;">Grid</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">The grid represents our logical side. It’s the foundation for organizing all the design components. You won’t see it, but it’s always there, keeping the different components of the visual identity clear, cohesive, and beautiful. Like our technology, it’s invisible.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_type_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_type_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_type_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_type_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_type_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="uber-9" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Typography</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Clan Pro for Uber is used to reinforce our identity and guarantee excellent legibility in all media. We customized Clan Pro to make it unique to Uber. Most of its personality was preserved, but we made modifications to increase legibility in body copy. For example, we elongated ascenders and descen- ders and increased the size of counters.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-9" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Typography</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Clan Pro for Uber is used to reinforce our identity and guarantee excellent legibility in all media. We customized Clan Pro to make it unique to Uber. Most of its personality was preserved, but we made modifications to increase legibility in body copy. For example, we elongated ascenders and descenders and increased the size of counters.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_secondary_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_secondary_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_secondary_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_secondary_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_secondary_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="uber-10" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 3;grid-row:1;text-transform:none !important;color:#000 !important;">Secondary components</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 13;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">These provide flexibility and allow for localization, keeping the system fresh and dynamic. Secondary components lean closer to the Atom, representing the physical world.<br><br>— Atoms<br>- physical world<br>— Colorful, approachable<br>— Variable</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_colors_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_colors_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_colors_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_colors_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_colors_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="uber-11" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Color</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Our color spectrum allows unique combinations that can speak to specific locations, holidays, and partnerships Inspired by the colors of the physical world, we created a broad color spectrum: 22 different colors and 22 values, 484 unique hues in total.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-11" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Color</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Our color spectrum allows unique combinations that can speak to specific locations, holidays, and partnerships Inspired by the colors of the physical world, we created a broad color spectrum: 22 different colors and 22 values, 484 unique hues in total.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_pattern_desk.gif?tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_pattern_desk.gif?tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_pattern_desk.gif?tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_pattern_desk.gif?tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_pattern_desk.gif?tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="uber-12" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Patterns</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Unique patterns are used to add flavor and flexibility. Like colors, they can speak to specific locations, holidays, partnerships, or global themes.More than 70 unique patterns were created­—one for each of the countries we serve</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-12" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Patterns</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Unique patterns are used to add flavor and flexibility. Like colors, they can speak to specific locations, holidays, partnerships, or global themes.More than 70 unique patterns were created—one for each of the countries we serve</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_photos_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_photos_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_photos_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_photos_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_photos_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="uber-13" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Photography</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">We use photos to create local stories about the daily lives of our riders and drivers. Our photographs use natural light and capture unposed moments.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_illu_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_illu_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_illu_2_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_illu_2_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_2_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_2_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_illu_2_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="uber-14" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Illustrations</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Grabbing elements from  Art Deco and inspiration from Bits &amp; Atoms, we created something uniquely ours.</p></div></div>
+              <div class="rm-slide-item" data-copy-id="uber-14" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Illustrations</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Grabbing elements from Art Deco and inspiration from Bits &amp; Atoms, we created something uniquely ours.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_color_systems_desk.gif?tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_color_systems_desk.gif?tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_color_systems_desk.gif?tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_color_systems_desk.gif?tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_color_systems_desk.gif?tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="uber-15" data-rmed-block="text" data-rmed-layout="side"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 2;grid-row:1;text-transform:none !important;color:#000 !important;">Color system</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:7 / 11;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">A variety of global color sets, along with the local themes were created in a systematic way to allow the brand to be expressive while consistent.</p></div></div>
@@ -6502,7 +6506,7 @@ window.__errLog = [];
         </div>
       </div>
 
-      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="hg26type_open.html">
+      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="hg26type_open.html" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container is-loaded" id="notypeLab1Container">
             <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
@@ -6527,11 +6531,11 @@ window.__errLog = [];
               </div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid6.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_2.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_all.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_process14_5.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_process14_5.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_2.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_process14_5.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_process14_5.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2400" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
             </div>
           </div>
@@ -6660,7 +6664,7 @@ window.__errLog = [];
       </div>
 
       <!-- CAROUSEL 6: Expa -->
-      <div class="carousel-section" id="expaCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/expa_flat.mp4">
+      <div class="carousel-section" id="expaCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/expa_flat.mp4?updatedAt=1788491751114" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/expa_flat_mobile.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
@@ -6671,11 +6675,11 @@ window.__errLog = [];
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4?tr=q-60,w-1920" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e_1.mp4?tr=q-60,w-1920" type="video/mp4"></video></div></div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_2_desk_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_2_desk_1.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_2.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_2.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_2.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_2.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_2.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="4" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4?updatedAt=1786110335836&amp;tr=q-60,w-1920" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e_1.mp4?updatedAt=1786110335856&amp;tr=q-60,w-1920" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_p.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_p.mp4?updatedAt=1786110335842&amp;tr=q-60,w-1920" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_a.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_a.mp4?updatedAt=1786110335915&amp;tr=q-60,w-1920" type="video/mp4"></video></div></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat_mobile.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat_mobile.mp4?tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_website_mobile.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_website_mobile.mp4?updatedAt=1788491895550&amp;tr=q-60,w-1920" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="metadata"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4?updatedAt=1788491550211&amp;tr=q-60,w-1920" type="video/mp4"></video></div>
             </div>
             <div class="rm-nav-overlay prev-zone"></div>
             <div class="rm-nav-overlay next-zone"></div>
@@ -6908,6 +6912,20 @@ function switchView(view) {
   const navAbout  = document.getElementById('nav-info');
   const mainEl    = document.getElementById('mainContent');
 
+  /* ── THE PHONE ARRIVES FRESH ──
+     Each view opens in its first state: Info with the bio closed and the
+     page at the top, Work as the grid with nothing open. Leaving a project
+     open under a view switch meant coming back into the middle of Cruise,
+     and a bio left open meant coming back to five paragraphs. Phone only;
+     the desktop shows both columns at once and keeps its places. */
+  const onPhone = window.innerWidth <= 768;
+  if (onPhone && view === 'about' && window._bioReset) window._bioReset();
+  if (onPhone && view !== 'about') {
+    document.querySelectorAll('#view-work .carousel-section.is-open').forEach(sec => {
+      sec._skipAnchor = true;
+      if (typeof sec._setOpen === 'function') sec._setOpen(false);
+    });
+  }
   if (view === 'about') {
     const mcRect = document.getElementById('mainContent').getBoundingClientRect();
     // Only capture carousel offset once — use initial load position, ignore scroll state
@@ -8571,7 +8589,8 @@ document.addEventListener('keydown', e => {
       // The first upward scroll clears it and normal behaviour resumes.
       let _hdrForceHidden = false;
       let _hdrLockUntil = 0;
-      window._hideHeaderNow = () => {
+      window._hideHeaderNow = (animate) => {
+        if (animate === undefined) animate = true;
         _hdrForceHidden = true;
         _revealed = false;
         // Paint it immediately rather than waiting for frame(). frame() only
@@ -8582,7 +8601,7 @@ document.addEventListener('keydown', e => {
           ? 57
           : (parseFloat(getComputedStyle(document.documentElement)
               .getPropertyValue('--headerH')) || 70);
-        setHeader(-hh, true);
+        setHeader(-hh, animate);
         _lastY = mainEl.scrollTop;
         // Opening a project scrolls the page to the top. That is an UPWARD
         // scroll, which is precisely the gesture that reveals the header, so
@@ -8614,9 +8633,24 @@ document.addEventListener('keydown', e => {
         if (hdrEl)  { hdrEl.classList.toggle('hdr-anim', animate);  hdrEl.style.transform = t; }
         if (window.innerWidth <= 768) {
           const hh = 57;
-          const push = mainEl.scrollTop > hh ? Math.max(0, hh + ty) : 0;
+          const y = mainEl.scrollTop;
+          /* ── HOW FAR THE PAGE MOVES ──
+             The page starts hh below the top of the scroll box, so the first
+             line sits on screen at hh - y + push and the bar's lower edge at
+             hh + ty. Keeping the first line clear of the bar is push >= y + ty,
+             and the bar never asks for more room than its own height, hh + ty.
+             The smaller of the two: near the top the page is held exactly on
+             the bar's edge, so an upward scroll into the first screen can never
+             put the project's name or its close button under the band; further
+             down it is the full height, which is the ordinary push. The old
+             guard skipped the whole thing below hh and took the band with it
+             over the name. */
+          const push = Math.max(0, Math.min(hh + ty, y + ty));
           const pt = push > 0.5 ? 'translateY(' + push.toFixed(2) + 'px)' : '';
-          pushEls.forEach(el => { el.classList.toggle('hdr-anim', animate); if (el.style.transform !== pt) el.style.transform = pt; });
+          /* The open and close flip owns this same transform for half a
+             second. Writing the push over it mid flight cancels the
+             transition and the page arrives with a cut. */
+          if (!window._mobFlip) pushEls.forEach(el => { el.classList.toggle('hdr-anim', animate); if (el.style.transform !== pt) el.style.transform = pt; });
         } else {
           pushEls.forEach(el => { if (el.style.transform) { el.style.transform = ''; el.classList.remove('hdr-anim'); } });
         }
@@ -9206,6 +9240,15 @@ window._fluidReveal = function (block, mutate, shown, hidden) {
   btn.innerHTML = SVG_PLUS;
   rest.style.display = 'none';
   document.body.classList.remove('bio-open');
+  /* Info arrives as it did the first time. switchView calls this on the way
+     in so a bio left open on the last visit is closed, instantly, while the
+     view is still hidden; no reveal animation for a change nobody watches. */
+  window._bioReset = function () {
+    if (!open) return;
+    open = false;
+    paint();
+    requestAnimationFrame(function () { if (window._updateBioCover) window._updateBioCover(); });
+  };
   btn.addEventListener('click', e => {
     e.preventDefault();
     open = !open;
@@ -9233,6 +9276,25 @@ window._fluidReveal = function (block, mutate, shown, hidden) {
       if (window._updateBioCover) window._updateBioCover();
     });
     if (window._fitAboutPhoto) window._fitAboutPhoto();
+    /* ── OPENING THE BIO PUTS THE BIO AT THE TOP ──
+       Phone only. The plus sits beside the first line, which on arrival is
+       most of a screen down, so opening it grew five paragraphs below the
+       fold and left the reader looking at the photo. Scroll the block's own
+       top to just under the bar, so the essay starts where reading starts.
+       Measured on the next frame, after paint() has swapped the display,
+       and only on the way open: closing should leave the page where it is. */
+    if (open && window.innerWidth <= 768) {
+      const main = document.getElementById('mainContent');
+      const blk = rest.closest('.about-bio-text') || rest.parentElement;
+      if (main && blk) requestAnimationFrame(function () {
+        const pad = parseFloat(getComputedStyle(main).paddingTop) || 0;
+        const gap = parseFloat(getComputedStyle(document.documentElement)
+                      .getPropertyValue('--gap')) || 15;
+        const to = main.scrollTop + blk.getBoundingClientRect().top
+                   - main.getBoundingClientRect().top - pad - gap;
+        main.scrollTo({ top: Math.max(0, to), behavior: 'smooth' });
+      });
+    }
   });
   /* ── THE COPY OVER THE PHOTO HIDES THE PHOTO ──
      One test: does the expanded bio block's rect intersect the plate's rect.
@@ -9913,7 +9975,18 @@ function initCarousel(sec) {
        margin-bottom: 0 !important on .carousel-section.is-open, which beats
        any inline value this writes. That gap is padding-bottom on the same
        rule, currently twenty gutters. */
-    sec.style.marginBottom = gap + 'px';
+    /* Half again on the phone's grid. The caption sits under its picture and
+       the next picture follows, so one gutter had the name of one project
+       nearly as close to the picture below it as to its own. Collapsed cards
+       only: an open project's own tail is set in the sheet, on !important,
+       and the desktop column keeps the single gutter it was drawn on. */
+    const phone = window.innerWidth <= 768;
+    /* An open project on the phone has its own figure, written by placeBack
+       so the rule under it sits centred between two pictures. Writing a flat
+       gutter here would take that value off on the next setHeight, and the
+       rule would jump until the next scroll put it back. */
+    if (phone && sec.classList.contains('is-open')) return;
+    sec.style.marginBottom = (phone ? gap * 1.5 : gap) + 'px';
   }
   setHeight();
 
@@ -9921,12 +9994,36 @@ function initCarousel(sec) {
   sec._setOpen = (v) => setOpen(v);
   function setOpen(open) {
     if (sec.classList.contains('is-open') === open) return;
+    /* Where the grid was when the card was tapped. Read before any class
+       change, since the reorder below moves this section to the top and
+       the number stops meaning anything a frame later. */
+    if (window.innerWidth <= 768) {
+      const me = document.getElementById('mainContent');
+      if (open) sec._mobReturnY = me ? me.scrollTop : 0;
+      /* Where this section's top edge sits on screen right now, before a
+         single class has changed. The FLIP at the end of this function
+         measures where it ends up and travels the difference. */
+      sec._mobFlipFrom = sec.getBoundingClientRect().top;
+    }
     // One project page at a time. Opening a second case study closes the one
     // already open rather than stacking them, so clicking a card in the grid
     // below reads as navigating to a new page.
     if (open) {
       document.querySelectorAll('#view-work .carousel-section.is-open').forEach(other => {
-        if (other !== sec && typeof other._setOpen === 'function') other._setOpen(false);
+        if (other === sec || typeof other._setOpen !== 'function') return;
+        /* ── A SWAP IS NOT A CLOSE ──
+           Tapping one of the two cards in a project's tail closes that
+           project and opens another. The close half was still doing what a
+           close does on the phone: putting the scroll back where the grid
+           was when the first project was opened, and doing it again on a
+           140ms timer, which landed after this project had already gone to
+           its top. That is why the new project opened part way down. Both
+           are switched off for the outgoing section: this call owns the
+           scroll and the movement. */
+        other._skipAnchor = true;
+        other._mobSuppress = true;
+        other._setOpen(false);
+        other._mobSuppress = false;
       });
     }
     const mainEl = document.getElementById('mainContent');
@@ -10539,6 +10636,27 @@ function initCarousel(sec) {
 
     setHeight();
 
+    /* ── THE PHONE SETTLES THE SCROLL BEFORE ANYTHING PAINTS ──
+       The jump to the top used to sit inside the frame callback below, one
+       frame after the sheet animation had already begun. So the first frame
+       showed the sheet starting to rise while the page was still at the old
+       scroll position, and the next frame moved the page under it: two
+       motions, opposite ways. Done here, synchronously, the page is at the
+       top before the animation's first frame exists. Same for the bar: it
+       is put away in one step rather than sliding up while the sheet
+       slides up under it. */
+    if (mainEl && !open && !sec._skipAnchor && window.innerWidth <= 768 && sec._mobReturnY != null) {
+      mainEl.style.scrollBehavior = 'auto';
+      mainEl.scrollTop = sec._mobReturnY;
+      mainEl.style.scrollBehavior = '';
+      sec._mobReturnDone = true;
+    }
+    if (mainEl && open && window.innerWidth <= 768) {
+      mainEl.style.scrollBehavior = 'auto';
+      mainEl.scrollTop = 0;
+      mainEl.style.scrollBehavior = '';
+      if (window._hideHeaderNow) window._hideHeaderNow(false);
+    }
     // anchor: keep this section's media top where it was on screen
     if (mainEl) {
       requestAnimationFrame(() => {
@@ -10548,25 +10666,135 @@ function initCarousel(sec) {
              regardless. Close puts the card back under the header, which is
              where the reader left the list, rather than wherever the
              collapse happened to leave the scroll. */
-          if (!open) {
-            const pad = parseFloat(getComputedStyle(mainEl).paddingTop) || 0;
-            mainEl.scrollTop += sec.getBoundingClientRect().top - pad;
+          if (!open && sec._skipAnchor) {
+            /* Closed by a view switch, which owns the scroll (it goes to 0). */
+            sec._skipAnchor = false;
+          } else if (!open) {
+            /* ── THE GRID COMES BACK WHERE IT WAS ──
+               Not where the card happens to land after the relayout: the
+               position the reader was at when they tapped, recorded on the
+               way in. Closing is then a return rather than a new arrival,
+               and it needs no animation to explain itself. Written twice,
+               once now and once after the cards have taken their heights,
+               since the column is shorter than the project was and the
+               first write can be clamped by a scroll height that has not
+               caught up. */
+            const back = sec._mobReturnY;
+            if (back != null && sec._mobReturnDone) {
+              /* Restored synchronously in the close path already; these
+                 are the settling passes only. */
+              const again = () => {
+                mainEl.style.scrollBehavior = 'auto';
+                mainEl.scrollTop = back;
+                mainEl.style.scrollBehavior = '';
+              };
+              again();
+              setTimeout(again, 140);
+              sec._mobReturnY = null; sec._mobReturnDone = false;
+            } else if (back != null) {
+              const put = () => {
+                mainEl.style.scrollBehavior = 'auto';
+                mainEl.scrollTop = back;
+                mainEl.style.scrollBehavior = '';
+              };
+              put();
+              requestAnimationFrame(put);
+              setTimeout(put, 140);
+              sec._mobReturnY = null;
+            } else {
+              const pad = parseFloat(getComputedStyle(mainEl).paddingTop) || 0;
+              mainEl.scrollTop += sec.getBoundingClientRect().top - pad;
+            }
           }
         } else {
           const after = el.getBoundingClientRect().top;
           mainEl.scrollTop += (after - before);
         }
         if (open) {
-          // then settle it just under the header
-          setTimeout(() => {
-            const carTop = el.getBoundingClientRect().top;
-            const mainTop = mainEl.getBoundingClientRect().top;
-            // A project page starts at its top, with the header away.
+          /* ── THE PHONE DOES NOT TRAVEL ──
+             A project page starts at its top. On the desktop that is a short
+             smooth scroll, because the column was never far from the top.
+             On the phone the card could be six projects down, and a smooth
+             scroll from there ran the whole index past the reader on the way
+             up: opening the last project looked nothing like opening the
+             first, and the travel was the difference. The jump is instant
+             here and the fade below covers it, so every project opens the
+             same way whatever its position in the list. */
+          if (window.innerWidth <= 768) {
+            /* Already done synchronously above; nothing to do this frame. */
+          } else setTimeout(() => {
             mainEl.scrollTo({ top: 0, behavior: 'smooth' });
             if (window._hideHeaderNow) window._hideHeaderNow();
           }, 60);
         }
       });
+    }
+    /* ── THE PHONE ANIMATES THE RESULT, NOT THE MOVE ──
+       Restarted by hand: the same class is set on consecutive opens, and an
+       animation only replays if the browser sees the class leave and return
+       with a layout read in between. Cleared on animationend, and on a timer
+       as well, since a backgrounded tab can swallow the event and would
+       otherwise leave the column holding the animation's end state. */
+    /* ── THE FLIP ──
+       Read where the card was, apply the state, then put the column back by
+       the difference and let it travel. Everything moves together: the project
+       that is opening, the rule under it, the two cards in its tail. There is
+       no second animation to disagree with it.
+
+       reduced motion skips straight to the settled page, and so does a tiny
+       distance: under a third of a gutter there is nothing to see and the
+       transition is only a delay. */
+    if (window.innerWidth <= 768 && sec._mobSuppress) sec._mobFlipFrom = null;
+    if (window.innerWidth <= 768 && sec._mobFlipFrom != null && !sec._mobSuppress) {
+      const workEl2 = document.getElementById('view-work');
+      const from = sec._mobFlipFrom;
+      sec._mobFlipFrom = null;
+      const to = sec.getBoundingClientRect().top;
+      const dy = from - to;
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      /* ── ONE SPEED, WHATEVER THE DISTANCE ──
+         A fixed half second covered four pixels and a whole screen at the
+         same duration, so a card near the top snapped and a card at the
+         bottom drifted. The duration grows with the travel: half a second
+         as the floor, up to a third of a second more for a full screen of
+         movement, which keeps the speed the page appears to move at close
+         to constant wherever the card was.
+
+         The curve is an exponential ease out. It leaves at speed and spends
+         most of its time arriving, so the end of the movement is where the
+         eye is given time, not the start. */
+      const span = Math.min(1, Math.abs(dy) / (window.innerHeight || 800));
+      const dur = (0.9 + span * 0.6).toFixed(2);
+      if (workEl2 && !still && Math.abs(dy) > 2) {
+        if (open) sec.classList.add('is-arriving');
+        window._mobFlip = true;
+        workEl2.style.transition = 'none';
+        workEl2.style.transform = 'translateY(' + dy.toFixed(1) + 'px)';
+        void workEl2.offsetWidth;
+        /* ── THE START IS EASED TOO ──
+           The first handle used to sit at 0.9, which threw nine tenths of
+           the distance away in the first fraction of the movement: the page
+           was effectively already there and the rest of the second was the
+           tail. Dropped to 0.08, so the column builds speed instead of
+           starting at it. The second handle is untouched, so the arrival,
+           which was right, is exactly as it was. */
+        workEl2.style.transition = 'transform ' + dur + 's cubic-bezier(0.34, 0.08, 0.16, 1)';
+        workEl2.style.transform = '';
+        let settled = false;
+        const done = (e) => {
+          if (e && (e.target !== workEl2 || e.propertyName !== 'transform')) return;
+          if (settled) return;
+          settled = true;
+          workEl2.removeEventListener('transitionend', done);
+          workEl2.style.transition = '';
+          workEl2.style.transform = '';
+          window._mobFlip = false;
+          sec.classList.remove('is-arriving');
+          if (window._updateCollapseDock) requestAnimationFrame(window._updateCollapseDock);
+        };
+        workEl2.addEventListener('transitionend', done);
+        setTimeout(done, (+dur * 1000) + 260);
+      }
     }
     if (window._positionFirst) requestAnimationFrame(window._positionFirst);
     if (window._updateCollapseDock) {
@@ -10864,8 +11092,37 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
        arriving: no rect worth reading. Left where it was rather than moved to
        a wrong place, and the next pass has the answer. */
     if (!sec || !tail) return;
-    const foot = tail.getBoundingClientRect().bottom - sec.getBoundingClientRect().top;
+    const secRect = sec.getBoundingClientRect();
+    const tailBottom = tail.getBoundingClientRect().bottom;
+    const foot = tailBottom - secRect.top;
     b.style.top = (foot + gap).toFixed(1) + 'px';
+    /* ── THE PHONE STACKS IT INSTEAD OF PLACING IT ──
+       Below 769 the control is an ordinary block at the end of the section,
+       so the inline top above does nothing and the distance from the last
+       picture is a margin. One gutter, the same gutter the pictures keep
+       between themselves, so the way out reads as the next item in the
+       sequence rather than as something adrift under it.
+
+       ── AND THE RULE SITS IN THE MIDDLE ──
+       The section's own padding-bottom is the air above the rule and its
+       margin-bottom is the air below. The first is measured, not authored:
+       it is whatever the last picture's bottom edge to the section's bottom
+       edge turns out to be, back button and all. Writing that same figure as
+       the margin puts the rule exactly halfway between the picture above it
+       and the picture below, at any type size and whether or not the label
+       wraps. important, because both figures are declared that way in the
+       trailing phone sheet. */
+    if (window.innerWidth <= 768) {
+      /* Two gutters, not one. At one the arrow read as part of the last
+         picture rather than as the end of the project. */
+      const want = (gap * 2) + 'px';
+      if (b.style.marginTop !== want) b.style.marginTop = want;
+      const above = secRect.bottom - tailBottom;
+      if (above > 0) {
+        const mb = above.toFixed(1) + 'px';
+        if (sec.style.marginBottom !== mb) sec.style.setProperty('margin-bottom', mb, 'important');
+      }
+    }
     /* First real figure of this opening. Until now the control was held at
        visibility:hidden, because top:auto resolves to the section's own top
        left corner and that is over the hero image. */
@@ -17042,6 +17299,34 @@ document.addEventListener('visibilitychange', function() {
     body.view-work.has-open #seeMoreLabel { display: none !important; }
   }
   @media (max-width: 768px) {
+    /* ── OPENING AND CLOSING ARE A CHANGE OF PAGE ──
+       The phone has no FLIP: the lead image it used to fly is not there any
+       more, and the state change is a reorder plus a scroll to the top, which
+       lands as a cut. Two short animations instead, both on properties the
+       compositor owns so nothing re-measures while they run.
+
+       The column crossfades, which covers the reorder. Inside it the open
+       project's copy rises a few pixels behind the fade, so the page reads as
+       arriving rather than as being swapped. Written as animations rather than
+       transitions because there is no from-state to transition out of: the
+       elements are laid out fresh in their final place.
+
+       Opacity and transform only. The dock measures live rects on every frame
+       and placeBack writes the rule's spacing from them, so anything that
+       changed a height here would be visible as the rule chasing the layout. */
+    /* ── THE COLUMN TRAVELS THE DISTANCE THE CARD DID ──
+       No keyframes here any more. Opening and closing are a FLIP written in
+       setOpen: the tapped card's position is read before the state changes,
+       the column is offset by the difference afterwards, and that offset is
+       transitioned away. So the page moves exactly as far as the card had to
+       move and in one direction only. A card near the top barely travels; the
+       last project comes up most of a screen. The two earlier versions moved
+       the page one way and the content the other, which is the fight.
+
+       Everything it needs is inline, written by script, so there is nothing to
+       declare. Left here as the note saying where it went. */
+  }
+  @media (max-width: 768px) {
     /* ── THE CLAIM UNDER THE NAME ──
        The one-line role the desktop card carries, "Bridged brand and
        product", comes to the phone card: directly under the company name,
@@ -17085,6 +17370,12 @@ document.addEventListener('visibilitychange', function() {
        half. Nothing on the landing is touched, because none of this applies
        until has-open. */
     body.view-work.has-open #view-work {
+      /* The phone sheet sets .scroll-content to display:block, so this box
+         was never a flex container and every rule below it, the direction,
+         the wrap, the halves and the orders, described a layout that could
+         not happen: the pair stacked. Declared here rather than on the
+         landing, so only an open project's tail is a row. */
+      display: flex !important;
       flex-direction: row;
       flex-wrap: wrap;
       align-items: flex-start;
@@ -17113,21 +17404,40 @@ document.addEventListener('visibilitychange', function() {
     /* :not(.is-open) is carried for specificity alone: the rule that hides
        every collapsed card on an open project spells it, and a selector
        without it loses that tie no matter where it sits in the sheet. */
-    body.view-work.has-open .carousel-section:not(.is-open).is-peer-a,
-    body.view-work.has-open .carousel-section:not(.is-open).is-peer-b {
+    /* ── WHY #view-work IS IN THIS SELECTOR ──
+       The rule two blocks up pins every child of #view-work to the full
+       measure, and it carries an id. An id outranks any number of classes,
+       so this rule, five classes deep and written later, still lost: the
+       pair kept flex-basis 100% and stacked, which looked like the row
+       never being a row. Matched through the same id and the tie is broken
+       the way source order says. */
+    body.view-work.has-open #view-work > .carousel-section:not(.is-open).is-peer-a,
+    body.view-work.has-open #view-work > .carousel-section:not(.is-open).is-peer-b {
       display: grid !important;
-      flex: 0 0 calc(50% - var(--gap) / 2);
-      max-width: calc(50% - var(--gap) / 2);
+      flex: 0 0 calc(50% - var(--gap) / 2) !important;
+      max-width: calc(50% - var(--gap) / 2) !important;
       order: 1;
       padding-top: 0;
     }
-    body.view-work.has-open .carousel-section.is-peer-b { order: 2; }
+    body.view-work.has-open #view-work > .carousel-section.is-peer-b { order: 2; }
     /* Half the measure sets the name and the claim at the copy size rather
        than the headline size, so two cards read as an index and not as two
        more titles competing with the project above them. */
     body.view-work.has-open .carousel-section.is-peer-a .col-title,
     body.view-work.has-open .carousel-section.is-peer-b .col-title {
       font-size: var(--type, 15.6px);
+    }
+    /* ── THE PAIR ARE NAMES, NOT CARDS ──
+       At half the measure the claim and the discipline line wrap to three
+       or four lines each and the two thumbnails stop being an index and
+       start being two more projects. The name alone says which is which,
+       and the card itself is the invitation. Matched through #view-work for
+       the same reason the sizing above it is. */
+    body.view-work.has-open #view-work > .carousel-section.is-peer-a .info-line,
+    body.view-work.has-open #view-work > .carousel-section.is-peer-a .info-description,
+    body.view-work.has-open #view-work > .carousel-section.is-peer-b .info-line,
+    body.view-work.has-open #view-work > .carousel-section.is-peer-b .info-description {
+      display: none !important;
     }
     body.view-work.has-open #workFooter { order: 3; }
     body.view-work.has-open #workPageCopy { order: 6; }
