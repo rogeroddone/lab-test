@@ -1034,6 +1034,30 @@
     @media (max-width: 768px) {
       .collapse-circle { right: var(--pad); }
     }
+    /* The pinned name. Same plate as the close button: white, the media
+       radius, so the two read as one control strip over whatever scrolls
+       under them. Positioned inline by the dock; the negative margin puts
+       the text exactly where the real title's left edge was. */
+    .collapse-name {
+      display: none;
+      position: fixed;
+      z-index: 10001;
+      pointer-events: none;
+      white-space: nowrap;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 0 6px;
+      margin-left: -6px;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+    }
+    .collapse-name.is-visible {
+      opacity: 1; visibility: visible;
+      transition: opacity 0.25s ease, visibility 0s;
+    }
+    @media (max-width: 768px) {
+      .collapse-name { display: block; }
+    }
 
     /* open section: no custom X cursor, the circle is the close affordance */
     .carousel-section.is-open .rm-main-container,
@@ -8572,11 +8596,30 @@ document.addEventListener('keydown', e => {
          only moved the desktop bar moved nothing a phone reader could see.
          Both are written every frame; whichever is not rendered ignores it. */
       const mbarEl = document.querySelector('.mobile-header-bar');
+      /* ── THE PHONE BAR PUSHES, IT DOES NOT COVER ──
+         Past the landing zone the bar used to slide in over the page. Now
+         the page moves down by the bar's height as the bar arrives and
+         back up as it leaves, on the same easing, so nothing is ever under
+         it. A transform on the two scroll-content blocks, not a padding
+         change, because padding would re-lay-out the whole column on every
+         frame of the slide. Inside the landing zone the bar rides away 1:1
+         with the page's own top padding and no push is needed. The dock's
+         fixed controls live outside these blocks, so the transform does not
+         move them; they track the bar's rect on their own. */
+      const pushEls = Array.from(document.querySelectorAll('.scroll-content'));
       const setHeader = (ty, animate) => {
         const t = 'translateY(' + ty.toFixed(2) + 'px)';
         if (barEl)  { barEl.classList.toggle('hdr-anim', animate);  barEl.style.transform = t; }
         if (mbarEl) { mbarEl.classList.toggle('hdr-anim', animate); mbarEl.style.transform = t; }
         if (hdrEl)  { hdrEl.classList.toggle('hdr-anim', animate);  hdrEl.style.transform = t; }
+        if (window.innerWidth <= 768) {
+          const hh = 57;
+          const push = mainEl.scrollTop > hh ? Math.max(0, hh + ty) : 0;
+          const pt = push > 0.5 ? 'translateY(' + push.toFixed(2) + 'px)' : '';
+          pushEls.forEach(el => { el.classList.toggle('hdr-anim', animate); if (el.style.transform !== pt) el.style.transform = pt; });
+        } else {
+          pushEls.forEach(el => { if (el.style.transform) { el.style.transform = ''; el.classList.remove('hdr-anim'); } });
+        }
       };
       /* The phone bar is its own fixed 57, not --headerH. Travelling the
          desktop distance would leave a strip of it on screen or overshoot. */
@@ -10651,7 +10694,18 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
       requestAnimationFrame(update);
     });
     dock.appendChild(b);
-    return { sec: sec, btn: b };
+    /* The phone has no lead image inside an open project any more, so the
+       name would leave the screen with the copy. A body-level copy of it is
+       pinned beside the close button once the real one has scrolled under
+       the pin line, and hidden again the moment the real one is back. Text
+       only; the type is copied from the live title at open. */
+    const nm = document.createElement('div');
+    nm.className = 'collapse-name';
+    nm.setAttribute('aria-hidden', 'true');
+    const t = sec.querySelector('.info-title');
+    nm.textContent = t ? t.textContent.trim() : '';
+    dock.appendChild(nm);
+    return { sec: sec, btn: b, name: nm };
   });
 
   function lastAssetOf(sec) {
@@ -10671,6 +10725,7 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
     items.forEach(o => {
       if (about || !o.sec.classList.contains('is-open')) {
         o.btn.classList.remove('is-visible');
+        o.name.classList.remove('is-visible');
         return;
       }
       /* ── THE X DOES NOT CHASE THE FLYING IMAGE ──
@@ -10682,11 +10737,53 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
          rest, so the X appears directly in its final place. */
       if (o.sec.classList.contains('is-arriving')) {
         o.btn.classList.remove('is-visible');
+        o.name.classList.remove('is-visible');
         return;
       }
       const head = o.sec.querySelector('.rm-main-container');
       const tail = lastAssetOf(o.sec);
       if (!head || !tail) { o.btn.classList.remove('is-visible'); return; }
+      /* ── THE PHONE ANCHORS TO THE NAME, NOT THE LEAD ──
+         The lead container is display:none inside an open project on the
+         phone, so its rect is all zeros: travel came out as one gutter,
+         and right came out as the whole viewport plus a gutter, which is
+         where the close button went. On the phone the button rides beside
+         the project's name on the first row of the copy and pins with it. */
+      const onPhone = window.innerWidth <= 768;
+      const titleEl = onPhone ? o.sec.querySelector('.info-title') : null;
+      if (onPhone && titleEl) {
+        const barEl3 = document.querySelector('.mobile-header-bar');
+        const barBot = barEl3 ? barEl3.getBoundingClientRect().bottom : 0;
+        const floorP = Math.max(gap, barBot + gap);
+        const tr = titleEl.getBoundingClientRect();
+        const sr = o.sec.getBoundingClientRect();
+        const btnH = o.btn.offsetHeight || 26.6;
+        /* Both sit on one line. While the name rides, the button is centred
+           on it; once the name would pass the pin line, both hold there. */
+        const pinned = tr.top < floorP;
+        const lineTop = pinned ? floorP : tr.top;
+        const lineH = pinned ? btnH : tr.height;
+        const btnTop = pinned ? floorP : (tr.top + (tr.height - btnH) / 2);
+        o.btn.style.top = btnTop + 'px';
+        o.btn.style.right = Math.max(0, window.innerWidth - sr.right + gap) + 'px';
+        if (!o.name.dataset.typed) {
+          const tcs = getComputedStyle(titleEl);
+          o.name.style.font = tcs.font;
+          o.name.style.letterSpacing = tcs.letterSpacing;
+          o.name.style.textTransform = tcs.textTransform;
+          o.name.style.color = tcs.color;
+          o.name.dataset.typed = '1';
+        }
+        o.name.style.left = tr.left + 'px';
+        o.name.style.top = (lineTop + (lineH - tr.height) / 2) + 'px';
+        const secBot = sr.bottom;
+        const tailBot = tail.getBoundingClientRect().bottom;
+        const on = Math.min(tailBot, secBot) > btnTop + btnH;
+        o.btn.classList.toggle('is-visible', on);
+        o.name.classList.toggle('is-visible', on && pinned);
+        openSec = o.sec; openTail = tail;
+        return;
+      }
       openSec = o.sec; openTail = tail;
       // Anchor to this project's image, one gutter inside it, so the circle
       // arrives with it. Never climb above the resting position.
