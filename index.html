@@ -11598,6 +11598,7 @@ document.addEventListener('visibilitychange', function() {
   function want(v, on) {
     if (on) {
       if (v._pvvPlaying) return;          // already playing or play in flight
+      if (v.error) { retryVideo(v); return; }   // dead source: re-fetch it, play() alone never will
       v._pvvPlaying = true;
       const pr = v.play();
       if (pr && pr.catch) pr.catch(e => {
@@ -11714,6 +11715,41 @@ document.addEventListener('visibilitychange', function() {
     sec.addEventListener('mouseleave', () => { delete sec.dataset.hover;  playVisibleVideos(); });
   });
   window._playVisibleVideos = playVisibleVideos;
+
+  /* ── RETRY A DEAD CLIP ──
+     A <video> that fails once stays failed for the life of the page: play()
+     keeps rejecting and nothing re-fetches the source. That is what a freshly
+     swapped asset looks like on the phone, since ImageKit answers the first
+     requests for a new ?tr= variant with not-ready-yet while it encodes, and
+     the clip that hit that moment is dead until a reload. Here a failed clip
+     re-requests itself a few times with growing gaps, and from the third try
+     asks for the original file with no transform, which always exists.
+     Retries stop on the first successful play. */
+  const RETRY_DELAYS = [3000, 8000, 20000, 45000];
+  function retryVideo(v) {
+    if (!v || v._pvvRetryTimer) return;
+    const n = v._pvvRetries || 0;
+    if (n >= RETRY_DELAYS.length) return;
+    v._pvvRetryTimer = setTimeout(() => {
+      v._pvvRetryTimer = null; v._pvvRetries = n + 1; v._pvvPlaying = false;
+      if (n >= 2) {
+        const src = v.querySelector('source[src]') || v;
+        const u = src.getAttribute('src') || '';
+        if (/[?&]tr=/.test(u)) src.setAttribute('src', u.replace(/([?&])tr=[^&#]*&?/, '$1').replace(/[?&]$/, ''));
+      }
+      if (v.preload === 'none') { v.preload = 'auto'; v.setAttribute('preload', 'auto'); }
+      try { v.load(); } catch (e) {}
+      schedulePVV();
+    }, RETRY_DELAYS[n]);
+  }
+  document.addEventListener('error', e => {
+    const t = e.target;
+    const v = t && t.tagName === 'VIDEO' ? t : (t && t.tagName === 'SOURCE' ? t.closest('video') : null);
+    if (v) retryVideo(v);
+  }, true);
+  document.addEventListener('playing', e => {
+    const t = e.target; if (t && t.tagName === 'VIDEO') t._pvvRetries = 0;
+  }, true);
   /* ── DIAGNOSTIC ──
      window.VIDEO_DEBUG = true turns on a console warn for every rejected
      play(). window.videoReport() dumps the live state of every video so a
