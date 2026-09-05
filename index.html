@@ -11572,6 +11572,18 @@ document.addEventListener('visibilitychange', function() {
     }
     const sections = _pvvSections;
     const mid = window.innerHeight / 2;
+    /* An open project owns playback for as long as any of it is on screen.
+       Without this the midpoint race below hands playback to the first
+       collapsed card under the project once the reader is past roughly
+       three quarters of it: that card's midpoint is nearer the viewport
+       centre than the open section's, which by then sits thousands of
+       pixels above. The last clips of every project on the phone froze on
+       their poster for exactly this reason. */
+    const openSec = document.querySelector('.carousel-section.is-open');
+    if (openSec) {
+      const o = openSec.getBoundingClientRect();
+      if (o.bottom > 0 && o.top < window.innerHeight) { _stickySec = openSec; return openSec; }
+    }
     let closest = null, closestDist = Infinity, stickyDist = Infinity;
     sections.forEach(sec => {
       const r = sec.getBoundingClientRect();
