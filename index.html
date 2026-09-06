@@ -6,6 +6,18 @@
      gone by the time anything is asked for. -->
 <link rel="preconnect" href="https://ik.imagekit.io" crossorigin>
 <link rel="dns-prefetch" href="https://ik.imagekit.io">
+<!-- ── THE FIRST CARD SHOULD NOT ARRIVE EMPTY ──
+     The phone's first card is a video with preload="none", so its poster is
+     the only thing that can paint, and the poster is discovered late: the
+     browser has to parse a thousand lines of markup and build the element
+     before it even asks for that file. Until it lands the card is its own
+     empty placeholder, which is the blank the page opens on. Asked for in
+     the head instead, at high priority, so the request is in flight while
+     the rest of the document is still parsing. Phone only, since the desktop
+     card carries a different asset, and one file, since the point is to be
+     first rather than to fetch the set. -->
+<link rel="preload" as="image" fetchpriority="high" media="(max-width: 768px)"
+      href="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_lests_cruise_mobile_1.mp4/ik-thumbnail.jpg">
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>Roger Oddone</title>
@@ -1789,14 +1801,12 @@
          the two. dvh would track the bar exactly but reflows the whole column
          while you scroll. */
       .main-content { display: block; height: 100svh; }
-      /* ── NO LEAD IMAGE ON THE PHONE ──
-         An open project starts with its copy. The container is the card's
-         thumbnail while collapsed, so it is hidden by the open state only;
-         the collapsed card is untouched. The lead slide still exists in the
-         markup and on desktop, and still feeds the card thumbnail. */
-      .carousel-section.is-open .rm-main-container { display: none !important; }
-      /* The wrap's 10px keeps a hairline of nothing above the copy otherwise. */
-      .carousel-section.is-open .carousel-media-wrap { margin-bottom: 0; }
+      /* ── THE LEAD IMAGE IS BACK ON THE PHONE ──
+         An open project starts with its first slide, above the copy, as it
+         did before the no-lead experiment. setHeight() already writes the
+         open frame's height from the asset's own proportion on the phone,
+         so nothing else is needed here. The wrap keeps its 10px, which is
+         now the gap between the lead and the copy. */
       .scroll-content { display: block; }
       .header-fixed { grid-template-columns: 1fr 1fr; }
       /* ── THE TYPE RIDES THE BAND ──
@@ -1891,9 +1901,16 @@
          grid-column and grid-row, and only the phone reads the order. flex:none
          because a column flex container will otherwise shrink a fixed-height
          box to make room. */
+      /* ── THE COPY OPENS THE COLUMN, THE PHOTO SITS IN THE MIDDLE ──
+         The photo held the top for a build, which meant Info opened on a face
+         while Work opened on the work, and the statement, the one sentence the
+         column is built on, started a screenful down. Reversed: the copy is
+         the first thing in Info exactly as "Selected works" is the first thing
+         in Work, both against the column's own top, and the photo takes the
+         space between the copy and the record. */
       .about-bio-grid { display: flex; flex-direction: column; }
-      .about-photo-ph { order: -1; flex: none; }
-      .about-bio-text { order: 0; }
+      .about-bio-text { order: -1; }
+      .about-photo-ph { order: 0; flex: none; }
 
       /* ── THE PLUS SITS ON THE RULE, ON THE RIGHT ──
          The same block the work entries use: Expa, Cruise, Principal Brand
@@ -2167,6 +2184,31 @@
       .section-label + .about-contact-block .work-contact-line,
       .section-label + .about-contact-block-right .about-contact-block-right-line,
       .work-experience-label + .about-contact-block-right .about-contact-block-right-line { display: none; }
+
+      /* ── THE WAY OUT SAYS ITS NAME ON THE PHONE TOO ──
+         The desktop sets the word beside the arrow inside body.unified rules,
+         which the phone never matches, so below 769 the span was in the markup
+         and unstyled: a bare word wrapping under a block-level button. Same
+         row here, same gutter between the two, same face, size and grey as
+         "See more projects". The plate keeps the control's own 24 by 18 box
+         rather than the desktop's larger one, since on the phone it sits in
+         the flow at the end of the pictures rather than on a corner of one. */
+      #indexBack {
+        display: flex;
+        align-items: center;
+        gap: var(--gap);
+        width: auto;
+      }
+      #indexBack .ib-label {
+        font-family: var(--font);
+        font-weight: 400;
+        font-size: 16.2px;
+        line-height: 1;
+        color: #999999;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+      }
 
       /* Fix about page: reset subgrids that have no grid parent on mobile */
       .about-contact-inner { display: block !important; overflow: hidden; }
@@ -2657,6 +2699,30 @@
     .carousel-section.is-open .col-list,
     .carousel-section.is-open .col-list * {
       line-height: var(--leadingCopy) !important;
+    }
+
+    /* ── THE COMPANY LINE IS THE DISCIPLINES' GREY ──
+       "Autonomous vehicles" says what the company is, which is context rather
+       than the work. It sits under the name inside an open project and takes
+       #999999, the exact grey .info-list-para gives the disciplines beside it,
+       so the two pieces of context on that row are one voice and the name is
+       the only black thing in the corner. Scoped to .is-open: on a card the
+       node is hidden on the phone and off the card entirely on desktop. */
+    .carousel-section.is-open .info-description { color: #999999; }
+
+    /* ── THE CREDIT UNDER THE COPY ──
+       Where the work was made, at the end of the reading rather than in the
+       header, because it answers a question the reader only has once they
+       have read what was done. Same grey and same size as the disciplines and
+       the company line, so the three pieces of context on a project are one
+       voice, and one line of air above it so it sits apart from the last
+       paragraph without becoming a section of its own. HG26 and Oddone carry
+       none: both are his own, and a credit naming himself says nothing. */
+    .info-credit {
+      color: #999999;
+      margin-top: 1.4em;
+      font-size: inherit;
+      line-height: inherit;
     }
 
     /* ── INFO PAGE: THE BIO ──
@@ -3938,8 +4004,18 @@
          upward scroll landed straight on top of it. That is the vanishing
          name. The project starts under the bar's line like every other page,
          and the push does the rest once you are further down. */
-      body.view-work.has-open .main-content { padding-top: 57px; }
-      body.view-work.has-open #view-work { padding-top: var(--gap); }
+      /* ── AN OPEN PROJECT STARTS AT THE TOP ──
+         This was 57, the bar's height, from the period when the phone had no
+         lead image and the project opened on its name: the name needed the
+         bar's line to sit under. The lead image is back and it opens the
+         page, so the clearance is one gutter, the same gutter it keeps from
+         the sides. The bar is hidden on open and pushes this column down as
+         it returns, so a gutter here never means the band on the image. */
+      body.view-work.has-open .main-content { padding-top: 0; }
+      /* --pad, not --gap: the page's outer margin is what the lead image sits
+         inside on the left and the right, so the same figure above it makes
+         the three clearances one measurement rather than two. */
+      body.view-work.has-open #view-work { padding-top: var(--pad); }
       /* A card carries 10px of padding on its top so the thumbnail sits inside
          its box in the grid. On the open project that padding is the second
          gutter in a row and lands the lead image at 20 rather than on the
@@ -5783,6 +5859,24 @@
         grid-row: 1 !important;
         grid-column: 3 / 5 !important;
       }
+      /* ── ONE BLOCK, NOT TWO GRID ITEMS ──
+         placeDescription() moves .info-description into .col-title when a
+         project opens. .col-title is display:contents on desktop, so the name
+         and the description came out as two separate items on the card grid:
+         placing the description on the row below left a grid gap between them
+         and it read as a second thing on the page rather than the name's own
+         second line.
+
+         The box paints again for that state. .col-title takes the name's own
+         tracks, the two nodes flow inside it as one paragraph, and the leading
+         between them is type leading rather than a grid row. .info-title's own
+         placement rules go inert inside a block, which is what is wanted: the
+         box is placed, not its children. */
+      body.unified.has-open .carousel-section.is-open .col-title {
+        display: block !important;
+        grid-row: 1 !important;
+        grid-column: 3 / 5 !important;
+      }
       body.unified.has-open .carousel-section.is-open .col-list     { grid-row: 1 !important; grid-column: 5 / 7 !important; }
       body.unified.has-open .carousel-section.is-open .col-para-a   { grid-row: 1 !important; grid-column: 7 / 10 !important; }
       body.unified.has-open .carousel-section.is-open .col-para-b   { grid-row: 2 !important; grid-column: 7 / 10 !important; }
@@ -6325,11 +6419,11 @@ window.__errLog = [];
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Cruise was unlike most things I had worked on. In an Uber, the driver is there to answer questions. On a Cruise, the experience had to be intentional enough to anticipate every rider need. Down to an icon of a car with an arrow pointing to the correct exit door. Few precedents. Little to compare against.<br><br>I joined as Staff Brand Designer right before its transition from R&D to public rollout. The identity had been established before I arrived. My role was to scale it across a wide surface: consumer-facing product, internal tools, marketing, and a shared design system. All while infusing approachability into a highly advanced technology. Expressive lines with width variations in the feature icons and illustrations, and motion as a core part of the visual language.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p><p class="info-credit">Created while I worked at Cruise.</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Iconography</span><span>• Art direction</span><span>• Guidelines</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Bridged brand and product</span><span class="mob-tags">• Iconography<br>• Art direction<br>• Guidelines</span><br><br>Cruise was unlike most things I had worked on. In an Uber, the driver is there to answer questions. On a Cruise, the experience had to be intentional enough to anticipate every rider need. Down to an icon of a car with an arrow pointing to the correct exit door. Few precedents. Little to compare against.<br><br>I joined as Staff Brand Designer right before its transition from R&D to public rollout. The identity had been established before I arrived. My role was to scale it across a wide surface: consumer-facing product, internal tools, marketing, and a shared design system. All while infusing approachability into a highly advanced technology. Expressive lines with width variations in the feature icons and illustrations, and motion as a core part of the visual language.<br><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Bridged brand and product</span><span class="mob-tags">• Iconography<br>• Art direction<br>• Guidelines</span><br><br>Cruise was unlike most things I had worked on. In an Uber, the driver is there to answer questions. On a Cruise, the experience had to be intentional enough to anticipate every rider need. Down to an icon of a car with an arrow pointing to the correct exit door. Few precedents. Little to compare against.<br><br>I joined as Staff Brand Designer right before its transition from R&D to public rollout. The identity had been established before I arrived. My role was to scale it across a wide surface: consumer-facing product, internal tools, marketing, and a shared design system. All while infusing approachability into a highly advanced technology. Expressive lines with width variations in the feature icons and illustrations, and motion as a core part of the visual language.<br><br>Working closely with product designers, UX writers, and PMs, I led the expansion of the visual identity system, defining the icon style and overseeing the creation of hundreds of UI and feature icons. I extended the color system across disciplines, built and managed a design org brand portal, and ran office hours and critiques to sharpen the design work coming out of the org.<br><br>2021–2024</p><p class="info-credit">Created while I worked at Cruise.</p></div></div>
         </div>
       </div>
 
@@ -6467,11 +6561,11 @@ window.__errLog = [];
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p><p class="info-credit">Created while I worked at Uber.</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Global Rebrand</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><span class="mob-tags">• Wordmark<br>• Color system<br>• Guidelines</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><span class="mob-tags">• Wordmark<br>• Color system<br>• Guidelines</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p><p class="info-credit">Created while I worked at Uber.</p></div></div>
         </div>
       </div>
 
@@ -6526,16 +6620,16 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Google</div><span class="info-line">Built the color systems behind Material Design</span><div class="info-description">Material Design / Kennedy</div></div>
+          <div class="col-title"><div class="info-title">Google</div><span class="info-line">Built the color and product icon systems of Material Design</span><div class="info-description">Material Design / Kennedy</div></div>
           <div class="col-list"><div class="info-list-para"><span>Product icon</span><span>Guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>2011–2014</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>2011–2014</p><p class="info-credit">Created while I worked at Google.</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Product icon</span><span>• Color system</span><span>• Guidelines</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built the color systems behind Material Design</span><span class="mob-tags">• Product icon<br>• Guidelines</span><br><br>After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>2011–2014</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built the color and product icon systems of Material Design</span><span class="mob-tags">• Product icon<br>• Guidelines</span><br><br>After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>2011–2014</p><p class="info-credit">Created while I worked at Google.</p></div></div>
         </div>
       </div>
 
@@ -6640,16 +6734,16 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Aero</div><span class="info-line">Gave an airline its first coherent identity</span><div class="info-description">Airline</div></div>
+          <div class="col-title"><div class="info-title">Aero</div><span class="info-line">Made boarding part of the brand</span><div class="info-description">Airline</div></div>
           <div class="col-list"><div class="info-list-para"><span>Livery</span><span>Color palette</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p><p class="info-credit">Created at Oddone.</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Brand refresh</span><span>• Jet livery design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Gave an airline its first coherent identity</span><span class="mob-tags">• Livery<br>• Color palette</span><br><br>Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.<br><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Made boarding part of the brand</span><span class="mob-tags">• Livery<br>• Color palette</span><br><br>Aero is a semi-private airline offering a premium, intimate flying experience between select destinations.<br><br>Aero came to me in 2019 to design the livery for their first plane and revisit the logo. The goal was to elevate the perception of luxury. My advice was to keep the symbol and wordmark but refine the palette, removing the blue tones and developing a warmer spectrum of yellows, oranges, and reds that better expressed the sunrise idea at the core of the brand.<br><br>Rather than forcing the window color stripes onto other parts of the plane, we deconstructed the color component of the symbol and morphed it to fit the fuselage. The symbol was placed in the first window, and the staircase was wrapped in the gradient palette, turning boarding into part of the experience.<br><br>Testing the livery on black revealed something unexpected: the warm tones against dark backgrounds made the palette richer and more distinctive among airlines. That discovery became the foundation for a broader identity system built around Haas Grotesk and a restrained Swiss-inspired grid, flexing across boarding passes, destination cards, and amenity packaging while keeping the identity unmistakably Aero.<br><br>2019</p><p class="info-credit">Created at Oddone.</p></div></div>
         </div>
       </div>
 
@@ -6670,20 +6764,26 @@ window.__errLog = [];
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
               <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_gallery_mobile.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_gallery_mobile.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_wordmark_motion.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_wordmark_motion.mp4?updatedAt=1788615503700" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster9_a.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster9_a.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?updatedAt=1788491373915&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?updatedAt=1788491373915&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?updatedAt=1788491373915&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?updatedAt=1788491373915&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?updatedAt=1788491373915&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_concept.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_concept.mp4?updatedAt=1788615503884" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?updatedAt=1788491375759&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?updatedAt=1788491375759&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?updatedAt=1788491375759&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?updatedAt=1788491375759&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?updatedAt=1788491375759&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?updatedAt=1788491377174&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?updatedAt=1788491377174&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?updatedAt=1788491377174&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?updatedAt=1788491377174&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?updatedAt=1788491377174&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?updatedAt=1788491374417&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster9_a.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster9_a.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster_a.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster_a.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster_a.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster_a.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_gallery_mobile.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster11.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster11.mp4?updatedAt=1788615513974" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster6.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster6.mp4?updatedAt=1788615509507" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster10.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster10.mp4?updatedAt=1788615508587" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster2.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster2.mp4?updatedAt=1788615506135" type="video/mp4"></video></div>
             </div>
             <div class="rm-nav-overlay prev-zone"></div>
             <div class="rm-nav-overlay next-zone"></div>
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Oddone</div><span class="info-line">Built identities from zero, straight with founders</span><div class="info-description">Brand studio</div></div>
+          <div class="col-title"><div class="info-title">Oddone</div><span class="info-line">Turned my way of thinking into my identity</span><div class="info-description">Brand studio</div></div>
           <div class="col-list"><div class="info-list-para"><span>Motion</span><span>Website</span><span>Posters</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -6692,7 +6792,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Visual identity</span><span>• Motion</span><span>• Website</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built identities from zero, straight with founders</span><span class="mob-tags">• Motion<br>• Website<br>• Posters</span><br><br>After Uber, I started Oddone, a brand identity studio in San Francisco specializing in visual identities for forward-thinking businesses.<br><br>The studio's own identity was the first project, and being our own client is always hard. Partnering with brand strategist Caren Williams was essential in this process of self-discovery, forcing clarity about my values. The core idea that emerged: I explore every angle of an idea. The "O" is treated as a three-dimensional object that reveals a different form depending on the perspective, so that each view shows a different dimension of the same thinking. Strategy, design, and exploration, finally made visible.<br><br>After launching, I decided to push the system further, creating a series of expressive posters rooted in the same visual logic, developing a motion language for the brand in the process.<br><br>Creative Director / Designer: Roger Oddone · Brand Strategist: Caren Williams.<br><br>2018</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Turned my way of thinking into my identity</span><span class="mob-tags">• Motion<br>• Website<br>• Posters</span><br><br>After Uber, I started Oddone, a brand identity studio in San Francisco specializing in visual identities for forward-thinking businesses.<br><br>The studio's own identity was the first project, and being our own client is always hard. Partnering with brand strategist Caren Williams was essential in this process of self-discovery, forcing clarity about my values. The core idea that emerged: I explore every angle of an idea. The "O" is treated as a three-dimensional object that reveals a different form depending on the perspective, so that each view shows a different dimension of the same thinking. Strategy, design, and exploration, finally made visible.<br><br>After launching, I decided to push the system further, creating a series of expressive posters rooted in the same visual logic, developing a motion language for the brand in the process.<br><br>Creative Director / Designer: Roger Oddone · Brand Strategist: Caren Williams.<br><br>2018</p></div></div>
         </div>
       </div>
 
@@ -6719,16 +6819,16 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Expa</div><span class="info-line">Founding identities for a venture studio</span><div class="info-description">Company studio</div></div>
+          <div class="col-title"><div class="info-title">Expa</div><span class="info-line">Made a fixed mark move without breaking its own rules</span><div class="info-description">Company studio</div></div>
           <div class="col-list"><div class="info-list-para"><span>Art direction</span><span>Iconography</span><span>Logo motion</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">Expa is a company studio that partners with founders to build companies from zero.<br><br>This project evolved the website: expanding the case studies, sharpening how the studio articulates its approach with the highest level of design and technology craft.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p><p class="info-credit">Created while I worked at Expa.</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Art direction</span><span>• Iconography</span><span>• Logo motion</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Founding identities for a venture studio</span><span class="mob-tags">• Art direction<br>• Iconography<br>• Logo motion</span><br><br>Expa is a company studio that partners with founders to build companies from zero.<br><br>This project evolved the website: expanding the case studies, sharpening how the studio articulates its approach with the highest level of design and technology craft.<br><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Made a fixed mark move without breaking its own rules</span><span class="mob-tags">• Art direction<br>• Iconography<br>• Logo motion</span><br><br>Expa is a company studio that partners with founders to build companies from zero.<br><br>This project evolved the website: expanding the case studies, sharpening how the studio articulates its approach with the highest level of design and technology craft.<br><br>At the heart of the identity are the dots that form the letters of Expa, representing the companies the studio works with. Each one distinct, together forming something larger. The logo animation expresses that idea through movement: a 3D grid of 2D-looking spheres rotates like the face of a cube to reveal each letter in sequence. Four letters, four faces, one continuous motion.<br><br>2025</p><p class="info-credit">Created while I worked at Expa.</p></div></div>
         </div>
       </div>
 
@@ -8029,9 +8129,15 @@ document.addEventListener('keydown', e => {
        and it lets go as the Contact rule comes within three gutters. Past
        that the block simply scrolls with its column, at zero, like the rest
        of the page. */
-    const shift  = Math.max(0, Math.min(pinned, limit));
+    let shift  = Math.max(0, Math.min(pinned, limit));
     if (Math.abs(shift - _bioShift) < 0.01) return;
     _bioShift = shift;
+    /* Published for alignFirstSection: the room the open essay needs is
+       measured from the copy's PAINTED tail, and that tail is this far below
+       where the flow put it. Without the figure the record is pushed down by
+       the copy's height alone, the pin is asked to give up the difference,
+       and the essay opens upwards. */
+    window._bioShiftPx = shift;
     text.style.transform = 'translateY(' + shift.toFixed(2) + 'px)';
   }
   window._positionBio = positionBio;
@@ -8342,14 +8448,25 @@ document.addEventListener('keydown', e => {
        card the disciplines are hidden and it stands alone at the bottom left,
        landing on the base the paragraph it replaced used to sit on. One home,
        so this no longer has to run again when a project opens. */
+    /* ── INSIDE A PROJECT IT BELONGS TO THE NAME ──
+       "Autonomous vehicles" says what the company is, so under the company is
+       where it reads. Leading the discipline list put it in the middle of the
+       row, a column away from the only word it modifies. Open projects take
+       the phone's placement, in .col-title under the name; collapsed cards
+       keep the paragraph slot on desktop, where the disciplines are hidden and
+       it stands alone at the foot of the card. */
     items.forEach(o => {
-      if (mq.matches) o.para.insertBefore(o.desc, o.para.firstChild);
+      const open = o.title.closest('.carousel-section').classList.contains('is-open');
+      if (mq.matches && !open) o.para.insertBefore(o.desc, o.para.firstChild);
       else o.title.appendChild(o.desc);
     });
   }
   apply();
   if (mq.addEventListener) mq.addEventListener('change', apply);
   else if (mq.addListener) mq.addListener(apply);
+  /* Opening or closing a project changes which home is right, and neither is
+     a resize or a breakpoint change, so this has to hear the class itself. */
+  window._placeDescription = apply;
 })();
 
 /* ── LINE-TO-TYPE DISTANCE ──
@@ -8678,7 +8795,16 @@ document.addEventListener('keydown', e => {
              down it is the full height, which is the ordinary push. The old
              guard skipped the whole thing below hh and took the band with it
              over the name. */
-          const push = Math.max(0, Math.min(hh + ty, y + ty));
+          /* padTop is the column's own clearance above its first line, which
+             is the bar's height on the landing and one gutter inside an open
+             project. With the two equal the near-top term is y + ty, as
+             before; with a gutter the page owes the difference, or the bar
+             would arrive over the lead image. */
+          const padPx = parseFloat(getComputedStyle(document.documentElement)
+            .getPropertyValue('--pad')) || 10;
+          const padTop = (document.body.classList.contains('has-open')
+            && document.body.classList.contains('view-work')) ? padPx : hh;
+          const push = Math.max(0, Math.min(hh + ty, y + ty + (hh - padTop)));
           const pt = push > 0.5 ? 'translateY(' + push.toFixed(2) + 'px)' : '';
           /* The open and close flip owns this same transform for half a
              second. Writing the push over it mid flight cancels the
@@ -10132,6 +10258,10 @@ function initCarousel(sec) {
     const flipFrom = flipEl ? flipEl.getBoundingClientRect() : null;
 
     sec.classList.toggle('is-open', open);
+    /* The company line has a different home in each state, and this class is
+       what decides which. Neither a resize nor a breakpoint change, so the
+       placement pass has to be told directly. */
+    if (window._placeDescription) window._placeDescription();
     /* ── CLOSING HAS TO RELEASE THE RIDE ──
        splitScroll only ran from apply() and from the right column's scroll
        handler. Neither fires on a close, so the four transforms it writes kept
@@ -11051,14 +11181,15 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
       const head = o.sec.querySelector('.rm-main-container');
       const tail = lastAssetOf(o.sec);
       if (!head || !tail) { o.btn.classList.remove('is-visible'); return; }
-      /* ── THE PHONE ANCHORS TO THE NAME, NOT THE LEAD ──
-         The lead container is display:none inside an open project on the
-         phone, so its rect is all zeros: travel came out as one gutter,
-         and right came out as the whole viewport plus a gutter, which is
-         where the close button went. On the phone the button rides beside
-         the project's name on the first row of the copy and pins with it. */
-      const onPhone = window.innerWidth <= 768;
-      const titleEl = onPhone ? o.sec.querySelector('.info-title') : null;
+      /* ── BOTH SURFACES ANCHOR TO THE LEAD ──
+         The phone used to ride the button beside the project's name, because
+         the lead container was display:none inside an open project and its
+         rect was all zeros. The lead is back, so the phone takes the same
+         anchor as the desktop below: inside the image, top right, one gutter
+         from its top edge and one from its right. The name pin goes with it,
+         since the name is no longer the thing the button sits on. */
+      const onPhone = false;
+      const titleEl = null;
       if (onPhone && titleEl) {
         const barEl3 = document.querySelector('.mobile-header-bar');
         const barBot = barEl3 ? barEl3.getBoundingClientRect().bottom : 0;
@@ -12172,6 +12303,50 @@ document.addEventListener('visibilitychange', function() {
   }, { passive: true });
 })();
 
+/* ── THE SCROLLER COMES BACK SHORT ──
+   Chrome on iOS restores a tab with a stale small viewport: 100svh on
+   .main-content resolves to the height the screen had inside the tab
+   switcher, and nothing re-resolves it until a real resize. The column is
+   then a scroller shorter than the screen, everything past its bottom edge
+   is clipped, and the reader sees a card cut through the middle with the
+   page's own grey under it. Nothing is missing, it is simply below a box
+   that stopped early.
+
+   Only ever runs when the tab comes back or the window regains focus, and
+   only writes when the scroller is shorter than what is visible, which is
+   the one state svh is never meant to produce. The inline figure is the
+   visible height at that moment. It comes off again on the first real
+   resize, where the browser has re-resolved svh and the sheet is right
+   again, so the bar retracting on scroll never grows the column and the
+   cropped footer svh was chosen against does not come back. Three passes,
+   because Chrome animates its chrome after the tab lands and the first
+   frame's innerHeight is not always the last. */
+(function phoneScrollerRestore() {
+  var MOB = window.matchMedia('(max-width: 768px)');
+  function check() {
+    var m = document.getElementById('mainContent');
+    if (!m || !MOB.matches) return;
+    var vis = window.innerHeight;
+    if (m.style.height) m.style.height = '';
+    void m.offsetHeight;
+    if (m.clientHeight < vis - 2) m.style.height = vis + 'px';
+  }
+  function onReturn() {
+    requestAnimationFrame(function () { requestAnimationFrame(check); });
+    setTimeout(check, 350);
+    setTimeout(check, 1000);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) onReturn();
+  });
+  window.addEventListener('pageshow', onReturn);
+  window.addEventListener('focus', onReturn);
+  window.addEventListener('resize', function () {
+    var m = document.getElementById('mainContent');
+    if (m && m.style.height) m.style.height = '';
+  });
+})();
+
 (function mobileFoldInit() {
   var MOB = window.matchMedia('(max-width: 768px)');
 
@@ -12686,11 +12861,37 @@ document.addEventListener('visibilitychange', function() {
     return 1;
   }
 
+  /* ── THE FADE IS TIED TO THE RECORD, NOT TO A VIEWPORT FRACTION ──
+     The portrait goes because the record is rising into it, so the record's
+     own travel is the ruler. D is the distance from the Contact rule's rest
+     position (scroll 0, lift taken out) down to the plate's bottom edge: the
+     whole of the journey the record makes before it touches the photo. The
+     photo holds full opacity for the first three tenths of that journey,
+     starts to go there, and is gone with a tenth of the journey still to run,
+     so the record never reads over a face. FADE_OVER is only the fallback for
+     a page where the rule or the plate cannot be measured. */
+  var FADE_START = 0.3, FADE_END = 0.9;
   function updatePlate(top) {
     var plate = document.getElementById('aboutPlate');
     if (!plate || !MQ.matches) return;
-    var span = Math.max(1, window.innerHeight * FADE_OVER);
-    var t = Math.max(0, Math.min(1, top / span));
+    var t;
+    var about = document.getElementById('view-about');
+    var r0 = about && about.querySelector('[data-stack="0"]');
+    var rr = r0 && r0.getBoundingClientRect();
+    var pr = plate.getBoundingClientRect();
+    var D = 0;
+    if (rr && rr.width && pr.height) {
+      var rest = rr.top + about.scrollTop
+        + ((typeof liftPainting === 'function') ? liftPainting(about) : 0);
+      D = rest - pr.bottom;
+    }
+    if (D > 1) {
+      var p = top / D;
+      t = Math.max(0, Math.min(1, (p - FADE_START) / (FADE_END - FADE_START)));
+    } else {
+      var span = Math.max(1, window.innerHeight * FADE_OVER);
+      t = Math.max(0, Math.min(1, top / span));
+    }
     plate.style.opacity = ((1 - t) * plateCover()).toFixed(3);
   }
 
@@ -12817,15 +13018,39 @@ document.addEventListener('visibilitychange', function() {
      Measured with the lift taken back out, for the same reason it is taken out
      over there: the rect carries the transform once the class is on, and
      without this the figure would grow on every recompute. */
+  /* ── THE LIFT AS IT IS PAINTING, NOT AS IT WAS ORDERED ──
+     Both measurements below take the record's lift back out of a rect before
+     comparing it with the parked slot. They did it by reading --peekShift
+     when the class was on and zero when it was off, which is the lift's
+     DESTINATION. The lift is a 0.45s transition, so for the whole of that
+     travel the rect carries some other figure: the pointer crosses to the
+     right, the class comes off, live reads zero, the rect is still most of
+     a lift high, and any alignment that lands in that window measures the
+     rule short by the remainder, stretches the bio by it, and leaves the
+     Contact rule that much under its label until something else recomputes.
+     That is the intermittent miss with the cursor on the right.
+
+     The transform the element is painting is on its computed style, so it is
+     read from there instead: matrix() or matrix3d(), translateY in the last
+     slot. Exact on every frame of the transition and at either end of it. */
+  function liftPainting(left) {
+    var inner = left && left.querySelector('.about-contact-inner');
+    if (!inner) return 0;
+    var t = getComputedStyle(inner).transform;
+    if (!t || t === 'none') return 0;
+    var m = t.match(/matrix(3d)?\(([^)]+)\)/);
+    if (!m) return 0;
+    var v = m[2].split(',').map(parseFloat);
+    var ty = m[1] ? v[13] : v[5];
+    return isFinite(ty) ? -ty : 0;
+  }
+
   function peekShift(left) {
     var rule = left.querySelector('[data-stack="1"]');
     if (!rule || typeof window._aboutParkTop !== 'function') return 0;
     var rr = rule.getBoundingClientRect();
     if (!rr.width) return 0;
-    var live = document.body.classList.contains('plate-peek')
-      ? (parseFloat(getComputedStyle(document.documentElement)
-          .getPropertyValue('--peekShift')) || 0)
-      : 0;
+    var live = liftPainting(left);
     return Math.max(0, (rr.top + live) - window._aboutParkTop(1));
   }
 
@@ -14144,10 +14369,7 @@ document.addEventListener('visibilitychange', function() {
        which is also what makes the measurement below the natural one. */
     if (inner) inner.style.marginTop = '0px';
     var natural = bio.offsetHeight;
-    var live = document.body.classList.contains('plate-peek')
-      ? (parseFloat(getComputedStyle(document.documentElement)
-          .getPropertyValue('--peekShift')) || 0)
-      : 0;
+    var live = (typeof liftPainting === 'function') ? liftPainting(left) : 0;
     /* ── THE COPY IS A FLOOR, NOT A RULER ──
        The record's position is decided by the parked slot, below. Opening the
        plus does not take that decision away from it. There is already air
@@ -14173,7 +14395,19 @@ document.addEventListener('visibilitychange', function() {
     var need = 0;
     if (document.body.classList.contains('bio-open')) {
       var openText = left.querySelector('.about-bio-text');
-      if (openText) need = openText.getBoundingClientRect().height + BIO_CLEAR_PX();
+      /* ── THE ROOM IS MADE BELOW, NOT TAKEN FROM THE PIN ──
+         The copy is held down the column by positionBio's translate, so its
+         painted tail is that much lower than its height alone says. Measured
+         without it, the record was pushed down by the copy's height only, the
+         pin was left to surrender the difference, and the essay lifted off the
+         line the reader had just clicked. Counted in, the block ends below the
+         painted tail, the record moves down by exactly the shortfall, and the
+         copy does not move at all: the disclosure opens downward and the pin
+         keeps holding the statement level with the name. */
+      if (openText) {
+        need = openText.getBoundingClientRect().height + BIO_CLEAR_PX()
+             + (window._bioShiftPx || 0);
+      }
     }
     var r0 = left.querySelector('[data-stack="0"]');
     if (r0 && typeof window._aboutParkTop === 'function') {
@@ -14204,6 +14438,18 @@ document.addEventListener('visibilitychange', function() {
          it up. `need` is inside the max, so the pull can never go past the
          last line of the copy. */
       var target = Math.max(natural + delta, need);
+      /* ── AN OPEN ESSAY IS NEVER PULLED THROUGH ──
+         The negative arm exists for the closed page, where what sits above the
+         record is a spacer that paints nothing. Once the plus is open that same
+         space is the essay, and a target below natural haules the record, the
+         Contact rule and the whole stack UP over the copy the reader just
+         asked for: click the plus with the stack already near it and the page
+         appears to open upwards. Open, natural is the floor: the essay grows
+         and everything under it moves down, which is the only direction a
+         disclosure should go. */
+      if (document.body.classList.contains('bio-open')) {
+        target = Math.max(target, natural);
+      }
       if (target >= natural) {
         bio.style.minHeight = target.toFixed(1) + 'px';
         if (inner) inner.style.marginTop = '0px';
@@ -15724,10 +15970,14 @@ document.addEventListener('visibilitychange', function() {
          the bar itself gets no sliding, or the bar would ride up above the
          thing it belongs to: a one gutter spacer is half the height of its own
          controls. */
+      /* Dropped one bar height below the item's top edge, so it clears
+         whatever the card already draws in that corner. Items too short to
+         hold two bars keep the old flush placement. */
+      var drop = r.height >= bh * 2 + 8 ? bh + 8 : 0;
       var top = r.height >= bh
-        ? Math.max(0, Math.min(r.top, r.bottom - bh))
+        ? Math.max(0, Math.min(r.top + drop, r.bottom - bh))
         : Math.max(0, Math.min(r.top, vh - bh));
-      var pinned = top > r.top + 0.5;
+      var pinned = top > r.top + drop + 0.5;
       bar.classList.toggle('rmed-ip-pinned', pinned);
       bar.style.top = Math.round(top) + 'px';
       bar.style.left = Math.round(Math.max(0, Math.min(r.right - bw, vw - bw))) + 'px';
@@ -17143,12 +17393,6 @@ document.addEventListener('visibilitychange', function() {
    Own script block, after the sanitizer, because the sanitizer clears inline
    geometry and this writes a custom property instead, which survives it. */
 (function mobileBehancePeek() {
-  function topIn(el, root) {
-    var y = 0;
-    while (el && el !== root) { y += el.offsetTop; el = el.offsetParent; }
-    return y;
-  }
-
   function apply() {
     var root = document.documentElement;
     if (window.innerWidth > 768) return;
@@ -17158,60 +17402,73 @@ document.addEventListener('visibilitychange', function() {
 
     var main  = document.getElementById('mainContent');
     var photo = document.querySelector('#view-about .about-photo-ph');
-    /* ── THE ANCHOR IS BEHANCE AGAIN ──
-       It was the last line of Availability for a build, which is one section
-       further down the column and therefore a block sitting higher up the
-       screen. Back to the third and last contact link, so the cut lands
-       earlier and everything from the bio down travels further down the page.
-       .work-contact-links is a flex column, so each link is its own block and
-       its rect is one line. */
-    var anchor = document.querySelector('#view-about .work-contact-links .work-contact-link:last-child');
-    if (!main || !photo || !anchor) return;
+    if (!main || !photo) return;
 
-    /* Both levers to zero before anything is read, or the previous pass's
-       figures are inside the numbers being measured and the block creeps down
-       a little on every run. */
-    root.style.setProperty('--mobPhotoTop', '0px');
-    root.style.setProperty('--mobBioDrop', '0px');
-    void document.body.offsetHeight;
+    /* What is in place right now, subtracted from every reading below instead
+       of being zeroed and re-measured. Same figures, without a frame in which
+       the photo is painted unplaced. */
+    var mtCur = parseFloat(root.style.getPropertyValue('--mobPhotoTop')) || 0;
+    var mbCur = parseFloat(root.style.getPropertyValue('--mobBioDrop')) || 0;
 
-    /* ── THE CUT DECIDES, THE PHOTO SPLITS WHAT IS LEFT ──
-       These were solved in sequence for a build, photo centred on the screen
-       first and the drop given the remainder, and the two do not both fit: the
-       centring ate the budget and the drop bottomed out at its floor with the
-       cut line below the fold.
+    /* ── THE PHOTO IS CENTRED BETWEEN THE COPY AND THE RULE ──
+       This used to be solved against the Behance cut: the two margins had to
+       sum to whatever kept the last contact link sliced by the bottom of the
+       screen, and the centring got what was left. On a tall phone that budget
+       is about thirty pixels against a two-hundred-pixel clearance under the
+       photo, so the top margin clamped at the budget and the picture sat hard
+       under the copy. The cut is gone as a constraint: the photo is centred,
+       and where the fold lands is whatever falls out of that.
 
-       One equation instead. Both margins sit between the top of the column and
-       the bio, so the copy below them moves down by their SUM and neither
-       margin alone matters to the cut:
+       A0 and B0 are the two gaps, the copy's last line to the photo and the
+       photo to the Contact rule, as they stand with the margins taken back out
+       rather than zeroed first. Zeroing meant painting the unplaced state on
+       every pass, which is a flash four times per entry. Their difference goes
+       to whichever side is short, so only one margin is ever non-zero, and it
+       is written only when it differs from what is there, so a settled column
+       is not touched at all.
 
-         T is the sum that lands the middle of the Behance link on the bottom
-         of the screen. That is the requirement and it is met exactly.
+       Three rects, one frame, one coordinate space. Mixing an offsetParent
+       walk with a viewport rect is what put the photo up in the copy. */
+    /* ── THE RULE ABOVE CONTACT, AS THE PHONE DRAWS IT ──
+       Every other build of this read [data-stack="0"], the .work-contact-line
+       the desktop uses. The phone hides that element (display:none, in the
+       rule that removes the redundant first line after a section label), so
+       its rect is all zeros: the gap below came out as a large negative
+       number, the whole of it was written as the photo's bottom margin, and
+       Contact was shoved a screen down while the picture stayed where it was.
+       That is every one of the "nothing changed" and "it went off the page"
+       builds, one wrong selector. The line the phone actually paints is the
+       Contact label's own border-top, so the label's rect is the rule. */
+    var rule = document.querySelector('#view-about .about-contact-inner .section-label');
+    var lead = document.getElementById('bioLeadMob')
+            || document.querySelector('#view-about .about-bio-text');
+    if (!rule || !lead) return;
 
-         T then splits in half. Equal air above the photo and below it means
-         the photo is centred in the gap between "Roger Oddone" and "Hands-on
-         designer", which is the space it actually lives in. Horizontally it is
-         already centred by the margin:auto on an eight-column box.
+    var pr = photo.getBoundingClientRect();
+    var rr = rule.getBoundingClientRect();
+    var lr = lead.getBoundingClientRect();
+    /* An element that is not painting measures zero and would send the same
+       figure off the page again; every edge has to be real. */
+    if (!pr.height || !rr.height || !lr.height) return;
+    var A0 = pr.top - lr.bottom - mtCur;
+    var B0 = rr.top - pr.bottom - mbCur;
+    if (!isFinite(A0) || !isFinite(B0)) return;
 
-       So the crop always holds and the photo is centred in whatever the crop
-       leaves, rather than the two competing for the same pixels.
+    var d  = B0 - A0;
+    var mt = d > 0 ?  d : 0;
+    var mb = d < 0 ? -d : 0;
+    /* A guard, not a design figure: a number this size means something was
+       measured mid-transition, and writing it would throw the photo off the
+       page. The last good pair stands and the next pass re-reads. */
+    if (mt > window.innerHeight || mb > window.innerHeight) return;
 
-       The anchor is a single line, so the midpoint wanted is simply the middle
-       of its own box. No line-height read is needed here: the previous anchor
-       was a two-line paragraph whose LAST line was the target, which is what
-       that arithmetic was for. */
-    var ar = anchor.getBoundingClientRect();
-    if (!ar.height) return;
-    var mid = topIn(anchor, main) + (ar.height / 2);
+    window._peekDbg = 'peek A0 ' + A0.toFixed(0) + '  B0 ' + B0.toFixed(0)
+      + '  mt ' + mt.toFixed(0) + '  mb ' + mb.toFixed(0);
 
-    var T = window.innerHeight - mid;
-    /* Floored at zero. On a screen too short to hold the column down to that
-       line, the block sits as high as the flow allows and the cut falls below
-       the fold; nothing is ever pulled upward into the portrait. */
-    if (!isFinite(T) || T < 0) T = 0;
-    var half = T / 2;
-    root.style.setProperty('--mobPhotoTop', half.toFixed(1) + 'px');
-    root.style.setProperty('--mobBioDrop', half.toFixed(1) + 'px');
+    if (Math.abs(mt - mtCur) > 0.5 || Math.abs(mb - mbCur) > 0.5) {
+      root.style.setProperty('--mobPhotoTop', mt.toFixed(1) + 'px');
+      root.style.setProperty('--mobBioDrop', mb.toFixed(1) + 'px');
+    }
   }
 
   function burst() {
@@ -17379,6 +17636,7 @@ document.addEventListener('visibilitychange', function() {
        unrun, which on this page looks exactly like a layout bug: sections
        that never get their inline styles simply are not where they should
        be. Reading the geometry cannot tell those two apart. This can. */
+    if (window._peekDbg) out.push(window._peekDbg);
     out.push('errors ' + errs.length);
     errs.slice(0, 4).forEach(function (m) { out.push('  ! ' + m.slice(0, 90)); });
     box.textContent = out.join('\n');
