@@ -6797,7 +6797,13 @@ window.__errLog = [];
         </div>
       </div>
 
-      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/hg26_3x3_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
+      <!-- Desktop card thumbnail is the live 3x3 viewer, not a capture of it.
+           applyCardThumb() recognises a local .html as an embed and builds an
+           <iframe class="card-thumb">, which carries pointer-events:none, so the
+           card stays clickable. The phone keeps the recorded mp4: the builder's
+           phone rule only swaps an .html for a video when no mobile URL is set,
+           and here one is, so the sketch never runs on a phone. -->
+      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="hg26_3x3.html" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container is-loaded" id="notypeLab1Container">
             <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" muted loop playsinline preload="none" aria-hidden="true"></video>
