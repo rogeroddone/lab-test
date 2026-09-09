@@ -35,6 +35,14 @@ button.active{border-color:rgba(255,255,255,0.45);color:#fff;}
 </style>
 </head>
 <body>
+<div id="err-overlay" style="display:none;position:fixed;top:12px;left:12px;right:12px;z-index:99;color:#ff6b6b;background:rgba(0,0,0,0.85);font:10px/1.5 monospace;padding:10px;border:1px solid rgba(255,107,107,0.4);white-space:pre-wrap;"></div>
+<script>
+window.addEventListener('error',function(e){
+  var d=document.getElementById('err-overlay');
+  d.style.display='block';
+  d.textContent+='ERROR: '+(e.message||e.type)+' @ '+(e.filename||'inline')+':'+(e.lineno||'?')+'\n';
+},true);
+</script>
 <canvas id="lobe-canvas" style="position:fixed;inset:0;pointer-events:none;z-index:5;"></canvas>
 <div id="size-slider"><input type="range" id="escale" min="0.75" max="3" step="0.05" value="3" oninput="updateElementScale(this.value)"></div>
 <div id="ui">
@@ -186,10 +194,70 @@ function sdfGrad(x,y,z){
   return _grad;
 }
 
-const renderer=new THREE.WebGLRenderer({antialias:true});
+let renderer;
+try{
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+}catch(_e){
+  // WebGL unavailable (hardware acceleration off, blocked GPU, managed Chrome):
+  // software 2D-canvas renderer. Same scene, same physics, drawn with arcs and lines.
+  renderer=(function(){
+    const cv=document.createElement('canvas');
+    const ctx=cv.getContext('2d');
+    let _dpr=1;
+    const _v=new THREE.Vector3();
+    function drawWire(mesh,mat,alphaMul){
+      ctx.strokeStyle=mat.color.getStyle();
+      ctx.globalAlpha=Math.min(1,mat.opacity*alphaMul);
+      ctx.lineWidth=1;
+      const idx=meshIndices,pos=geo.attributes.position.array,m=mesh.matrixWorld;
+      const stride=Math.max(1,Math.floor(idx.length/3/1500))*3;
+      const W=cv.width,H=cv.height;
+      ctx.beginPath();
+      for(let t=0;t<idx.length-2;t+=stride){
+        const a=idx[t]*3,b=idx[t+1]*3;
+        _v.set(pos[a],pos[a+1],pos[a+2]).applyMatrix4(m).project(camera);
+        if(_v.z>1)continue;
+        const x1=(_v.x*0.5+0.5)*W,y1=(-_v.y*0.5+0.5)*H;
+        _v.set(pos[b],pos[b+1],pos[b+2]).applyMatrix4(m).project(camera);
+        if(_v.z>1)continue;
+        ctx.moveTo(x1,y1);ctx.lineTo((_v.x*0.5+0.5)*W,(-_v.y*0.5+0.5)*H);
+      }
+      ctx.stroke();
+    }
+    return {
+      domElement:cv,
+      setPixelRatio:function(p){_dpr=p;},
+      setSize:function(w,h){cv.width=w*_dpr;cv.height=h*_dpr;cv.style.width=w+'px';cv.style.height=h+'px';},
+      toneMapping:null,
+      render:function(scene,camera){
+        scene.updateMatrixWorld();
+        camera.updateMatrixWorld();
+        camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+        const W=cv.width,H=cv.height;
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
+        const fovScale=(H/2)/Math.tan(camera.fov*Math.PI/360);
+        if(wireMesh.visible&&wireMat.opacity>0.004)drawWire(wireMesh,wireMat,2.0);
+        if(solidMesh.visible&&solidMat.opacity>0.004)drawWire(solidMesh,solidMat,1.2);
+        ctx.fillStyle=pMat.color.getStyle();
+        ctx.globalAlpha=pMat.opacity;
+        const m=points.matrixWorld,n=activeCount;
+        for(let i=0;i<n;i++){
+          _v.set(pPos[i*3],pPos[i*3+1],pPos[i*3+2]).applyMatrix4(m).applyMatrix4(camera.matrixWorldInverse);
+          const depth=-_v.z; if(depth<=0.01)continue;
+          const r=Math.max(0.6,pMat.size*0.5*fovScale/depth);
+          _v.applyMatrix4(camera.projectionMatrix);
+          const x=(_v.x*0.5+0.5)*W,y=(-_v.y*0.5+0.5)*H;
+          ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.fill();
+        }
+        ctx.globalAlpha=1;
+      }
+    };
+  })();
+}
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
