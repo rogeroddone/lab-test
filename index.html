@@ -6,6 +6,16 @@
      gone by the time anything is asked for. -->
 <link rel="preconnect" href="https://ik.imagekit.io" crossorigin>
 <link rel="dns-prefetch" href="https://ik.imagekit.io">
+<!-- ── AND ITS OWN COLOUR UNDER IT ──
+     The preload below shortens the wait for the first card's poster; it cannot
+     remove it, because on a cold cache the file still has to travel. So the
+     slide and the video carry the frame's own flat red as a background, which
+     costs nothing and paints on the first frame the box exists. The poster
+     lands on top of it and the video after that, both opaque, so the colour is
+     only ever seen in the gap it was put there to fill. Written inline on the
+     element rather than in the sheet because it belongs to that one asset: any
+     other lead would need its own colour, and a class would invite the wrong
+     one being reused. -->
 <!-- ── THE FIRST CARD SHOULD NOT ARRIVE EMPTY ──
      The phone's first card is a video with preload="none", so its poster is
      the only thing that can paint, and the poster is discovered late: the
@@ -19,6 +29,51 @@
 <link rel="preload" as="image" fetchpriority="high" media="(max-width: 768px)"
       href="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_lests_cruise_mobile_1.mp4/ik-thumbnail.jpg">
 <meta charset="utf-8"/>
+<!-- ── ONE REVEAL INSTEAD OF FOUR ──
+     The page arrives in stages: the header and the record paint with the
+     document, #view-work is held at opacity 0 until its layout has settled and
+     then fades itself in, the phone's spacers are written after that, and the
+     photo takes its margins later still. Each of those is correct on its own
+     and together they are the flicker on every refresh: pieces landing in
+     sequence, some of them moving after they land.
+
+     So nothing is shown until they have all happened. The class goes on the
+     document element from a blocking script in the head, before the first
+     paint rather than after it, and comes off once the layout is settled,
+     revealing the finished page in one 0.2s fade. The colour under the cloak
+     is the page's own, so what the reader sees first is the site's background
+     rather than the browser's white.
+
+     visibility, not display: the boxes still lay out and every script that
+     measures them at boot gets real rects. And a timeout releases it whatever
+     happens, because a page that fails to un-cloak is a blank page. -->
+<style>
+  html { background: #F2F2F2; }
+  html.boot-cloak body { visibility: hidden; }
+  html.boot-cloak.boot-lit body { visibility: visible; animation: bootIn .2s ease both; }
+  @keyframes bootIn { from { opacity: 0 } to { opacity: 1 } }
+  @media (prefers-reduced-motion: reduce) {
+    html.boot-cloak.boot-lit body { animation: none; }
+  }
+</style>
+<script>
+  document.documentElement.classList.add('boot-cloak');
+  (function () {
+    var done = false;
+    function lit() {
+      if (done) return;
+      done = true;
+      document.documentElement.classList.add('boot-lit');
+    }
+    /* Whichever comes first: the work column reporting itself placed, the
+       window load event two frames on, or the deadline. */
+    window._bootLit = lit;
+    window.addEventListener('load', function () {
+      requestAnimationFrame(function () { requestAnimationFrame(lit); });
+    });
+    setTimeout(lit, 2000);
+  })();
+</script>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>Roger Oddone</title>
 <meta property="og:title" content="Roger Oddone - Brand Identity Design"/>
@@ -3293,7 +3348,7 @@
        of .rm-main-container:
 
          <img class="card-thumb" src="...">
-         <video class="card-thumb" src="..." autoplay muted loop playsinline>
+         <video class="card-thumb" src="..." muted loop playsinline>
 
        or put the URL on the section and let injectCardThumb build it:
 
@@ -3316,6 +3371,34 @@
       border-radius: var(--radius);
     }
     .carousel-section.is-open .card-thumb { display: none; }
+    /* ONE PAINT AT REST. A collapsed card is the container's flat gray until
+       its thumbnail has a decoded frame, then that frame, and nothing in
+       between. Two things enforce it. The pending thumb is invisible, so a
+       video element with no frame yet does not paint as transparent and let
+       the layers under it show through in stages. And while the thumb is
+       pending, the slide layer beneath it is invisible too, so slide one
+       loading is not seen arriving under a gap. visibility rather than
+       opacity so there is nothing to animate; the swap is one frame. No
+       transition property anywhere on this path on purpose. */
+    .carousel-section:not(.is-open) .card-thumb.is-pending,
+    .carousel-section:not(.is-open) .thumb-poster.is-pending { visibility: hidden; }
+    .carousel-section:not(.is-open) .rm-main-container:has(> .card-thumb.is-pending) .rm-slide-wrapper,
+    .carousel-section:not(.is-open) .rm-main-container:has(> .thumb-poster.is-pending) .rm-slide-wrapper { visibility: hidden; }
+    /* NO SKELETON PULSE UNDER A THUMBNAIL. The pulse breathes the whole
+       container between 100% and 60% opacity until .is-loaded lands, and
+       .is-loaded is added when SLIDE ONE's image finishes loading, or after a
+       two second timeout. On a collapsed card slide one is hidden behind the
+       thumbnail and is a large AVIF, so the frame, thumbnail included, was
+       pulsing on behalf of an image nobody can see, for one or two cycles,
+       then snapping solid. That was the "changes twice, then 100%". Here the
+       thumbnail is the visible surface, so the pulse is the wrong signal
+       entirely; the thumbnail's own readiness marks the card loaded instead
+       (see the is-pending handlers). */
+    .carousel-section:not(.is-open) .rm-main-container:has(> .card-thumb),
+    .carousel-section:not(.is-open) .rm-main-container:has(> .thumb-poster) {
+      animation: none;
+      opacity: 1;
+    }
 
 
     /* ══ CARD INTERIOR ══════════════════════════════════════════════════════
@@ -3376,6 +3459,13 @@
            the original throw back. */
         --cardRest: 0.25;
         --cardRestPx: calc(var(--gap) * var(--cardRest));
+        /* Hover throw. The image rests at --cardRest of a gutter and used to
+           grow to a full gutter on hover, a throw of (1 - 0.25) = 0.75 gap per
+           side. Halved on request: rest 0.25 + half of 0.75 = 0.625, so the
+           grown size is now 50% of what it was. Raise toward 1 for the old
+           full throw, drop toward --cardRest to kill the growth. */
+        --cardHover: 0.625;
+        --cardHoverPx: calc(var(--gap) * var(--cardHover));
       }
 
       /* Panel back, spanning the whole card: row 1 the image, row 2 the
@@ -3433,17 +3523,94 @@
         width: auto !important;
         height: auto !important;
         aspect-ratio: auto !important;
-        transform: none !important;
+        /* Hover grows the box with one uniform scale, not by moving insets.
+           Inset growth stretched the box more in height than in width, and
+           object-fit: cover then re-cropped every video by its own aspect
+           ratio: the 2.514 clips (Uber, Google, Cruise) zoomed hard while the
+           narrower ones barely moved. A uniform scale changes width and height
+           by the same factor, so cover zooms every clip identically whatever
+           its shape. The scale is on the MEDIA, not on this frame: scaling the
+           frame scaled its own border-radius with it, so a hovered card's
+           corner rendered rounder than every card at rest. The frame now holds
+           still in both states and only its contents move, which is what keeps
+           one roundness across the column. */
         transition: top var(--cardEase), right var(--cardEase),
                     bottom var(--cardEase), left var(--cardEase);
       }
-      /* HOVER: the margin drops from two gutters to one. Left is pinned to the
-         column line, so the image grows up, right and down only. */
-      .carousel-section:not(.is-open):hover .rm-main-container {
-        top: calc(-1 * var(--gap));
-        right: calc(-1 * var(--gap));
-        bottom: calc(-1 * var(--gap));
-        left: 0;
+      /* NO HOVER MOVEMENT. The media holds still in both states on every card.
+         The zoom that used to sit here scaled .card-thumb and the slide media
+         from their centre; it is gone rather than set to 1, so nothing is
+         transformed, nothing is composited, and no card can move by a
+         different amount from any other. Hover still gates video playback and
+         still opens the project; only the growth is removed. */
+
+      /* THE VIDEO DOES NOT RESIZE; THE CONTAINER DOES.
+         object-fit: cover sizes a video off whichever box edge binds. For a
+         clip WIDER than the card box, that edge is the height, so the
+         container's 5% height growth scaled the video up 5% and cropped it
+         further in. That is why Uber, Google and Cruise zoomed hard while
+         Oddone, Expa, Aero and HG26 (all narrower than the box, so width
+         bound) did not move at all.
+
+         Fixed by giving the media a constant absolute height in both states,
+         the height the container reaches at full hover, so the box the video
+         is fitted into never changes and cover has nothing to recompute. The
+         container grows underneath it and reveals the part that was cropped.
+         Growth is downward only, so the media is anchored to the top and the
+         reveal happens at the bottom edge.
+
+         The rest figure is the hover height written against the resting
+         container: hover is 1.05 x the wrap, and the resting container is the
+         wrap plus a --cardRestPx bleed top and bottom, so subtracting that
+         bleed before the 1.05 lands on the same pixel height as the hover
+         state. Percentages resolve against the container's height, which is
+         what makes the two states agree without measuring anything. */
+      .carousel-section:not(.is-open) .card-thumb {
+        /* Height is written inline in pixels by sizeCardThumbs(), the same
+           value in both states: the container's full-hover height. It used to
+           be a percentage here, and a percentage resolves against the
+           container, which is mid-transition on hover in and out, so for the
+           length of that transition the video's target height was chasing a
+           moving box and the clip visibly wobbled and settled twice before
+           coming to rest. A pixel value has nothing to chase. No transition on
+           height for the same reason: there is never a change to animate. */
+        bottom: auto;
+        /* CENTRED, NOT TOP-PINNED. top:50% plus a half-height translate puts
+           the clip's centre on the container's centre. The percentage resolves
+           against the container's height, so as the container grows on hover
+           the midpoint moves and the clip rides down with it, staying centred
+           the whole way instead of hanging off the top edge and revealing only
+           at the bottom. Equal amounts of the clip are cropped above and below
+           in every state. */
+        top: 50%;
+        /* Height never transitions (fixed px, see above). The transform does:
+           this is the video's own hover zoom, layered on top of the container
+           growth, which is untouched. The translate is the centring half and
+           is constant; only the scale changes, so the two compose cleanly.
+           Scale is applied first, about the element's own centre, which the
+           translate has already put on the container's centre. */
+        transition: transform var(--cardEase);
+        transform-origin: center center;
+        transform: translateY(-50%) scale(1);
+        will-change: transform;
+      }
+      /* VIDEO ZOOM ON HOVER, centred, clipped by the frame's overflow so the
+         corners never move. One and a half percent, the same on every card.
+         The two-rate split (2% on the 2.514 clips, 5% on the rest) is gone; if
+         a card ever needs its own figure again, override --thumbZoom on that
+         section. */
+      .carousel-section:not(.is-open) { --thumbZoom: 1.015; }
+      .carousel-section:not(.is-open) .thumb-poster {
+        bottom: auto;
+        top: 50%;
+        transition: transform var(--cardEase);
+        transform-origin: center center;
+        transform: translateY(-50%) scale(1);
+        will-change: transform;
+      }
+      .carousel-section:not(.is-open):hover .card-thumb,
+      .carousel-section:not(.is-open):hover .thumb-poster {
+        transform: translateY(-50%) scale(var(--thumbZoom));
       }
 
       /* Left column, full card height. Two equal rows: the name sits at the top
@@ -3488,10 +3655,10 @@
         transform: translate(calc(-1 * var(--cardRestPx)), var(--cardRestPx));
       }
       .carousel-section:not(.is-open):hover .col-title {
-        transform: translate(calc(-1 * var(--gap)), calc(-1 * var(--gap)));
+        transform: translate(calc(-1 * var(--cardHoverPx)), calc(-1 * var(--cardHoverPx)));
       }
       .carousel-section:not(.is-open):hover .col-list {
-        transform: translate(calc(-1 * var(--gap)), var(--gap));
+        transform: translate(calc(-1 * var(--cardHoverPx)), var(--cardHoverPx));
       }
       /* The name alone at the top of the card. Block, not the desktop flex,
          which is set up to run a second element alongside it on one baseline. */
@@ -6380,25 +6547,23 @@ window.__errLog = [];
       <div id="worksLabel">Selected works (6)<br>&amp; Lab [Interactive] (1)</div>
 
       <!-- CAROUSEL 1: Cruise -->
-      <div class="carousel-section" id="firstCarouselSection" style="--cardRatio:2.514" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/cruise_lests_cruise_mobile_1.mp4?updatedAt=1788475383337" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/cruise_lests_cruise_mobile_1.mp4?updatedAt=1788475383337">
+      <div class="carousel-section" id="firstCarouselSection" style="--cardRatio:2.514" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/cruise_1_desk_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/cruise_1_mobile.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_1_desk_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/cruise_1_desk_1.mp4?updatedAt=1782946695362" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_app_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_app_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-copy-id="cruise-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 10;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">Icons in use</p></div></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_1.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_1.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_1.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_1.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_1.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_all_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_all_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_all_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_all_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_all_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_3.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_3.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_3.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_3.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_3.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_4.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_4.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_4.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_4.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_4.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_feature_icons_deskb.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/cruise_feature_icons_deskb.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_feature_icons_deskb.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/cruise_feature_icons_deskb.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_type_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_type_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_type_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_type_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_type_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/cruise_lests_cruise_mobile_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/cruise_lests_cruise_mobile_1.mp4?updatedAt=1788475383337" type="video/mp4"></video></div>
-              <div class="rm-slide-item" data-copy-ref="cruise-1"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_app_mobile.jpg?updatedAt=1788475382218&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_app_mobile.jpg?updatedAt=1788475382218&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_mobile.jpg?updatedAt=1788475382218&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_mobile.jpg?updatedAt=1788475382218&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_app_mobile.jpg?updatedAt=1788475382218&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item" data-copy-ref="cruise-1"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?updatedAt=1788475382509&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?updatedAt=1788475382509&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?updatedAt=1788475382509&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?updatedAt=1788475382509&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_guidelines.jpg?updatedAt=1788475382509&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?updatedAt=1788478819892&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?updatedAt=1788478819892&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?updatedAt=1788478819892&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?updatedAt=1788478819892&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_colors_3dots.jpg?updatedAt=1788478819892&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Cruise" src="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?updatedAt=1788475380809&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?updatedAt=1788475380809&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?updatedAt=1788475380809&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?updatedAt=1788475380809&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/cruise_ui_2.jpg?updatedAt=1788475380809&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
@@ -6428,11 +6593,11 @@ window.__errLog = [];
       </div>
 
       <!-- CAROUSEL 2: Uber -->
-      <div class="carousel-section" id="uberCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?updatedAt=1788461736851" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_mobile.jpg?updatedAt=1788461736250">
+      <div class="carousel-section" id="uberCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/uber_wordmark_3d.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_mobile.jpg?updatedAt=1788461736250">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
-              <div class="rm-slide-item"><img loading="lazy" alt="Uber" src="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/uber_cube_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/Comp%207_2.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/Comp%207_2.mp4?updatedAt=1788790278090" type="video/mp4"></video></div>
               <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
               <div class="rm-slide-item" data-copy-id="uber-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Challenges</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">Uber began six years ago as a way for 100 friends in San Francisco to get luxury rides—everyone’s private driver. Today, we’re a transportation network spanning 450 cities in 72 countries. That network delivers food and packages, as well as people, all at the push of a button. It became clear that a limited set of visual identity components was not enough to engage with different audiences and price points.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="4" style="--rmed-units:4;height:calc(4 * var(--gap));min-height:calc(4 * var(--gap));"></div>
@@ -6556,7 +6721,7 @@ window.__errLog = [];
           </div>
         </div>
         <div class="info-grid">
-          <div class="col-title"><div class="info-title">Uber</div><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><div class="info-description">Mobility platform</div></div>
+          <div class="col-title"><div class="info-title">Uber</div><span class="info-line">Designed the wordmark and identity system on the 2016 rebrand</span><div class="info-description">Mobility platform</div></div>
           <div class="col-list"><div class="info-list-para"><span>Wordmark</span><span>Color system</span><span>Guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -6565,16 +6730,16 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Global Rebrand</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Led the 2016 rebrand rollout across 65 countries</span><span class="mob-tags">• Wordmark<br>• Color system<br>• Guidelines</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p><p class="info-credit">Created while I worked at Uber.</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Designed the wordmark and identity system on the 2016 rebrand</span><span class="mob-tags">• Wordmark<br>• Color system<br>• Guidelines</span><br><br>Back in 2014, when I joined Uber, the company had outgrown its identity. What began as a premium ride service had become, during a period of hyper-growth, a global platform spanning dozens of products and price points. The existing brand had no language for that complexity.<br><br>Working closely with the head of design and Uber's leadership, the answer was a core concept called Bits &amp; Atoms: technology meeting the physical world. That tension became the foundation for the entire design framework, structured in two parts: consistent monochromatic components rooted in the Bit, creating coherence across every expression; and colorful, variable components rooted in the Atom, enabling localization and keeping the system fresh across markets.<br><br>Drove the project end to end. Defined the design framework, crafted the Uber wordmark and its sub-brands, created the color spectrum and established the color architecture. Built and maintained the brand guidelines portal, defining guidelines, templates, and branded examples across print, packaging, web, and product.<br><br>Team: Head of Design: Shalin Amin · Design Manager: Strahan McMullen · Lead Brand Designer: Roger Oddone · Designers: Bryant Jow, Catherine Ray, Donald Wong, James Bamford, Lian Ng, Matt Riley, Mirtho Prepont.<br><br>2016</p><p class="info-credit">Created while I worked at Uber.</p></div></div>
         </div>
       </div>
 
       <!-- CAROUSEL 3: Google -->
-      <div class="carousel-section" id="googleIconCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952">
+      <div class="carousel-section" id="googleIconCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop_5_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
-              <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
               <div class="rm-slide-item" data-copy-id="google-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Material design</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">My contribution was twofold: evolving the flat icon style to carry more tactile, paper-like depth while staying true to its geometric foundation, and building Google's color system from scratch. For color, I started with Google's four brand colors and expanded outward, building a full spectrum that designers across the company could share. To make the system usable at scale, I introduced a numerical naming convention, 50 through 900, assigning a value to each tone in the spectrum. That structure became standard practice across the industry after Material Design launched.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
@@ -6582,7 +6747,6 @@ window.__errLog = [];
               <div class="rm-slide-item" data-copy-id="google-2" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 4;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">As the color spectrum expanded, traditional naming conventions like 'light blue' or 'dark blue' became imprecise and difficult to scale.<br><br>To address this, we transitioned to a systematic, numeric approach that provides a logical framework for color classification and consistency.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_play_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_play_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_play_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_play_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_play_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
@@ -6633,10 +6797,10 @@ window.__errLog = [];
         </div>
       </div>
 
-      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="hg26type_open.html" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
+      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/hg26_3x3_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container is-loaded" id="notypeLab1Container">
-            <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" autoplay muted loop playsinline preload="none" aria-hidden="true"></video>
+            <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" muted loop playsinline preload="none" aria-hidden="true"></video>
             <div class="lab-nav-btn lab-prev">
               <svg viewBox="0 0 41 34" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:20px;display:block;"><path d="M16.69 0L18.1 1.41L3.89 15.62H41V17.62H3.89L18.1 31.83L16.69 33.25L0.06 16.62L16.69 0Z" fill="white"/></svg>
             </div>
@@ -6688,7 +6852,7 @@ window.__errLog = [];
       <div class="carousel-section" id="aeroCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/aero_plane_footage.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/aero_plane_footage_mobile.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
-            <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/aero_1_mobile_2.mp4?updatedAt=1774733387860" autoplay muted loop playsinline preload="none" aria-hidden="true"></video>
+            <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/aero_1_mobile_2.mp4?updatedAt=1774733387860" muted loop playsinline preload="none" aria-hidden="true"></video>
             <div class="rm-slide-wrapper" data-surface="desktop">
               <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/aero_plane_footage.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/aero_plane_footage.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Aero" src="https://ik.imagekit.io/rfi7kdlxzn/aero_before.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/aero_before.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/aero_before.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/aero_before.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/aero_before.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Aero" src="https://ik.imagekit.io/rfi7kdlxzn/aero_after.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/aero_after.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/aero_after.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/aero_after.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/aero_after.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
@@ -6748,18 +6912,18 @@ window.__errLog = [];
       </div>
 
       <!-- CAROUSEL 5: Oddone -->
-      <div class="carousel-section" id="oddoneCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery.mp4?updatedAt=1788491377841" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4">
+      <div class="carousel-section" id="oddoneCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster17_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
               <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_gallery.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="3" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster4.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster4.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster6.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster6.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster9.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster9.mp4" type="video/mp4"></video></div></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_concept_1b.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_concept_1b.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_concept3_2.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_concept3_2.mp4" type="video/mp4"></video></div></div>
+              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="3" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster4.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster4.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster6.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster6.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster9.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster9.mp4" type="video/mp4"></video></div></div>
+              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="3" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster2.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster2.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster11_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster11_1.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster3.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster3.mp4" type="video/mp4"></video></div></div>
               <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster8_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster8_1.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_cards.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_hat.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
-              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="3" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster2.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster2.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster11_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster11_1.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster3.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster3.mp4" type="video/mp4"></video></div></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster1_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster1_1.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="3" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster5.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster5.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster7.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster7.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster10.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster10.mp4" type="video/mp4"></video></div></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/oddone_poster1_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster1_1.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tube.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><img loading="lazy" alt="Oddone" src="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?tr=q-90,w-2400,f-avif" style="width:100%;height:100%;object-fit:cover;display:block;" srcset="https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/oddone_tablets.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div></div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
@@ -6801,18 +6965,19 @@ window.__errLog = [];
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat.mp4?updatedAt=1786111418176" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_website_desk.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_website_desk.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_website_desk.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_website_desk.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat.mp4?updatedAt=1788615346233" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e_1.mp4" type="video/mp4"></video></div></div>
+              <div class="rm-slide-item aero-split" data-ratio="split" data-cells="2" style="display:flex;gap:var(--gap);align-items:stretch;"><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4" type="video/mp4"></video></div><div style="flex:1;overflow:hidden;border-radius:3.9px;height:100%;"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_p.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_p.mp4?updatedAt=1788615346230" type="video/mp4"></video></div></div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat_mobile.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat_mobile.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_website_mobile.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_website_mobile.mp4?updatedAt=1788491895550" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_website_mobile.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_website_mobile.mp4?updatedAt=1788491895550" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_flat_mobile.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_flat_mobile.mp4" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icon_family_mobile.jpg?updatedAt=1788491549557&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Expa" src="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/expa_icons_in_use_mobile.gif?updatedAt=1788491549656&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4?updatedAt=1788491550211" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_e.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_e.mp4?updatedAt=1788491550211" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/expa_p.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/expa_p.mp4?updatedAt=1788615346230" type="video/mp4"></video></div>
             </div>
             <div class="rm-nav-overlay prev-zone"></div>
             <div class="rm-nav-overlay next-zone"></div>
@@ -7149,12 +7314,18 @@ function switchView(view) {
         setTimeout(applyWorkLayout, 400);
         // Restart any videos that paused while hidden
         // Restart only videos currently visible in viewport
+        /* Mute and prepare only. Playback is NOT decided here: this used to
+           call play() on every in-view video in the work column, with no
+           hover check at all, which is why the top cards started themselves on
+           load no matter how many autoplay attributes were removed. The
+           hover gate lives in playVisibleVideos, so defer to it and let one
+           place own the decision. */
         document.querySelectorAll('#view-work video').forEach(v => {
           v.muted = true; v.volume = 0;
           try { if (v.audioTracks) for (let i=0;i<v.audioTracks.length;i++) v.audioTracks[i].enabled=false; } catch(e){}
-          const r = v.getBoundingClientRect();
-          if (r.top < window.innerHeight && r.bottom > 0) v.play().catch(e => { if (window.VIDEO_DEBUG) console.warn('[video] play failed', (v.currentSrc || v.src || '(no src)'), e && e.name, e && e.message); });
         });
+        if (window._sizeCardThumbs) window._sizeCardThumbs();
+        if (window._playVisibleVideos) window._playVisibleVideos();
       } else {
         setTimeout(() => retryWorkLayout(n - 1), 50);
       }
@@ -8707,8 +8878,16 @@ document.addEventListener('keydown', e => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           viewWork.style.visibility = 'visible';
-          viewWork.style.transition = 'opacity 0.3s ease';
+          /* Its own 0.3s fade was this column's answer to arriving after the
+             rest of the page. Under the boot cloak there is nothing to arrive
+             after: it is simply on, and the whole page is revealed once, which
+             is the difference between one fade and a sequence of them. */
+          var cloaked = document.documentElement.classList.contains('boot-cloak');
+          viewWork.style.transition = cloaked ? 'none' : 'opacity 0.3s ease';
           viewWork.style.opacity = '1';
+          if (cloaked && window._bootLit) {
+            requestAnimationFrame(() => { requestAnimationFrame(window._bootLit); });
+          }
         });
       });
     }
@@ -8852,8 +9031,26 @@ document.addEventListener('keydown', e => {
           _revealed = false;
           setHeader(-y, false);
         } else {
-          if (dy < -HDR_THRESH) _revealed = true;
-          else if (dy > HDR_THRESH) _revealed = false;
+          /* ── THE BOUNCE AT THE END IS NOT A GESTURE ──
+             The bar follows the reader's direction, and two pixels is enough
+             intent to flip it. At the foot of the column that test starts
+             reading the browser's own rubber band: the scroller overshoots its
+             end, springs back, overshoots again, and each reversal is a dy far
+             past the threshold with no finger behind it. The bar comes down,
+             pushes the whole column down with it, goes back up, and the page
+             flickers for as long as the reader keeps pushing.
+
+             So the last stretch of the column is exempt. Within a bar's height
+             of the end, and anywhere past it, the bar holds whatever state it
+             already had: there is nothing below to reveal it for, and the only
+             direction changes there are the spring's. Anywhere else it behaves
+             exactly as before. */
+          var span = mainEl.scrollHeight - mainEl.clientHeight;
+          var atEnd = span > 0 && y >= span - hh;
+          if (!atEnd) {
+            if (dy < -HDR_THRESH) _revealed = true;
+            else if (dy > HDR_THRESH) _revealed = false;
+          }
           setHeader(_revealed ? 0 : -hh, true);
         }
         if (Math.abs(dy) > 0.5) _lastY = y;
@@ -9709,10 +9906,49 @@ window.applyCardThumb = function applyCardThumb(sec) {
     node.setAttribute('title', '');
     node.src = src;
   } else if (isVid) {
-    node.autoplay = true; node.muted = true; node.loop = true;
+    /* No autoplay. A collapsed card plays only when hovered on desktop, or
+       when it is the closest section on the phone; both go through the
+       play/pause state machine, which the leftover autoplay attribute used to
+       race, starting the top cards on load before any scroll re-paused them. */
+    node.muted = true; node.loop = true;
     node.playsInline = true;
     node.setAttribute('playsinline', '');
-    node.setAttribute('preload', 'metadata');
+    /* Desktop cards buffer enough to decode frame one. A <video> paints its
+       poster only while readyState is below HAVE_CURRENT_DATA; once a frame is
+       decoded it paints that frame instead, even paused. Back when cards
+       autoplayed this happened within a moment of load, so the poster was
+       never really seen. Now that a card only plays on hover, the poster IS
+       the resting state, and it is an 800px q-80 JPEG stretched across a card
+       roughly 1300px wide: that is the blur, and the JPEG's own colour
+       handling against the clip's BT.709 tagging is the colour shift. Loading
+       the real frame removes both, and hovering no longer "corrects" the card
+       because nothing was wrong with it to begin with.
+
+       The phone stays on metadata. It has no hover, plays by proximity, and
+       paying for seven decodes up front is the load cost this preload setting
+       was introduced to avoid. */
+    node.setAttribute('preload', onPhone ? 'metadata' : 'auto');
+    /* Safari will sit at readyState 1 with a paused video and never decode a
+       frame on its own. Touching currentTime forces the decode; frame one is
+       what the poster was standing in for, so it is the frame to land on. */
+    if (!onPhone) {
+      node.addEventListener('loadedmetadata', () => {
+        try { if (node.paused && !node.currentTime) node.currentTime = 0.001; } catch (e) {}
+      }, { once: true });
+      /* Invisible until frame one is decoded, then shown with no transition.
+         Same gate the video-prep pass applies; set here as well because a
+         thumb the editor swaps in later is created after that pass has run. */
+      node.classList.add('is-pending');
+      const ready = () => {
+        node.classList.remove('is-pending');
+        /* The thumbnail is what is on screen, so its frame arriving is the
+           moment this card is loaded, whatever slide one is still doing. */
+        el.classList.add('is-loaded');
+      };
+      node.addEventListener('loadeddata', ready, { once: true });
+      node.addEventListener('error', ready, { once: true });
+      setTimeout(ready, 8000);
+    }
     /* A card video with no poster is a blank card until it has buffered
        enough to decode a frame, and on the phone that was the original
        file, whatever size it was uploaded at, so the landing sat white for
@@ -9722,7 +9958,19 @@ window.applyCardThumb = function applyCardThumb(sec) {
        hero reel already uses on the phone. Desktop keeps the URL as typed. */
     const ik = src.match(/^(https:\/\/ik\.imagekit\.io\/[^/]+\/)(?:tr:[^/]+\/)?([^?#]+)(\?[^#]*)?$/i);
     if (ik) {
-      node.setAttribute('poster', ik[1] + 'tr:q-80,w-800/' + ik[2] + '/ik-thumbnail.jpg');
+      /* NO POSTER ON DESKTOP. A poster plus a decoded frame is two paints, and
+         they do not match: the poster is a JPEG of frame one and the clip is
+         BT.709, so the handoff showed as the card changing twice before
+         settling. Desktop already buffers the real frame above, so the poster
+         is a step with nothing to add. The card holds the container's own
+         #EBEBEB until that frame lands, then paints once, correctly.
+
+         The phone keeps it. It stays on preload metadata, so there is no
+         decoded frame waiting and the poster is the only thing standing
+         between the reader and a blank card. */
+      if (onPhone) {
+        node.setAttribute('poster', ik[1] + 'tr:q-80,w-800/' + ik[2] + '/ik-thumbnail.jpg');
+      }
       if (onPhone && !/[?&]tr=/.test(src)) {
         src = ik[1] + ik[2] + (ik[3] ? ik[3] + '&' : '?') + 'tr=q-60,w-900';
       }
@@ -10020,7 +10268,7 @@ function initCarousel(sec) {
     if (f0) f0.removeAttribute('src');
     const poster = document.createElement('div');
     poster.className = 'thumb-poster';
-    poster.innerHTML = '<video src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" autoplay muted loop playsinline preload="none" aria-hidden="true"></video>';
+    poster.innerHTML = '<video src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" muted loop playsinline preload="none" aria-hidden="true"></video>';
     el.appendChild(poster);
   }
 
@@ -11053,12 +11301,14 @@ function initCarousel(sec) {
 
   setTimeout(() => {
     setHeight();
+    /* Prepare only. The play() that used to sit here ran 50ms after every
+       carousel initialised and started any in-view video outright, bypassing
+       the hover gate entirely. One owner for playback: playVisibleVideos. */
     sec.querySelectorAll('video').forEach(v => {
       v.muted = true; v.volume = 0;
       try { if (v.audioTracks) for (let i = 0; i < v.audioTracks.length; i++) v.audioTracks[i].enabled = false; } catch (e) {}
-      const r = v.getBoundingClientRect();
-      if (r.top < window.innerHeight && r.bottom > 0) v.play().catch(e => { if (window.VIDEO_DEBUG) console.warn('[video] play failed', (v.currentSrc || v.src || '(no src)'), e && e.name, e && e.message); });
     });
+    if (window._playVisibleVideos) window._playVisibleVideos();
   }, 50);
 
   if (sec.id === 'firstCarouselSection') {
@@ -11674,6 +11924,47 @@ document.addEventListener('visibilitychange', function() {
   wire();
   document.addEventListener('DOMContentLoaded', wire);
 })();
+/* ── CARD THUMB SIZER ──
+   Writes a fixed pixel height on every collapsed card's thumbnail, equal to
+   the height the container reaches at full hover. With the same number in
+   both states the box the video is fitted into never changes, so object-fit
+   has nothing to recompute and the clip holds its scale while the container
+   grows and shrinks around it. The measurement is the wrap's content height,
+   read with any hover padding subtracted so it is correct whether or not the
+   pointer happens to be on the card at the moment of the pass. Hover growth
+   is 5% of that height, so the target is 1.05 x. Desktop only: the phone has
+   no hover and keeps the flow layout. */
+(function() {
+  function sizeCardThumbs() {
+    if (window.innerWidth <= 768) return;
+    document.querySelectorAll('#view-work .carousel-section:not(.is-open)').forEach(sec => {
+      const wrap = sec.querySelector('.carousel-media-wrap');
+      const el   = sec.querySelector('.rm-main-container');
+      if (!wrap || !el) return;
+      const cs = getComputedStyle(wrap);
+      const contentH = wrap.clientHeight
+        - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+      if (!(contentH > 0)) return;
+      const h = Math.round(contentH * 1.05 * 100) / 100;
+      el.querySelectorAll(':scope > .card-thumb, :scope > .thumb-poster').forEach(t => {
+        t.style.height = h + 'px';
+      });
+    });
+  }
+  window._sizeCardThumbs = sizeCardThumbs;
+  document.addEventListener('DOMContentLoaded', sizeCardThumbs);
+  window.addEventListener('load', sizeCardThumbs);
+  let _rz = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rz); _rz = setTimeout(sizeCardThumbs, 80);
+  }, { passive: true });
+  /* The ratio the card box is built from is published after the first
+     thumbnail reports its natural size, which can land after load; re-size
+     once it does so the value is taken from the final box. onThumbRatio runs
+     the callback immediately if the ratio is already known. */
+  if (typeof onThumbRatio === 'function') onThumbRatio(() => setTimeout(sizeCardThumbs, 0));
+})();
+
 /* ── VIDEO PLAY (replaces autoplay attr — avoids iOS audio session interruption) ── */
 (function() {
   // iOS: prevent videos from interrupting ambient audio (Spotify etc)
@@ -11685,6 +11976,41 @@ document.addEventListener('visibilitychange', function() {
   document.querySelectorAll('video').forEach(v => {
     prepareVideo(v);
     v.disableRemotePlayback = true;
+    /* Desktop: a card thumbnail is paused until hovered, so whatever it paints
+       at rest is what the column looks like. preload="none" paints nothing and
+       a poster paints a stretched JPEG; both were only ever acceptable while
+       these autoplayed. Buffer frame one so the card rests on the real clip.
+       Hand-written thumbs and the lab poster are picked up here rather than at
+       each markup site, so there is one rule for all of them. */
+    const isCardThumb = v.classList.contains('card-thumb') || v.closest('.thumb-poster');
+    if (isCardThumb && window.innerWidth > 768) {
+      if (v.preload === 'none' || !v.preload) { v.preload = 'auto'; v.setAttribute('preload', 'auto'); }
+      /* ONE PAINT. Until frame one is decoded the element is held invisible,
+         and the slide layer under it is held invisible too (CSS, keyed on
+         is-pending), so nothing beneath shows through as it loads. The card
+         is the container's flat gray, then the real frame, with no transition
+         between: not the poster, not the slide underneath arriving, not the
+         video going from transparent to painted. loadeddata is the first
+         event at which a frame is guaranteed decodable. */
+      const target = v.classList.contains('card-thumb') ? v : v.closest('.thumb-poster');
+      const cont = target.closest('.rm-main-container');
+      const ready = () => {
+        target.classList.remove('is-pending');
+        if (cont) cont.classList.add('is-loaded');
+      };
+      if (v.readyState >= 2) ready();
+      else {
+        target.classList.add('is-pending');
+        v.addEventListener('loadeddata', ready, { once: true });
+        /* Never strand a card: if the clip fails or stalls, show whatever is
+           there rather than leaving a gray square. */
+        v.addEventListener('error', ready, { once: true });
+        setTimeout(ready, 8000);
+      }
+      v.addEventListener('loadedmetadata', () => {
+        try { if (v.paused && !v.currentTime) v.currentTime = 0.001; } catch (e) {}
+      }, { once: true });
+    }
     // Keep the tracking flag honest when the browser changes state on its own
     // (stall, end of a non-looping clip, tab backgrounding).
     v.addEventListener('play',  () => { v._pvvPlaying = true;  });
@@ -16617,12 +16943,16 @@ document.addEventListener('visibilitychange', function() {
         '</div>' +
         '<div class="rmed-acts">' +
           '<button data-a="tedit">' + (cur ? 'Replace' : 'Set') + '</button>' +
+          /* Apply sits in the action row, not only inside the form, so it is
+             visible without opening the panel first and every asset in the
+             editor carries one in the same place. Opens the form if it is
+             still closed rather than committing an empty field. */
+          '<button data-a="tapply" class="rmed-apply">Apply</button>' +
           (cur ? '<button data-a="tclear" class="rmed-del">Clear</button>' : '') +
         '</div>' +
         '<div class="rmed-form rmed-hidden">' +
           '<textarea spellcheck="false" placeholder="' + (onMob ? 'Mobile' : 'Desktop') + ' thumbnail URL">'
             + esc(cur || '') + '</textarea>' +
-          '<div class="rmed-row"><button class="rmed-apply" data-a="tapply" style="flex:1">Apply</button></div>' +
           '<div class="rmed-hint">Shown on the collapsed card only, on ' + (onMob ? 'the phone' : 'desktop')
             + '. The big image at the top of the open project is slide 1 and is not touched by this. Images or mp4.'
             + (onMob ? ' Clear it and the phone shows the desktop thumbnail.' : '') + '</div>' +
@@ -16646,7 +16976,18 @@ document.addEventListener('visibilitychange', function() {
         }
         if (a === 'tedit') form.classList.toggle('rmed-hidden');
         else if (a === 'tclear') commit('');
-        else if (a === 'tapply') commit(tCard.querySelector('textarea').value.trim());
+        else if (a === 'tapply') {
+          /* Pressed while the panel is still closed, there is nothing to
+             apply yet: open it and put the cursor in the field instead of
+             committing an empty value and wiping the thumbnail. */
+          if (form.classList.contains('rmed-hidden')) {
+            form.classList.remove('rmed-hidden');
+            var ta = tCard.querySelector('textarea');
+            if (ta) ta.focus();
+            return;
+          }
+          commit(tCard.querySelector('textarea').value.trim());
+        }
       });
       grid.appendChild(tCard);
     }
@@ -16725,6 +17066,14 @@ document.addEventListener('visibilitychange', function() {
               + (it.copyFrom && openTab === 'mobile' ? '<button data-a="relink" title="Drop the mobile copy and share the desktop block again">Relink</button>' : '')
           : '<button data-a="edit"' + ((it.locked || it.kind === 'copyref' || it.kind === 'rule' || it.kind === 'spacer')
             ? ' disabled style="opacity:.35;cursor:not-allowed"' : '') + '>Replace</button>') +
+          /* Apply beside Replace, always visible, matching the card thumbnail.
+             It used to live only inside the form, so it appeared to exist on
+             some assets and not others depending on whether the panel happened
+             to be open. Every card below gets a URL form, so every one gets an
+             Apply; the only exclusions are the two kinds whose row is about
+             copy rather than media and which have no URL to apply. */
+          (it.kind === 'text' || (it.kind === 'copyref' && openTab === 'mobile')
+            ? '' : '<button data-a="apply" class="rmed-apply">Apply</button>') +
           '<button data-a="left">&larr;</button>' +
           '<button data-a="right">&rarr;</button>' +
           '<button data-a="del" class="rmed-del">Delete</button>' +
@@ -16769,6 +17118,14 @@ document.addEventListener('visibilitychange', function() {
           markDirty(); renderModal(); if (inplace) syncLive(openSection); return;
         }
         if (a === 'apply') {
+          /* Clicked from the action row while the form is still closed: open
+             it and focus the field rather than reading an unedited textarea. */
+          if (form.classList.contains('rmed-hidden')) {
+            form.classList.remove('rmed-hidden');
+            var ta0 = form.querySelector('textarea');
+            if (ta0) ta0.focus();
+            return;
+          }
           var raw = form.querySelector('textarea').value.split('\n')
             .map(function (s) { return s.trim(); }).filter(Boolean);
           if (!raw.length) return;
@@ -17410,60 +17767,66 @@ document.addEventListener('visibilitychange', function() {
     var mtCur = parseFloat(root.style.getPropertyValue('--mobPhotoTop')) || 0;
     var mbCur = parseFloat(root.style.getPropertyValue('--mobBioDrop')) || 0;
 
-    /* ── THE PHOTO IS CENTRED BETWEEN THE COPY AND THE RULE ──
-       This used to be solved against the Behance cut: the two margins had to
-       sum to whatever kept the last contact link sliced by the bottom of the
-       screen, and the centring got what was left. On a tall phone that budget
-       is about thirty pixels against a two-hundred-pixel clearance under the
-       photo, so the top margin clamped at the budget and the picture sat hard
-       under the copy. The cut is gone as a constraint: the photo is centred,
-       and where the fold lands is whatever falls out of that.
+    /* ── TWO CONSTRAINTS, TWO MARGINS, ONE SOLUTION ──
+       The photo is centred between the last line of the copy and the rule
+       above Contact, AND the contact stack is cut by the fold the way it was
+       asked to be. Those are not in competition once it is seen that they use
+       the margins differently: centring is fixed by the DIFFERENCE between the
+       two margins and the cut by their SUM. Two equations, one answer each.
 
-       A0 and B0 are the two gaps, the copy's last line to the photo and the
-       photo to the Contact rule, as they stand with the margins taken back out
-       rather than zeroed first. Zeroing meant painting the unplaced state on
-       every pass, which is a flash four times per entry. Their difference goes
-       to whichever side is short, so only one margin is ever non-zero, and it
-       is written only when it differs from what is there, so a settled column
-       is not touched at all.
+       Earlier builds solved one and let the other go. Solving for the cut
+       first clamped the centring to a thirty pixel budget and the photo sat
+       hard under the copy; dropping the cut centred the photo and let the
+       stack land wherever it fell, which is under the browser's own bar.
 
-       Three rects, one frame, one coordinate space. Mixing an offsetParent
-       walk with a viewport rect is what put the photo up in the copy. */
-    /* ── THE RULE ABOVE CONTACT, AS THE PHONE DRAWS IT ──
-       Every other build of this read [data-stack="0"], the .work-contact-line
-       the desktop uses. The phone hides that element (display:none, in the
-       rule that removes the redundant first line after a section label), so
-       its rect is all zeros: the gap below came out as a large negative
-       number, the whole of it was written as the photo's bottom margin, and
-       Contact was shoved a screen down while the picture stayed where it was.
-       That is every one of the "nothing changed" and "it went off the page"
-       builds, one wrong selector. The line the phone actually paints is the
-       Contact label's own border-top, so the label's rect is the rule. */
+       ── AND THE FOLD IS WHERE THE PAGE ENDS, NOT WHERE THE WINDOW DOES ──
+       innerHeight on a phone counts the strip beneath Chrome's and Safari's
+       bottom bars, which is real viewport that the reader cannot see. The cut
+       measured to it lands behind the bar, so the crop the fold was supposed
+       to make is simply covered. visualViewport.height is the part actually on
+       screen, bars excluded, and it is what the reader's eye calls the bottom
+       of the page. */
     var rule = document.querySelector('#view-about .about-contact-inner .section-label');
     var lead = document.getElementById('bioLeadMob')
             || document.querySelector('#view-about .about-bio-text');
-    if (!rule || !lead) return;
+    var anchor = document.querySelector('#view-about .work-contact-links .work-contact-link:last-child');
+    if (!rule || !lead || !anchor) return;
 
     var pr = photo.getBoundingClientRect();
     var rr = rule.getBoundingClientRect();
     var lr = lead.getBoundingClientRect();
-    /* An element that is not painting measures zero and would send the same
-       figure off the page again; every edge has to be real. */
-    if (!pr.height || !rr.height || !lr.height) return;
+    var an = anchor.getBoundingClientRect();
+    /* An element that is not painting measures zero, and a zero here is what
+       threw the stack a screen down in an earlier build. Every edge is real or
+       nothing is written. The phone hides the desktop's own rule element,
+       [data-stack="0"], so the line the reader sees is the Contact label's top
+       border and the label's rect is that line. */
+    if (!pr.height || !rr.height || !lr.height || !an.height) return;
+
+    /* Both gaps as they would stand with the margins at zero, taken out of the
+       live layout rather than zeroed and re-measured: zeroing paints the
+       unplaced state for a frame, which is a flash on every pass. */
     var A0 = pr.top - lr.bottom - mtCur;
     var B0 = rr.top - pr.bottom - mbCur;
-    if (!isFinite(A0) || !isFinite(B0)) return;
+    /* Where the middle of the last contact link would sit at zero margins, and
+       how far the column has to travel to put it on the visible fold. */
+    var fold = (window.visualViewport && window.visualViewport.height)
+             || window.innerHeight;
+    var T = fold - ((an.top + an.height / 2) - (mtCur + mbCur));
+    if (!isFinite(A0) || !isFinite(B0) || !isFinite(T)) return;
+    if (T < 0) T = 0;
 
     var d  = B0 - A0;
-    var mt = d > 0 ?  d : 0;
-    var mb = d < 0 ? -d : 0;
-    /* A guard, not a design figure: a number this size means something was
-       measured mid-transition, and writing it would throw the photo off the
-       page. The last good pair stands and the next pass re-reads. */
-    if (mt > window.innerHeight || mb > window.innerHeight) return;
+    var mt = (T + d) / 2;
+    var mb = (T - d) / 2;
+    /* Negative is allowed and often right: the centring can call for the photo
+       to sit closer than the flow puts it, and refusing that is what pinned it
+       under the copy before. Only a figure large enough to mean a mid
+       transition reading is refused, and then the last good pair stands. */
+    if (Math.abs(mt) > fold || Math.abs(mb) > fold) return;
 
     window._peekDbg = 'peek A0 ' + A0.toFixed(0) + '  B0 ' + B0.toFixed(0)
-      + '  mt ' + mt.toFixed(0) + '  mb ' + mb.toFixed(0);
+      + '  T ' + T.toFixed(0) + '  mt ' + mt.toFixed(0) + '  mb ' + mb.toFixed(0);
 
     if (Math.abs(mt - mtCur) > 0.5 || Math.abs(mb - mbCur) > 0.5) {
       root.style.setProperty('--mobPhotoTop', mt.toFixed(1) + 'px');
@@ -17480,6 +17843,12 @@ document.addEventListener('visibilitychange', function() {
   window._mobileBehancePeek = burst;
   window.addEventListener('load', burst);
   window.addEventListener('resize', burst);
+  /* The bars slide away on scroll and back on a flick, and each time the
+     visible fold moves by their height without a resize event behind it. The
+     cut is measured to that fold, so it has to be recomputed when it moves. */
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', burst);
+  }
   window.addEventListener('orientationchange', burst);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(burst);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', burst);
