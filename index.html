@@ -3593,6 +3593,17 @@
         transform-origin: center center;
         transform: translateY(-50%) scale(1);
         will-change: transform;
+        /* NEVER SHORTER THAN THE FRAME. The pixel height above is written by
+           script from a measurement, and a measurement can go stale: the card
+           box grows after the pass (ratio publish, layout settle on refresh)
+           and for the frames until the next pass the centred clip sat short
+           inside its frame, slide one showing in two equal strips above and
+           below it. The floor makes that state impossible. It binds only when
+           the pixel figure is smaller than the container, which is exactly
+           the stale case; whenever the figure is current it is the larger
+           value and nothing here has any effect, so the fixed-px anti-wobble
+           design above is untouched. */
+        min-height: 100%;
       }
       /* VIDEO ZOOM ON HOVER, centred, clipped by the frame's overflow so the
          corners never move. One and a half percent, the same on every card.
@@ -3607,6 +3618,7 @@
         transform-origin: center center;
         transform: translateY(-50%) scale(1);
         will-change: transform;
+        min-height: 100%;   /* same stale-measurement floor as .card-thumb */
       }
       .carousel-section:not(.is-open):hover .card-thumb,
       .carousel-section:not(.is-open):hover .thumb-poster {
@@ -6803,7 +6815,7 @@ window.__errLog = [];
            card stays clickable. The phone keeps the recorded mp4: the builder's
            phone rule only swaps an .html for a video when no mobile URL is set,
            and here one is, so the sketch never runs on a phone. -->
-      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/hg26_3x3_5.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4">
+      <div class="carousel-section" id="notypeLab1Section" data-lab="true" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/hg26_3x3_5.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/hg_thumb_mobile.mp4">
         <div class="carousel-media-wrap">
           <div class="rm-main-container is-loaded" id="notypeLab1Container">
             <video class="card-thumb" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4?updatedAt=1783366105600" muted loop playsinline preload="none" aria-hidden="true"></video>
@@ -6828,15 +6840,9 @@ window.__errLog = [];
               </div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_1.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_1.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788490981717&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_2.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_2.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/linkedin_hg26_9.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/linkedin_hg26_9.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_grid_mobile.gif/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564" type="video/mp4"></video></div>
               <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_process14_5.mp4/ik-thumbnail.jpg" loop="" muted="" playsinline="" disableremoteplayback="" preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_process14_5.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2400" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_3_mobile2.gif?tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_behance1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_behance1.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_behance3.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_behance3.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26.mp4" type="video/mp4"></video></div>
             </div>
           </div>
         </div>
@@ -11969,6 +11975,27 @@ document.addEventListener('visibilitychange', function() {
      once it does so the value is taken from the final box. onThumbRatio runs
      the callback immediately if the ratio is already known. */
   if (typeof onThumbRatio === 'function') onThumbRatio(() => setTimeout(sizeCardThumbs, 0));
+  /* THE BOX, NOT THE WINDOW. The passes above all fire on events (parse,
+     load, resize, ratio publish) and each takes its measurement at that
+     moment. The card box can still change between them, on a refresh
+     especially, where layout settles in stages that fire none of those
+     events, and a height written from the earlier box left the thumb short
+     until the next pass happened by. Watching the wraps themselves means
+     any change to the box re-runs the sizer, whatever caused it. Coalesced
+     to one pass per frame; the observer reports each wrap once on attach,
+     which is just a free first pass. */
+  if (window.ResizeObserver) {
+    let _roQueued = false;
+    const _ro = new ResizeObserver(() => {
+      if (_roQueued) return;
+      _roQueued = true;
+      requestAnimationFrame(() => { _roQueued = false; sizeCardThumbs(); });
+    });
+    const attach = () => document.querySelectorAll('#view-work .carousel-media-wrap')
+      .forEach(w => _ro.observe(w));
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
+    else attach();
+  }
 })();
 
 /* ── VIDEO PLAY (replaces autoplay attr — avoids iOS audio session interruption) ── */
