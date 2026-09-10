@@ -464,58 +464,28 @@ let targetScale=1.0, currentScale=1.0;   // overwritten at boot by THE OPENING M
 const SCALE_EASE=0.12; // per-frame approach; lower = slower, more elegant glide
 function updateElementScale(v){targetScale=parseFloat(v);}
 window.updateElementScale=updateElementScale;
-/* ── THE OPENING MOVE ──
-   It arrives at the slider's MAXIMUM, fully zoomed in, holds there long enough
-   to register as a held frame rather than a flash, and then pulls back to the
-   slider's minimum. Two seconds end to end: half a second still, a second and
-   a half travelling.
+/* ── THE OPENING MOVE: REMOVED ──
+   It used to arrive at the slider's MAXIMUM, fully zoomed in, hold half a
+   second and pull back to the slider's minimum over another second and a
+   half. The piece now simply opens at the size that move used to land on,
+   which is the slider's minimum, so a reader meets the form at the scale it
+   is meant to be read at rather than watching it get there.
 
-   The thumb travels with it. The scale is written to the input's value on
-   every frame of the pull-back, so the control reads the piece's actual state
-   the whole way down rather than jumping to its landing at the end.
-
-   Driven frame by frame off a clock rather than handed to SCALE_EASE. That
-   ease is an exponential approach: it has no duration, it never quite arrives,
-   and a slider tracking it would decelerate forever short of the end. The
-   intro needs a stated length and an exact landing, so it writes BOTH
-   targetScale and currentScale on each frame, which makes the render loop's
-   ease line a no-op for the length of the move and hands the scale back
-   untouched at the end.
-
-   Cancelled the moment the reader touches the slider or the wheel. A hand on
-   a control outranks an introduction, and nothing should move under it. */
-const INTRO_HOLD_MS   = 500;    // held at full zoom before anything moves
-const INTRO_TRAVEL_MS = 1500;   // the pull-back itself
+   The old move wrote the value to the input on every frame so the thumb
+   travelled with it, and disarmed itself the moment a hand touched the
+   slider or the wheel. None of that is needed for a single value written
+   once. If the introduction is ever wanted back, it was a clock-driven tween
+   from parseFloat(s.max) to parseFloat(s.min), 500ms held then 1500ms
+   travelling on a cubic in-out, writing BOTH targetScale and currentScale so
+   the render loop's ease line was a no-op for its duration. */
 (function(){
   const s = document.getElementById('escale');
   if(!s) return;
-  const from = parseFloat(s.max);   // fully zoomed in
-  const to   = parseFloat(s.min);   // fully zoomed out
-  let armed = true;
-  const disarm = () => { armed = false; };
-  s.addEventListener('input', disarm, { once: true });
-  window.addEventListener('wheel', disarm, { once: true, passive: true });
-
-  function write(v){
-    targetScale = currentScale = v;
-    s.value = v.toFixed(3);
-  }
-  write(from);   // the state the piece opens in
-
-  /* Gentle at both ends: it leaves the held frame without a jerk and settles
-     into the last one without a stop. */
-  const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
-
-  let t0 = 0;
-  requestAnimationFrame(function step(now){
-    if(!armed) return;
-    if(!t0) t0 = now;
-    const t = (now - t0 - INTRO_HOLD_MS) / INTRO_TRAVEL_MS;
-    if(t >= 1){ write(to); return; }          // exact landing, then hands off
-    if(t > 0) write(from + (to - from) * ease(t));
-    requestAnimationFrame(step);
-  });
+  const at = parseFloat(s.min);   // the state the piece opens in
+  targetScale = currentScale = at;
+  s.value = at.toFixed(3);
 })();
+
 // C key toggles UI
 let _uiVisible=false;
 function _applyUiVisible(){
@@ -548,6 +518,8 @@ let xAmount=1.0;   // orbit drag sensitivity
 function updateXAmount(v){xAmount=parseFloat(v);document.getElementById('xamt-val').textContent=parseFloat(v).toFixed(2);}
 window.updateXAmount=updateXAmount;
 let dragging=false, rolling=false, lastPX=0, lastPY=0;
+// Set once the arcball has a previous point to measure a hover delta against.
+let _hoverPrimed=false;
 document.body.style.cursor='grab';
 // Arcball: the pointer is projected onto a virtual sphere that fills the
 // viewport. Drag through the middle and the form tumbles; drag around the
@@ -571,7 +543,31 @@ window.addEventListener('pointerdown',e=>{
   document.body.style.cursor='grabbing';
 });
 window.addEventListener('pointermove',e=>{
-  if(!dragging)return;
+  /* ── THE CURSOR IS THE HAND ──
+     No button needed. A reader who has to guess that a still object responds
+     to click and hold mostly never finds out, so the same arcball that ran
+     under a held pointer now runs under a moving one, through the identical
+     path below: same ballPoint projection, same xAmount, same ROT_GAIN, so
+     hovering and dragging turn the form by exactly the same amount per unit
+     of hand movement and there are not two feels to reconcile.
+
+     Roll still asks for a press, because a twist is a deliberate act and
+     nobody should roll the piece by crossing the window on their way
+     somewhere else.
+
+     _ballA has to be primed before the first delta: without a previous point
+     the arcball would read the whole distance from the screen's centre as one
+     gesture and snap. One frame of movement is spent recording where the
+     cursor is, and every frame after that is a rotation. */
+  if(!dragging){
+    if(e.target.closest('#ui')||e.target.closest('#size-slider')) return;
+    if(!_hoverPrimed){
+      ballPoint(e.clientX,e.clientY,_ballA);
+      lastPX=e.clientX;lastPY=e.clientY;
+      _hoverPrimed=true;
+      return;
+    }
+  }
   if(rolling){
     // explicit twist: shift-drag or right-drag, horizontal motion spins in plane
     const dx=e.clientX-lastPX;
@@ -596,6 +592,9 @@ window.addEventListener('pointermove',e=>{
 });
 window.addEventListener('pointerup',()=>{dragging=false;rolling=false;document.body.style.cursor='grab';});
 window.addEventListener('pointercancel',()=>{dragging=false;rolling=false;document.body.style.cursor='grab';});
+// Re-prime on re-entry: the cursor can leave on one edge and come back on
+// another, and the distance between those two points is not a gesture.
+window.addEventListener('pointerout',e=>{ if(!e.relatedTarget) _hoverPrimed=false; });
 function updateSpacing(v){
   spacingScale=parseFloat(v);
   document.getElementById('spacing-val').textContent=parseFloat(v).toFixed(2);
@@ -603,7 +602,27 @@ function updateSpacing(v){
   for(let i=0;i<activeCount;i++){spawnParticle(i);}
 }
 window.updateSpacing=updateSpacing;
-window.addEventListener('wheel',e=>{orbRadius=Math.max(2,Math.min(20,orbRadius+e.deltaY*0.005));});
+/* ── THE WHEEL AND THE SLIDER ARE ONE CONTROL ──
+   The wheel used to walk orbRadius, the camera's distance, while the slider
+   walked the element's scale. Two zooms, neither aware of the other, so
+   scrolling left the slider reading a state the piece was no longer in.
+   The wheel now drives the slider's own value: the same targetScale the
+   control writes, clamped to the same min and max, and written back to the
+   input so the thumb travels with the scroll. One notion of zoom, stated in
+   one place, whichever way the reader reaches for it.
+
+   targetScale rather than currentScale, so the render loop's SCALE_EASE
+   carries the movement and a flick of the wheel arrives as a glide rather
+   than a jump. The camera stays where it was put; distance is now a decision
+   the piece makes once, not something a stray scroll can undo. */
+window.addEventListener('wheel',e=>{
+  const s=document.getElementById('escale');
+  if(!s)return;
+  const lo=parseFloat(s.min), hi=parseFloat(s.max);
+  const v=Math.max(lo,Math.min(hi,targetScale-e.deltaY*0.0025*(hi-lo)));
+  targetScale=v;
+  s.value=v.toFixed(3);
+},{passive:true});
 
 const _gW=new THREE.Vector3(0,-1,0),_gL=new THREE.Vector3(),_iQ=new THREE.Quaternion();
 function stepParticles(){
@@ -780,6 +799,17 @@ function stepParticles(){
   pAttr.needsUpdate=true;
 }
 
+/* ── IT NO LONGER TURNS ON ITS OWN ──
+   The turntable said "this can be turned" but it also said "this is a video",
+   and a form already moving gives a reader nothing to discover. The invitation
+   is now the response itself: the shape follows the cursor the moment it
+   moves, with no button held, so the connection between hand and form is made
+   on the reader's first gesture rather than announced by motion they had no
+   part in. See THE CURSOR IS THE HAND below, in the pointermove handler.
+
+   If the self-rotation is ever wanted back, it was a per-frame premultiply on
+   tgtQ around _AXIS_Y, time based off performance.now(), skipped while
+   dragging, at 0.05 revolutions per second. */
 function animate(){
   requestAnimationFrame(animate);
   if(window._hgPaused) return;
