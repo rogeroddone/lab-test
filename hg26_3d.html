@@ -527,6 +527,7 @@ document.body.style.cursor='grab';
 // The sphere falls off hyperbolically past the rim so it never snaps.
 const _ballA=new THREE.Vector3(), _ballB=new THREE.Vector3(), _ballAxis=new THREE.Vector3();
 const ROT_GAIN=1.625;   // 30% then a further 25% more rotation per unit of hand movement
+const TOUCH_GAIN_MULT=3; // a finger drag covers far less of the screen than a mouse drag, so touch gets extra gain
 function ballPoint(x,y,out){
   const R=Math.min(innerWidth,innerHeight)*0.5;
   const nx=(x-innerWidth/2)/R, ny=-(y-innerHeight/2)/R;
@@ -568,16 +569,17 @@ window.addEventListener('pointermove',e=>{
       return;
     }
   }
+  const touchMult=(e.pointerType==='touch')?TOUCH_GAIN_MULT:1;
   if(rolling){
     // explicit twist: shift-drag or right-drag, horizontal motion spins in plane
     const dx=e.clientX-lastPX;
-    _dq.setFromAxisAngle(_AXIS_Z,-dx*0.005*xAmount*ROT_GAIN);
+    _dq.setFromAxisAngle(_AXIS_Z,-dx*0.005*xAmount*ROT_GAIN*touchMult);
     tgtQ.premultiply(_dq);
   }else{
     ballPoint(e.clientX,e.clientY,_ballB);
     _dq.setFromUnitVectors(_ballA,_ballB);
     // scale the arcball step by axis-angle so the gain stays linear
-    const g=xAmount*ROT_GAIN;
+    const g=xAmount*ROT_GAIN*touchMult;
     if(g!==1){
       const w=Math.min(1,Math.max(-1,_dq.w)), sn=Math.sqrt(1-w*w);
       if(sn>1e-6){
