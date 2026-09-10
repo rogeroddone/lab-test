@@ -7321,10 +7321,10 @@ window.__errLog = [];
                measurements already handle. -->
           <p id="bioLeadMob">Bay Area brand designer. Twenty years building brand identities and the systems that carry them.</p>
           <div id="bioRestMob">
-            <p>I do foundations. Find the idea a brand can stand on, then create the building blocks hundreds of people reach for, people who never meet, so what they make adds up to one feeling instead of scattering.</p>
-            <p>Before design I was a mechanic, in my dad's motorcycle wheel garage in São Paulo. Truing rims, replacing worn parts, and the last step, balancing: small weights placed around the wheel until the ride runs smooth. Nobody notices a balanced wheel. Everyone feels the wobble, and they can't name it. Twenty years later that is still the job: place the weights until nothing wobbles.</p>
+            <p>I build foundations. Find the idea a brand can stand on, then create the building blocks hundreds of people reach for, people who never meet, so that what they make adds up to one cohesive feeling.</p>
+            <p>Before design I was a mechanic in my dad's garage in São Paulo, fixing motorcycle wheels. Truing rims, replacing worn parts, and the last and most important step, balancing: small weights placed around the wheel until the ride runs smooth. Nobody notices a balanced wheel. Everyone feels the wobble, and they can't name it. Twenty years later that is still the job: place the weights until nothing wobbles.</p>
+            <p>Along the way I've kept adding to the toolbox to become a better brand designer: strategy, motion, product, 3D, and lately my own tools coded with AI, so an idea can be tested in a browser the same week it's sketched.</p>
             <p>I've stayed hands-on my whole career, by choice. Nothing compares to finding the idea that holds everything up.</p>
-            <p>The toolbox keeps growing. Strategy, motion, product, 3D, and lately my own tools coded with AI, so an idea can be tested in a browser the same week it's sketched.</p>
           </div>
           <!-- After the block it opens rather than before it, so the control
                sits under the last line of whatever is showing: under the
@@ -9825,6 +9825,10 @@ window._fluidReveal = function (block, mutate, shown, hidden) {
        flag on window because it is also readable from CSS and from the
        inspector, and because `open` is a local in this closure. */
     document.body.classList.toggle('bio-open', open);
+    /* The lift comes down with the click rather than with the next pointer
+       move, so the record is never painted over the copy for even a frame.
+       syncPeek reads bio-open and does the right thing in both directions. */
+    if (window._syncPeek) window._syncPeek();
     // Opening the bio moves every rule under it. Same reason as the job
     // toggles above: the labels are placed from those rules and nothing
     // scrolled.
@@ -13871,6 +13875,7 @@ document.addEventListener('visibilitychange', function() {
     followPeek();
   }
   window._setPeek = setPeek;
+  window._syncPeek = function () { syncPeek(); };
 
   /* ── THE INTENT, AND ACTING ON IT ──
      _wantPeek is which half the pointer was last seen in. It is written only
@@ -13926,6 +13931,25 @@ document.addEventListener('visibilitychange', function() {
      the lift stops working with nothing on screen to say why. */
   function syncPeek() {
     if (!MQ.matches) return;
+    /* ── AN OPEN BIO PUTS THE LIFT DOWN AND KEEPS IT DOWN ──
+       The lift is a stylesheet transform on the record: with the pointer on
+       the left half, .about-contact-inner is drawn --peekShift above where the
+       flow put it. That is the overlap. The essay grows in the flow and the
+       floor in alignFirstSection keeps the record clear of it there, but the
+       transform paints the record higher than the flow says, straight over
+       the essay's last lines. Crossing to the thumbnails released it and the
+       overlap went; crossing back raised it and the overlap came back.
+
+       So while the copy is open the record is released and the pointer is
+       ignored: it sits where the flow put it, three gutters under the last
+       line, and nothing the pointer does moves it. _wantPeek still records
+       where the pointer is, so the first move after the copy closes lifts or
+       leaves the record exactly as it would have anyway. */
+    if (document.body.classList.contains('bio-open')) {
+      var openCol = document.getElementById('view-about');
+      if (openCol && openCol.scrollTop === 0) setPeek(false);
+      return;
+    }
     if (_wantPeek) {
       if (!document.body.classList.contains('has-open')) setPeek(true);
     } else {
@@ -15128,8 +15152,22 @@ document.addEventListener('visibilitychange', function() {
          copy does not move at all: the disclosure opens downward and the pin
          keeps holding the statement level with the name. */
       if (openText) {
-        need = openText.getBoundingClientRect().height + BIO_CLEAR_PX()
-             + (window._bioShiftPx || 0);
+        /* ── MEASURED AS A TAIL, NOT A HEIGHT ──
+           Height plus shift assumes the copy starts at the block's own top.
+           It does not: the lead is pinned level with the name in the header
+           and the block's top sits above that, so the sum came out short by
+           the offset between the two and the Contact rule landed inside the
+           last line of the essay. The tail is read directly instead, the
+           copy's painted bottom against the block's painted top, which takes
+           in the pin, the shift and any offset without naming them. The old
+           sum is kept as a floor so nothing this measures can come out lower
+           than it did before. */
+        var tailBelowTop = openText.getBoundingClientRect().bottom
+                         - bio.getBoundingClientRect().top;
+        need = Math.max(
+          tailBelowTop + BIO_CLEAR_PX(),
+          openText.getBoundingClientRect().height + BIO_CLEAR_PX()
+             + (window._bioShiftPx || 0));
       }
     }
     var r0 = left.querySelector('[data-stack="0"]');
@@ -18620,7 +18658,10 @@ document.addEventListener('visibilitychange', function() {
    Files, not URLs: relative to this page, the same paths the desktop
    iframes use. Order matches the desktop wrapper: 3x3, 5x5 and 10x10, 3D. */
 (function () {
-  const FILES = ['hg26_3x3.html', 'hg26_5x5_10x10.html', 'hg26_3d.html'];
+  /* Phone builds where one exists. The desktop files keep their own names and
+     their own behaviour: the sketches the page embeds inline are unchanged,
+     and these are the versions made to be read on a phone. */
+  const FILES = ['hg26_3x3_mobile.html', 'hg26_5x5_10x10.html', 'hg26_3d.html'];
   let ov = null, frame = null, count = null, idx = 0, releaseSwipe = null;
 
   const ARROW_L = '<svg viewBox="0 0 41 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M16.69 0L18.1 1.41L3.89 15.62H41V17.62H3.89L18.1 31.83L16.69 33.25L0.06 16.62L16.69 0Z" fill="#000"/></svg>';
