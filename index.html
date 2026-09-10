@@ -2958,10 +2958,28 @@
     /* The lead frame opens to a fixed share of the viewport rather than a
        proportion of its width. It is the opening statement of the section, so
        it is sized to the screen, not to the other leads' aspect. The
-       aspect-ratio is dropped here so it cannot fight the height. */
-    .carousel-section.is-open #notypeLab1Container {
-      aspect-ratio: auto !important;
-      height: 90vh !important;
+       aspect-ratio is dropped here so it cannot fight the height.
+       DESKTOP ONLY. Unscoped, this leaked to the phone: 90vh of a phone
+       screen is far taller than the measure is wide, so the lead's box was a
+       tall panel and its media rendered oversized, running past the viewport
+       instead of sitting inside the page margin like every other lead. */
+    @media (min-width: 769px) {
+      .carousel-section.is-open #notypeLab1Container {
+        aspect-ratio: auto !important;
+        height: 90vh !important;
+      }
+    }
+    /* The phone's open lab lead takes its height from its width, the same
+       deal every other phone lead gets from setHeight(): full measure wide,
+       inside the page margin, and the asset letterboxed on the section's own
+       black where its shape differs. --leadAR is the per-section proportion
+       readRatio() publishes; the fallback matches the collapsed card. */
+    @media (max-width: 768px) {
+      .carousel-section.is-open #notypeLab1Container {
+        height: auto !important;
+        aspect-ratio: var(--leadAR, var(--thumbRatio, 16 / 9)) !important;
+        width: 100%;
+      }
     }
     #notypeLab1Container .rm-slide-wrapper,
     #notypeLab1Container .rm-slide-item { height: 100%; }
@@ -3056,6 +3074,18 @@
       padding-bottom: 1px;
     }
     .lab-link:hover { opacity: 0.6; }
+    /* ── THE PHONE IS TOLD IT IS WATCHING A RECORDING ──
+       HG26's whole point is interaction and the phone cannot have it: the
+       sketches are desktop-only and the phone plays captures. Said outright,
+       first thing in the copy, so a phone reader knows there is a live
+       version and where it is. Prominence the way this page does prominence:
+       not bold, the primary colour against the paragraph's grey, the same
+       one-step lift the company name gets over its caption line. Lives in
+       .col-para-mob, so the desktop, which IS the live version, never sees
+       a note about itself. */
+    #notypeLab1Section .lab-live-note {
+      color: #FFFFFF;
+    }
     /* HG26 opens on near-black, so the primary colour there is white. */
     body.has-open .carousel-section.is-open#notypeLab1Section .lab-link,
     body.unified.has-open .carousel-section.is-open#notypeLab1Section .lab-link {
@@ -3384,6 +3414,22 @@
     .carousel-section:not(.is-open) .thumb-poster.is-pending { visibility: hidden; }
     .carousel-section:not(.is-open) .rm-main-container:has(> .card-thumb.is-pending) .rm-slide-wrapper,
     .carousel-section:not(.is-open) .rm-main-container:has(> .thumb-poster.is-pending) .rm-slide-wrapper { visibility: hidden; }
+    /* THE PHONE HIDES THE SLIDE LAYER FOR AS LONG AS THE CARD IS CLOSED.
+       The desktop gate above is temporal: hidden while the thumb is pending,
+       trusted to be covered after. The phone never sets is-pending (that
+       machinery is desktop-only), so before a poster painted, slide one
+       showed straight through the transparent video element, and after it
+       painted, any sub-pixel gap between the thumb and its frame let slide
+       one through as a hairline (Uber's dark lead, a thin black line under
+       the card). A collapsed phone card with a thumb has exactly one visible
+       surface, so the layer beneath it is not conditionally hidden, it is
+       hidden, full stop, and comes back the moment the project opens.
+       visibility, not display: the wrapper still lays out, so ratio reads
+       and the open FLIP measure real boxes. */
+    @media (max-width: 768px) {
+      .carousel-section:not(.is-open) .rm-main-container:has(> .card-thumb) .rm-slide-wrapper,
+      .carousel-section:not(.is-open) .rm-main-container:has(> .thumb-poster) .rm-slide-wrapper { visibility: hidden; }
+    }
     /* NO SKELETON PULSE UNDER A THUMBNAIL. The pulse breathes the whole
        container between 100% and 60% opacity until .is-loaded lands, and
        .is-loaded is added when SLIDE ONE's image finishes loading, or after a
@@ -6840,8 +6886,8 @@ window.__errLog = [];
               </div>
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/linkedin_hg26_9.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/linkedin_hg26_9.mp4" type="video/mp4"></video></div>
-              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg26_grid_mobile.gif/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><video poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-800/hg_26_mobile_inro_1.mp4/ik-thumbnail.jpg" loop muted playsinline disableremoteplayback preload="none"><source src="https://ik.imagekit.io/rfi7kdlxzn/hg_26_mobile_inro_1.mp4" type="video/mp4"></video></div>
+              <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_grid_mobile.gif?updatedAt=1788969207564&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="HG26" src="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/hg26_waterfall_mobile.jpg?updatedAt=1788490982143&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
             </div>
           </div>
@@ -6856,7 +6902,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Creative coding</span><span>• Generative design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><span class="lab-live-note">What you see here is a recording. The live, interactive version runs on the desktop site.</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
         </div>
       </div>
 
@@ -6924,7 +6970,7 @@ window.__errLog = [];
       </div>
 
       <!-- CAROUSEL 5: Oddone -->
-      <div class="carousel-section" id="oddoneCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster17_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/oddone_gallery_mobile.mp4">
+      <div class="carousel-section" id="oddoneCarouselSection" data-card-thumb="https://ik.imagekit.io/rfi7kdlxzn/oddone_poster17_1.mp4" data-card-thumb-mobile="https://ik.imagekit.io/rfi7kdlxzn/oddone_2_mobile.mp4?updatedAt=1774656138254">
         <div class="carousel-media-wrap">
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
@@ -9994,6 +10040,27 @@ window.applyCardThumb = function applyCardThumb(sec) {
     node.src = src;
   }
   el.appendChild(node);
+  /* THE PHONE CARD IS LOADED WHEN ITS THUMB IS. Same principle the desktop
+     pass states: the thumbnail is what is on screen, so slide one's own
+     progress should not drive the skeleton pulse. The phone had no such
+     marking, so the container pulsed on behalf of a hidden slide while the
+     poster it actually shows was already up, which read as the cards
+     blinking on first load. The poster is fetched here as an Image because
+     a preload=metadata video gives no event for it; whichever of poster,
+     media or timeout lands first settles the card. */
+  if (window.innerWidth <= 768) {
+    const settle = () => el.classList.add('is-loaded');
+    const posterUrl = node.getAttribute && node.getAttribute('poster');
+    if (posterUrl) {
+      const p = new Image();
+      p.onload = settle; p.onerror = settle;
+      p.src = posterUrl;
+    }
+    node.addEventListener('load', settle, { once: true });
+    node.addEventListener('loadeddata', settle, { once: true });
+    node.addEventListener('error', settle, { once: true });
+    setTimeout(settle, 8000);
+  }
 };
 
 function initCarousel(sec) {
