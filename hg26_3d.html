@@ -602,27 +602,18 @@ function updateSpacing(v){
   for(let i=0;i<activeCount;i++){spawnParticle(i);}
 }
 window.updateSpacing=updateSpacing;
-/* ── THE WHEEL AND THE SLIDER ARE ONE CONTROL ──
-   The wheel used to walk orbRadius, the camera's distance, while the slider
-   walked the element's scale. Two zooms, neither aware of the other, so
-   scrolling left the slider reading a state the piece was no longer in.
-   The wheel now drives the slider's own value: the same targetScale the
-   control writes, clamped to the same min and max, and written back to the
-   input so the thumb travels with the scroll. One notion of zoom, stated in
-   one place, whichever way the reader reaches for it.
+/* ── THE SLIDER IS THE ONLY ZOOM ──
+   Scroll no longer changes scale. The wheel listener that walked targetScale
+   and wrote the value back to #escale has been removed, and with it the
+   pinch gesture, which reaches the page as a ctrl-modified wheel event.
+   Zoom is now a deliberate act: the reader takes hold of the slider or the
+   piece stays where it is. Drag still orbits, the camera distance is still
+   fixed at boot, and nothing scrolls the page because body is overflow:hidden.
 
-   targetScale rather than currentScale, so the render loop's SCALE_EASE
-   carries the movement and a flick of the wheel arrives as a glide rather
-   than a jump. The camera stays where it was put; distance is now a decision
-   the piece makes once, not something a stray scroll can undo. */
-window.addEventListener('wheel',e=>{
-  const s=document.getElementById('escale');
-  if(!s)return;
-  const lo=parseFloat(s.min), hi=parseFloat(s.max);
-  const v=Math.max(lo,Math.min(hi,targetScale-e.deltaY*0.0025*(hi-lo)));
-  targetScale=v;
-  s.value=v.toFixed(3);
-},{passive:true});
+   If wheel zoom is ever wanted back, it was a passive window 'wheel' listener
+   that clamped targetScale - deltaY * 0.0025 * (max - min) to the input's own
+   min and max, assigned targetScale, then wrote v.toFixed(3) to the slider so
+   the thumb tracked the scroll. */
 
 const _gW=new THREE.Vector3(0,-1,0),_gL=new THREE.Vector3(),_iQ=new THREE.Quaternion();
 function stepParticles(){
