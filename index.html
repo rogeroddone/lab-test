@@ -7474,7 +7474,16 @@ document.addEventListener('visibilitychange', function() {
   function check() {
     var m = document.getElementById('mainContent');
     if (!m || !MOB.matches) return;
-    var vis = window.innerHeight;
+    /* Opened from another app (Messages, WhatsApp), Safari can leave the whole
+       page layer pushed up by roughly one toolbar height: the fixed header is
+       off the top and a grey band shows under the scroller. html/body are
+       overflow:hidden so the user cannot drag it back. Reset any document or
+       visual-viewport offset before measuring. */
+    if (window.scrollY || window.scrollX ||
+        (window.visualViewport && (window.visualViewport.offsetTop || window.visualViewport.offsetLeft))) {
+      window.scrollTo(0, 0);
+    }
+    var vis = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     if (m.style.height) m.style.height = '';
     void m.offsetHeight;
     if (m.clientHeight < vis - 2) m.style.height = vis + 'px';
@@ -7483,6 +7492,30 @@ document.addEventListener('visibilitychange', function() {
     requestAnimationFrame(function () { requestAnimationFrame(check); });
     setTimeout(check, 350);
     setTimeout(check, 1000);
+    setTimeout(check, 2500);
+  }
+  /* Initial load from a cold link, not only bfcache returns. */
+  window.addEventListener('load', onReturn);
+  document.addEventListener('DOMContentLoaded', onReturn);
+  /* In-app browsers (Messages, WhatsApp) animate their toolbars in after the
+     page has already laid out, so re-check for the first few seconds. */
+  (function burst() {
+    var t = 0, iv = setInterval(function () {
+      check(); t += 400; if (t > 4000) clearInterval(iv);
+    }, 400);
+  })();
+  /* html and body are overflow:hidden, so if the document layer itself ends up
+     scrolled the user has no way to drag it back. Pin it. */
+  window.addEventListener('scroll', function () {
+    if (MOB.matches && (window.scrollY || window.scrollX)) window.scrollTo(0, 0);
+  }, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', check);
+    window.visualViewport.addEventListener('scroll', function () {
+      if (!MOB.matches) return;
+      var vv = window.visualViewport;
+      if (vv.scale === 1 && (vv.offsetTop || vv.offsetLeft)) window.scrollTo(0, 0);
+    });
   }
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) onReturn();
