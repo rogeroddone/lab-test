@@ -2742,6 +2742,13 @@
        spaces to worry about. Every gap between words on every line is the same
        width. What reads as awkward is the shape of the rag, not the spacing. */
     .info-paragraph { text-wrap: pretty; }
+    /* ── A RUN-IN NAME AT THE HEAD OF A PARAGRAPH ──
+       The copy is #999999 throughout, which is right for running text and
+       wrong for the one thing at the head of it that names what follows. Set
+       in the primary colour on the same line, so it reads as the paragraph's
+       subject rather than as a heading with its own storey. Nothing else
+       changes: same face, same size, same leading, one space after it. */
+    .copy-lead { color: #000000; }
 
     /* ── OPEN PROJECT: DISCIPLINES ON THE COPY'S LEADING ──
        Inside an open project the disciplines sit in the column beside the long
@@ -2972,12 +2979,18 @@
     /* The phone's open lab lead takes its height from its width, the same
        deal every other phone lead gets from setHeight(): full measure wide,
        inside the page margin, and the asset letterboxed on the section's own
-       black where its shape differs. --leadAR is the per-section proportion
-       readRatio() publishes; the fallback matches the collapsed card. */
+       black where its shape differs.
+       The ratio is this section's own number rather than --leadAR, because
+       readRatio() gets nothing from a lab section: its desktop lead is a live
+       iframe, which reports no intrinsic size, so the frame fell through to
+       --thumbRatio and opened as a wide 16/9 band. The phone lead is a
+       portrait recording, so a 16/9 frame cropped it to a strip and the
+       artwork read as tiny. 900 / 1020 is the cropped intro's real pixel
+       size. One number to change if the asset is ever re-exported. */
     @media (max-width: 768px) {
       .carousel-section.is-open #notypeLab1Container {
         height: auto !important;
-        aspect-ratio: var(--leadAR, var(--thumbRatio, 16 / 9)) !important;
+        aspect-ratio: var(--hg26LeadAR, 900 / 1020) !important;
         width: 100%;
       }
     }
@@ -3052,7 +3065,59 @@
        relative on .rest-media, which the stack still needs for its own
        children, and one rule that ends the labels wherever they are built. */
     .carousel-section.is-open .rest-media { position: relative; }
-    .rest-num { display: none !important; }
+    /* ── PER-IMAGE NUMBERS: BACK, FOR EVERY ASSET ──
+       The block above is the reasoning for taking them out. The reasoning for
+       putting them back is the one the lead already made: an open project
+       carries 01-08 beside its first image, and a number that appears once
+       and never again is not a counter, it is a label that looks like one.
+       Either every asset is numbered or none is. So each image and video in
+       the stack takes its own, in page column 1, level with the top of the
+       asset it counts, in the same grey and the same tabular figures the
+       lead's indicator uses.
+
+       Only images and videos count. Copy blocks, rules and spacers are not
+       assets and take no number, so the total is the number of things a
+       reader can actually look at rather than the number of children the
+       stack happens to have.
+
+       Not on the lab project. Its stack is live experiments in iframes rather
+       than a run of pictures, and numbering them would be counting the wrong
+       kind of thing.
+
+       overflow is released on the items that carry a number: the number sits
+       two tracks to the left of the media, outside the item's own box, and
+       .rest-item is authored overflow:hidden for the collapsed card's rounded
+       plate. Open, that plate is already transparent with the radius off, so
+       there is nothing left for the clip to do. */
+    .rest-num { display: none; }
+    @media (min-width: 769px) {
+      .carousel-section.is-open:not([data-lab]) .rest-item:has(> .rest-num) {
+        overflow: visible;
+      }
+      .carousel-section.is-open:not([data-lab]) > .rest-media .rest-num {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: calc(-2 * var(--col) - 2 * var(--gap));
+        font-family: var(--font);
+        font-weight: 400;
+        font-size: var(--type);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        color: #999999;
+        white-space: nowrap;
+        pointer-events: none;
+        user-select: none;
+      }
+    }
+    /* ── THE LAPTOP RANGE HAS NO COLUMNS TO SPARE ──
+       Below 1600 the stack already runs the full twelve tracks, so there is
+       no column 1 to sit in and the number would land on the picture. The
+       lead's own indicator is inside the info grid and is unaffected, which
+       is the state this page shipped in for every width until now. */
+    @media (min-width: 769px) and (max-width: 1600px) {
+      .carousel-section.is-open .rest-num { display: none; }
+    }
 
     /* ── A LINK IN THE COPY, KEPT ──
        The studio used to be a line in HG26's second column that opened it in a
@@ -3222,11 +3287,19 @@
        black on near-black. Named at the same weight the light values were,
        since several of them are !important there. */
     body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-title,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-line,
     body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy,
     body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-mark,
     body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-name {
       color: #FFFFFF !important;
+    }
+    /* ── THE CLAIM IS SECOND RANK ON EITHER GROUND ──
+       It was inverted to full white along with the company name above it,
+       which put the two at the same weight and lost the step between the name
+       and what it says. #7C7C7C was chosen to sit under the primary rather
+       than to sit on white, and it does that on this ground too, which is the
+       same call the open project's own .info-description already makes. */
+    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-line {
+      color: #7C7C7C !important;
     }
     /* ── AND THE WHITE EDGE ON THE TAIL CARDS ──
        Every card frame is authored white behind its thumbnail. On the light
@@ -5799,7 +5872,17 @@
         align-items: center;
         gap: var(--gap);
         position: absolute;
-        left: calc(2 * var(--col) + 2 * var(--gap));
+        /* ── COLUMN ONE, EVERY WIDTH ──
+           This used to be two tracks and two gutters in, landing on page
+           column 3, where an open project's copy starts. The laptop range
+           already opted out of it, on the reasoning that at narrower tracks
+           the indent stopped reading as a known line and only read as the
+           button sitting adrift of the picture's left edge. That is true at
+           every width: the button marks a corner, and a corner mark that is
+           not on the corner is just a floating control. So it goes flush to
+           the section's own edge, page column 1, and the two ways out of a
+           project sit on the same vertical as the picture they belong to. */
+        left: 0;
         width: auto;
         height: calc(38px * 0.7);
         border-radius: var(--radius);
@@ -5809,18 +5892,23 @@
         pointer-events: auto;
       }
       /* ── ON A LAPTOP IT GOES TO THE FIRST COLUMN ──
-         Page column 3 is where an open project's copy starts, so on a wide
-         screen the button lands on a line the reader has already been given.
-         In the laptop range the tracks are narrower and those two tracks plus
-         two gutters no longer read as an indent off a known line, only as the
-         button sitting adrift of the picture's left edge. So it goes flush to
-         the section's own edge, page column 1, and reads as the corner mark it
-         is. Large screens keep the indent. Bounded at 1600 rather than left
-         open, so it applies to the laptop range only, and that is the same
-         1600 the LAPTOP block at the head of this sheet uses. */
+         Kept as the reasoning that led to the change above: page column 3 is
+         where an open project's copy starts, so on a wide screen the button
+         landed on a line the reader had already been given. In the laptop
+         range the tracks are narrower and those two tracks plus two gutters
+         no longer read as an indent off a known line, only as the button
+         sitting adrift of the picture's left edge. That reasoning now applies
+         at every width and the base rule carries it. */
+      /* ── THE LAPTOP OPT-OUT IS NOW THE RULE ──
+         This block put the button flush left below 1600 while wide screens
+         kept a two-track indent. The base rule above takes column 1 at every
+         width, so the exception has nothing left to except. Left as an empty
+         block rather than deleted, so the indent is findable if the wide
+         screens ever want it back: left: calc(2 * var(--col) + 2 * var(--gap)).
       @media (min-width: 769px) and (max-width: 1600px) {
         body.unified.has-open #indexBack { left: 0; }
       }
+      */
 
       body.unified.has-open #indexBack .read-more-btn {
         flex: 0 0 38px;
@@ -6798,11 +6886,8 @@ window.__errLog = [];
           <div class="rm-main-container">
             <div class="rm-slide-wrapper" data-surface="desktop">
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_3_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
-              <div class="rm-slide-item" data-copy-id="google-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Material design</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">My contribution was twofold: evolving the flat icon style to carry more tactile, paper-like depth while staying true to its geometric foundation, and building Google's color system from scratch. For color, I started with Google's four brand colors and expanded outward, building a full spectrum that designers across the company could share. To make the system usable at scale, I introduced a numerical naming convention, 50 through 900, assigning a value to each tone in the spectrum. That structure became standard practice across the industry after Material Design launched.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-id="google-2" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 4;grid-row:1;text-transform:none !important;color:var(--rmed-grey) !important;">As the color spectrum expanded, traditional naming conventions like 'light blue' or 'dark blue' became imprecise and difficult to scale.<br><br>To address this, we transitioned to a systematic, numeric approach that provides a logical framework for color classification and consistency.</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
@@ -6818,11 +6903,8 @@ window.__errLog = [];
             </div>
             <div class="rm-slide-wrapper" data-surface="mobile">
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952&amp;tr=q-90,w-2400" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952&amp;tr=q-90,w-1200 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952&amp;tr=q-90,w-1600 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952&amp;tr=q-90,w-2000 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_mobile.gif?updatedAt=1788479012952&amp;tr=q-90,w-2400 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-rmed-block="rule"><div class="rest-rule"></div></div>
-              <div class="rm-slide-item" data-copy-ref="google-1"></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_mobile.jpg?updatedAt=1788479012177&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_mobile.jpg?updatedAt=1788479012177&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_mobile.jpg?updatedAt=1788479012177&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_mobile.jpg?updatedAt=1788479012177&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_mobile.jpg?updatedAt=1788479012177&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-copy-ref="google-2"></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_mobile.jpg?updatedAt=1788479012459&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_mobile.jpg?updatedAt=1788479012459&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_mobile.jpg?updatedAt=1788479012459&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_mobile.jpg?updatedAt=1788479012459&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_mobile.jpg?updatedAt=1788479012459&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_mobile.jpg?updatedAt=1788479012201&amp;tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_mobile.jpg?updatedAt=1788479012201&amp;tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_mobile.jpg?updatedAt=1788479012201&amp;tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_mobile.jpg?updatedAt=1788479012201&amp;tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_in_use_2_mobile.jpg?updatedAt=1788479012201&amp;tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
@@ -6843,15 +6925,15 @@ window.__errLog = [];
         </div>
         <div class="info-grid">
           <div class="col-title"><div class="info-title">Google</div><span class="info-line">Built the color system of Material Design</span><div class="info-description">Material Design / Kennedy</div></div>
-          <div class="col-list"><div class="info-list-para"><span>Product icon</span><span>Guidelines</span></div></div>
+          <div class="col-list"><div class="info-list-para"><span>Color system</span><span>Product icon style</span><span>Kennedy guidelines</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
-          <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.</p></div></div>
+          <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="copy-lead">Material design</span> After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>My contribution was twofold: evolving the flat icon style to carry more tactile, paper-like depth while staying true to its geometric foundation, and building Google's color system from scratch. For color, I started with Google's four brand colors and expanded outward, building a full spectrum that designers across the company could share. To make the system usable at scale, I introduced a numerical naming convention, 50 through 900, assigning a value to each tone in the spectrum. That structure became standard practice across the industry after Material Design launched.</p></div></div>
           <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>2011–2014</p></div></div>
         </div>
         <div class="info-secondary">
-          <div class="col-list-mob"><div class="info-list-para"><span>• Product icon</span><span>• Color system</span><span>• Guidelines</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built the color system of Material Design</span><span class="mob-tags">• Product icon<br>• Guidelines</span><br><br>After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>2011–2014</p></div></div>
+          <div class="col-list-mob"><div class="info-list-para"><span>• Color system</span><span>• Product icon style</span><span>• Kennedy guidelines</span></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built the color system of Material Design</span><span class="mob-tags">• Color system<br>• Product icon style<br>• Kennedy guidelines</span><br><br><span class="copy-lead">Material design</span> After the flat design language was established across desktop apps, the gap between desktop and Android became impossible to ignore. Google's design organization was tasked with unifying the two, and a cross-functional team was assembled, drawing designers from across the company, to work on the project. It launched internally as Quantum Paper, and publicly as Material Design.<br><br>My contribution was twofold: evolving the flat icon style to carry more tactile, paper-like depth while staying true to its geometric foundation, and building Google's color system from scratch. For color, I started with Google's four brand colors and expanded outward, building a full spectrum that designers across the company could share. To make the system usable at scale, I introduced a numerical naming convention, 50 through 900, assigning a value to each tone in the spectrum. That structure became standard practice across the industry after Material Design launched.<br><br>2011–2014</p></div></div>
         </div>
       </div>
 
@@ -6898,11 +6980,11 @@ window.__errLog = [];
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
           <div class="col-para-a"><div class="info-paragraph-wrap"><p class="info-paragraph">HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.</p></div></div>
-          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
+          <div class="col-para-b"><div class="info-paragraph-wrap"><p class="info-paragraph"><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Creative coding</span><span>• Generative design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><span class="lab-live-note">What you see here is a recording. The live, interactive version runs on the desktop site.</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with.<br><br>2026</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><span class="lab-live-note">What you see here is a recording. The live, interactive version runs on the desktop site.</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
         </div>
       </div>
 
@@ -10339,6 +10421,36 @@ function initCarousel(sec) {
   });
   (infoSec || infoGrid).insertAdjacentElement('afterend', rest);
 
+  /* ── ONE NUMBER PER ASSET ──
+     The lead's indicator counts a position in a set, so the set has to be
+     countable: every image and video in the project, the lead as 01 and the
+     stack from 02 down. Copy blocks, rules and spacers are skipped, which is
+     why the total is computed here from the media rather than taken from
+     slideCount: that figure counts children, and a reader counts pictures.
+     Written once, at the same moment the stack is built, because the sequence
+     is a property of the markup and cannot change without a rebuild. */
+  if (!isLab) {
+    const isAsset = node => {
+      const kind = node.getAttribute('data-rmed-block');
+      if (kind && kind !== 'image' && kind !== 'video') return false;
+      return !!node.querySelector('img, video, iframe');
+    };
+    const stack = Array.from(rest.children).filter(isAsset);
+    const assets = (slides[0] && isAsset(slides[0]) ? 1 : 0) + stack.length;
+    if (assets > 1) {
+      const pad2 = n => String(n).padStart(2, '0');
+      sec.dataset.assetCount = assets;
+      stack.forEach((item, i) => {
+        if (item.querySelector(':scope > .rest-num')) return;
+        const num = document.createElement('div');
+        num.className = 'rest-num';
+        num.setAttribute('aria-hidden', 'true');
+        num.textContent = pad2(i + 2) + '-' + pad2(assets);
+        item.appendChild(num);
+      });
+    }
+  }
+
   /* Rows written by hand predate data-cells, and the mobile reflow for a row
      of four is keyed on it. Counting the children here means the attribute is
      never something Roger has to remember to type. */
@@ -11651,7 +11763,23 @@ document.querySelectorAll('#view-work .carousel-section').forEach(initCarousel);
     const secRect = sec.getBoundingClientRect();
     const tailBottom = tail.getBoundingClientRect().bottom;
     const foot = tailBottom - secRect.top;
-    b.style.top = (foot + gap).toFixed(1) + 'px';
+    /* ── THE CONTROL ENDS WHERE THE PROJECT ENDS ──
+       It used to hang one gutter below the last asset, which put it in the
+       space after the pictures rather than on the line the pictures finish
+       on. Its bottom edge now sits on the last asset's bottom edge, so the
+       two ways out of a project are both corner marks: one on the top left
+       of the first image, this one on the bottom left of the last.
+       Desktop only. Below 769 the control is an ordinary block at the end of
+       the section and the branch below owns its spacing, so top does nothing
+       there. Not on the lab project either: its stack runs full bleed with no
+       column 1 to sit beside, so it keeps the gutter it had. */
+    const isLab = sec.hasAttribute('data-lab');
+    if (window.innerWidth > 768 && !isLab) {
+      const h = b.offsetHeight || (38 * 0.7);
+      b.style.top = (foot - h).toFixed(1) + 'px';
+    } else {
+      b.style.top = (foot + gap).toFixed(1) + 'px';
+    }
     /* ── THE PHONE STACKS IT INSTEAD OF PLACING IT ──
        Below 769 the control is an ordinary block at the end of the section,
        so the inline top above does nothing and the distance from the last
@@ -11777,7 +11905,12 @@ setTimeout(() => {
     if (sec) {
       const ind = sec.querySelector('.slide-indicator');
       if (ind) {
-        const total = parseInt(sec.dataset.slideCount) || 1;
+        /* The stack below now numbers itself out of the asset count, images
+           and videos only, so the lead has to be counting the same set or the
+           page states two different totals for one project. slideCount counts
+           children, copy blocks included, and stays the fallback for anything
+           with no stack of its own to count. */
+        const total = parseInt(sec.dataset.assetCount) || parseInt(sec.dataset.slideCount) || 1;
         const cur   = (parseInt(sec.dataset.currentSlide) || 0) + 1;
         const txt   = pad(cur) + '-' + pad(total);
         if (ind.textContent !== txt) ind.textContent = txt;
