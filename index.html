@@ -10052,6 +10052,22 @@ window.applyCardThumb = function applyCardThumb(sec) {
     const settle = () => el.classList.add('is-loaded');
     const posterUrl = node.getAttribute && node.getAttribute('poster');
     if (posterUrl) {
+      /* ── THE SINGLE BLINK WHEN A CARD STARTS PLAYING ──
+         Not the file. A <video> paints its poster only while readyState is
+         under HAVE_CURRENT_DATA; the moment playback begins the element
+         switches to compositing decoded frames, and on the phone, where
+         preload is none, there is a frame or two in between where it is
+         painting neither: the element is transparent and the card's own
+         white ground shows through. One white flash, once per card, exactly
+         when proximity play fires. Nothing in the mp4 is wrong.
+         The same poster is painted as the element's background, so the layer
+         behind the video is that still rather than white. The handoff then
+         has nothing to reveal: poster, poster, first frame. Costs no extra
+         request, since the preload below fetches this URL anyway. */
+      node.style.backgroundImage = 'url("' + posterUrl + '")';
+      node.style.backgroundSize = 'cover';
+      node.style.backgroundPosition = 'center';
+      node.style.backgroundRepeat = 'no-repeat';
       const p = new Image();
       p.onload = settle; p.onerror = settle;
       p.src = posterUrl;
