@@ -3148,9 +3148,104 @@
        one-step lift the company name gets over its caption line. Lives in
        .col-para-mob, so the desktop, which IS the live version, never sees
        a note about itself. */
-    #notypeLab1Section .lab-live-note {
+    /* ── THE PHONE LAUNCHES THE LIVE VERSION ──
+       The note that said "this is a recording" is now a control that opens
+       the recording's subject. One word, on its own line at the head of the
+       copy, drawn the way the two ways out of a project are drawn: a plate
+       with a hairline, the primary colour, no fill. The rest of the copy
+       follows under it exactly as before. Phone only by residence, since
+       .col-para-mob never reaches the desktop. */
+    #notypeLab1Section .lab-launch {
+      display: inline-block;
+      font-family: var(--font);
+      font-weight: 400;
+      font-size: var(--type);
+      line-height: 1;
+      letter-spacing: 0.2px;
       color: #FFFFFF;
+      background: transparent;
+      border: 0.5px solid #FFFFFF;
+      border-radius: var(--radius);
+      padding: 11px 16px;
+      margin: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    #notypeLab1Section .lab-launch:active { opacity: 0.6; }
+
+    /* ── THE OVERLAY ──
+       A fixed layer over the whole page holding one iframe at a time. inset
+       rather than 100vh, because the phone's vh is a moving target under the
+       address bar and inset simply fills whatever the viewport currently is.
+       Touch-action none on the chrome so the page beneath does not scroll or
+       rubber-band under a finger; the iframe is its own document and keeps
+       every gesture that lands inside it. */
+    #labOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483000;
+      background: #000;
+      display: none;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    #labOverlay.is-open { display: block; }
+    #labOverlay iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000;
+    }
+    /* Three controls, each the same 38 by 26.6 plate .collapse-circle and the
+       back button use, so the way out of an experiment is the way out of a
+       project. The X at the top right, the arrows bottom left and right, all
+       one gutter in from the edges and clear of the phone's home bar. */
+    #labOverlay .lab-ov-btn {
+      position: absolute;
+      width: 38px;
+      height: 26.6px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      border-radius: var(--radius);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 2;
+    }
+    #labOverlay .lab-ov-btn svg { width: 24px; height: 18px; display: block; }
+    #labOverlay .lab-ov-btn:active { opacity: 0.6; }
+    #labOverlay .lab-ov-close { top: calc(var(--gap) + env(safe-area-inset-top, 0px)); right: var(--gap); }
+    #labOverlay .lab-ov-prev  { bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px)); left: var(--gap); }
+    #labOverlay .lab-ov-next  { bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px)); right: var(--gap); }
+    /* Which of the three is up. Same grey and tabular figures as every other
+       counter on the site, centred between the two arrows. */
+    #labOverlay .lab-ov-count {
+      position: absolute;
+      left: 50%;
+      bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      height: 26.6px;
+      display: flex;
+      align-items: center;
+      font-family: var(--font);
+      font-size: var(--type);
+      font-variant-numeric: tabular-nums;
+      color: #999999;
+      pointer-events: none;
+      user-select: none;
+    }
+    /* The page stops scrolling while the layer is up, so a stray drag on
+       the chrome cannot move the project underneath. */
+    body.lab-overlay-open { overflow: hidden !important; }
+    body.lab-overlay-open #mainContent,
+    body.lab-overlay-open #view-work { overflow: hidden !important; }
     /* HG26 opens on near-black, so the primary colour there is white. */
     body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .lab-link,
     body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .lab-link {
@@ -6904,7 +6999,6 @@ window.__errLog = [];
               <div class="rm-slide-item" data-copy-id="google-1" data-rmed-block="text"><div class="rest-copy"><p class="info-paragraph" data-rmed-p="title" style="grid-column:1 / 5;grid-row:1;text-transform:none !important;color:#000 !important;">Material design</p><p class="info-paragraph" data-rmed-p="body" style="grid-column:1 / 5;grid-row:2;text-transform:none !important;color:var(--rmed-grey) !important;">My contribution was twofold: evolving the flat icon style to carry more tactile, paper-like depth while staying true to its geometric foundation, and building Google's color system from scratch. For color, I started with Google's four brand colors and expanded outward, building a full spectrum that designers across the company could share. To make the system usable at scale, I introduced a numerical naming convention, 50 through 900, assigning a value to each tone in the spectrum. That structure became standard practice across the industry after Material Design launched.<br><br>2014</p></div></div>
               <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_colors_evolution_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
-              <div class="rm-slide-item" data-rmed-block="spacer" data-units="6" style="--rmed-units:6;height:calc(6 * var(--gap));min-height:calc(6 * var(--gap));"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_color_spectrum_desktop.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_paper_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
               <div class="rm-slide-item"><img loading="lazy" alt="Google Material" src="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2400,f-avif" srcset="https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-1200,f-avif 1200w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-1600,f-avif 1600w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2000,f-avif 2000w, https://ik.imagekit.io/rfi7kdlxzn/google_produtc_icon_desk.jpg?tr=q-90,w-2400,f-avif 2400w" sizes="100vw" decoding="async"></div>
@@ -7000,7 +7094,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Creative coding</span><span>• Generative design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><span class="lab-live-note">What you see here is a recording. The live, interactive version runs on the desktop site.</span><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><button type="button" class="lab-launch" data-lab-launch aria-label="Launch the live experiments">Launch</button><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
         </div>
       </div>
 
@@ -10686,8 +10780,10 @@ function initCarousel(sec) {
     // already open rather than stacking them, so clicking a card in the grid
     // below reads as navigating to a new page.
     if (open) {
+      sec._swapIn = false;
       document.querySelectorAll('#view-work .carousel-section.is-open').forEach(other => {
         if (other === sec || typeof other._setOpen !== 'function') return;
+        sec._swapIn = true;
         /* ── A SWAP IS NOT A CLOSE ──
            Tapping one of the two cards in a project's tail closes that
            project and opens another. The close half was still doing what a
@@ -10699,8 +10795,24 @@ function initCarousel(sec) {
            scroll and the movement. */
         other._skipAnchor = true;
         other._mobSuppress = true;
+        /* ── AND THE DESKTOP HAD THE SAME BUG, ONE FRAME LATER ──
+           The phone's half was fixed above. The desktop's was not, and it is
+           the same shape: closing restores #view-work to _workScrollOnOpen,
+           once synchronously and once inside a requestAnimationFrame in the
+           close FLIP. The rAF is the one that showed: this call sets the
+           column to 0 for the incoming project, and the outgoing project's
+           deferred restore then puts it back to where the reader had been
+           reading, so the new project opened part way down.
+           Read and cleared by the close paths, which skip both restores when
+           they see it. */
+        other._swapOut = true;
         other._setOpen(false);
         other._mobSuppress = false;
+        /* Two frames, because the deferred restore this flag suppresses lives
+           one frame out. The close FLIP clears it too, but only when it runs,
+           and a section with no measurable rect skips that path entirely: a
+           flag left set would silently swallow the next honest close. */
+        requestAnimationFrame(() => requestAnimationFrame(() => { other._swapOut = false; }));
       });
     }
     const mainEl = document.getElementById('mainContent');
@@ -11105,6 +11217,17 @@ function initCarousel(sec) {
        the stack had. Instant, not smooth: this is a navigation, not a move
        within a page. */
     if (open) {
+      /* ── THE LEAD STARTS AT THE START ──
+         The proximity player runs a collapsed card's videos by nearness, and
+         the lead slide is a video sitting under the thumbnail, hidden but
+         not paused. So by the time a reader opened a project its opening
+         clip was wherever the loop had got to: a project that began in the
+         middle of its own first sentence. Rewound here, on the way in, so
+         landing inside the project is where the clip begins. Wrapped because
+         a preload=none video with nothing buffered can refuse the seek, and
+         a refused seek on an unloaded clip changes nothing anyway. */
+      const leadVid = wrapper && wrapper.querySelector('.rm-slide-item video');
+      if (leadVid) { try { leadVid.currentTime = 0; } catch (e) {} }
       requestAnimationFrame(() => {
         const goTo = window._carouselGoTo && window._carouselGoTo.get(sec);
         if (goTo) goTo(0);
@@ -11118,7 +11241,12 @@ function initCarousel(sec) {
          screen, which is the whole of "the animation doesn't play": it played,
          into a box nobody could see. One number, taken here, spent on close. */
       if (rightCol && document.body.classList.contains('unified')) {
-        window._workScrollOnOpen = rightCol.scrollTop;
+        /* On a swap the outgoing project already owns this number: it is where
+           the reader was in the index when they opened the FIRST project, and
+           it is what closing the new one should return to. Overwriting it here
+           would record a position inside a case study nobody asked to go back
+           to. Only a fresh open from the index writes it. */
+        if (!sec._swapIn) window._workScrollOnOpen = rightCol.scrollTop;
         rightCol.scrollTop = 0;
       }
     }
@@ -11127,7 +11255,7 @@ function initCarousel(sec) {
        from now and it has to be read at the scroll position the reader will
        actually keep, or the flight ends somewhere the page then scrolls away
        from. Writing scrollTop forces the layout that makes the restore real. */
-    if (!open && document.body.classList.contains('unified')
+    if (!open && !sec._swapOut && document.body.classList.contains('unified')
         && typeof window._workScrollOnOpen === 'number') {
       var backCol = document.getElementById('view-work');
       if (backCol) backCol.scrollTop = window._workScrollOnOpen;
@@ -11171,13 +11299,17 @@ function initCarousel(sec) {
            layout, so the clamp may have eaten part of it. Re-asserted here, one
            frame on, with the column at its real height, and only then is the
            destination read. */
-        if (!open && document.body.classList.contains('unified')
+        if (!open && !sec._swapOut && document.body.classList.contains('unified')
             && typeof window._workScrollOnOpen === 'number') {
           var bc = document.getElementById('view-work');
           if (bc && Math.abs(bc.scrollTop - window._workScrollOnOpen) > 1) {
             bc.scrollTop = window._workScrollOnOpen;
           }
         }
+        /* Spent here rather than at the end of the close call: this frame is
+           the last place the flag is read, and the section has to be an
+           ordinary card again by the time it is next opened. */
+        if (!open) sec._swapOut = false;
         flipEl.style.transition = 'none';
         void flipEl.offsetHeight;
         var to = flipEl.getBoundingClientRect();
@@ -18471,5 +18603,106 @@ document.addEventListener('visibilitychange', function() {
     body.view-work.has-open #workPageCopy { order: 6; }
   }
 </style>
+<script id="labLauncher">
+/* ── THE LIVE EXPERIMENTS, ON THE PHONE ──
+   The desktop runs the three sketches inline. The phone plays recordings and
+   offers this instead: a Launch control in the copy opens a full-screen layer
+   holding one sketch at a time, arrows step through the three in the order
+   the desktop stacks them, and the X returns the reader to the project at the
+   exact scroll they left.
+
+   The layer is built once, on the first launch, and the iframe only ever
+   carries a src while it is up. Pointing it at about:blank on close is what
+   frees the sketch's GPU and stops its loop; leaving it loaded behind a
+   hidden layer would keep a particle system running for the rest of the
+   visit. Each arrow press is the same swap, so at most one sketch is alive.
+
+   Files, not URLs: relative to this page, the same paths the desktop
+   iframes use. Order matches the desktop wrapper: 3x3, 5x5 and 10x10, 3D. */
+(function () {
+  const FILES = ['hg26_3x3.html', 'hg26_5x5_10x10.html', 'hg26_3d.html'];
+  let ov = null, frame = null, count = null, idx = 0, releaseSwipe = null;
+
+  const ARROW_L = '<svg viewBox="0 0 41 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M16.69 0L18.1 1.41L3.89 15.62H41V17.62H3.89L18.1 31.83L16.69 33.25L0.06 16.62L16.69 0Z" fill="#000"/></svg>';
+  const ARROW_R = '<svg viewBox="0 0 41 34" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M24.31 0L22.9 1.41L37.11 15.62H0V17.62H37.11L22.9 31.83L24.31 33.25L40.94 16.62L24.31 0Z" fill="#000"/></svg>';
+  const CROSS   = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5 5L19 19M19 5L5 19" stroke="#000" stroke-width="2" fill="none"/></svg>';
+
+  function build() {
+    ov = document.createElement('div');
+    ov.id = 'labOverlay';
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-label', 'HG26 live experiments');
+    frame = document.createElement('iframe');
+    frame.setAttribute('title', 'HG26 experiment');
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('allowtransparency', 'true');
+    frame.src = 'about:blank';
+    const mk = (cls, svg, label, fn) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lab-ov-btn ' + cls;
+      b.innerHTML = svg;
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', fn);
+      return b;
+    };
+    count = document.createElement('div');
+    count.className = 'lab-ov-count';
+    count.setAttribute('aria-live', 'polite');
+    ov.appendChild(frame);
+    ov.appendChild(mk('lab-ov-close', CROSS, 'Close', close));
+    ov.appendChild(mk('lab-ov-prev', ARROW_L, 'Previous experiment', () => show(idx - 1)));
+    ov.appendChild(mk('lab-ov-next', ARROW_R, 'Next experiment', () => show(idx + 1)));
+    ov.appendChild(count);
+    document.body.appendChild(ov);
+    /* Escape closes it on a phone with a keyboard attached, and on the
+       desktop should anyone ever reach the control there. */
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && ov.classList.contains('is-open')) close(); });
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function show(i) {
+    idx = (i + FILES.length) % FILES.length;
+    /* about:blank first, then the file. Assigning a new src straight over an
+       old one keeps the old document alive until the new one paints, which
+       on a phone is two particle systems for a moment. */
+    frame.src = 'about:blank';
+    requestAnimationFrame(() => { frame.src = FILES[idx]; });
+    count.textContent = pad(idx + 1) + '-' + pad(FILES.length);
+  }
+
+  function open(i) {
+    if (!ov) build();
+    document.body.classList.add('lab-overlay-open');
+    ov.classList.add('is-open');
+    /* Every card video on the page is paused while the layer is up: they
+       are under a black sheet and the sketch needs the decoders more. The
+       proximity player restarts whichever is closest on the next scroll. */
+    document.querySelectorAll('#view-work video').forEach(v => { try { v.pause(); } catch (e) {} });
+    show(i || 0);
+  }
+
+  function close() {
+    if (!ov) return;
+    frame.src = 'about:blank';
+    ov.classList.remove('is-open');
+    document.body.classList.remove('lab-overlay-open');
+    /* Nothing here touches the scroll: the page was never scrolled, only
+       covered, so the reader is exactly where they were. */
+    if (window._updateCollapseDock) window._updateCollapseDock();
+  }
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-lab-launch]');
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    open(0);
+  }, true);
+
+  window._labLaunch = open;
+})();
+</script>
 </body>
 </html>
