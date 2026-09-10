@@ -3152,8 +3152,8 @@
       color: #FFFFFF;
     }
     /* HG26 opens on near-black, so the primary colour there is white. */
-    body.has-open .carousel-section.is-open#notypeLab1Section .lab-link,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .lab-link {
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .lab-link,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .lab-link {
       color: #FFFFFF;
     }
 
@@ -3176,26 +3176,40 @@
        is lifted back over the project and becomes the landing page again —
        the opening statement, the record, the contact stack — and that is not
        part of this project. The ground behind it would leave black copy on near-black. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) {
+    /* ── AND NOT ON THE INFO PAGE ──
+       Every selector in this group carries :not(.view-about). The ground was
+       written for a page that IS this project, and Info is not: the phone
+       hides #view-work entirely and shows the bio, the record and the contact
+       stack, all of them authored near-black on the light page. The ground
+       stayed on, so Info arrived black with black copy on it and only came
+       back when the project closed. The exception below, which held
+       #view-about at the page colour, was written with .unified and so never
+       reached the phone, where the two views are one at a time rather than
+       side by side.
+
+       Stated as an opt-out on the dark rules rather than as a light override
+       on top of them: the authored colours are already right, so the fix is
+       to stop overriding them, not to write them a second time. */
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) {
       background: #080808;
     }
-    body.unified.has-open:has(.carousel-section.is-open#notypeLab1Section) #view-about {
+    body.unified.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #view-about {
       background: #F5F5F5;
     }
 
     /* The header is the top margin as far as a reader is concerned. Its name,
        its tabs and its mark are all authored near-black, two of them with
        !important, so each has to be answered at the same weight. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .header-bar,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .mobile-header-bar {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .header-bar,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .mobile-header-bar {
       background: #080808;
     }
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .header-name,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .hn-link {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .header-name,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .hn-link {
       color: #FFFFFF !important;
     }
     /* A fill written as a presentation attribute on the path, which CSS beats. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #header-logo-path {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #header-logo-path {
       fill: #FFFFFF;
     }
 
@@ -3203,13 +3217,13 @@
        inverts with the hairlines above it; the secondary grey on Back is left
        alone, since it reads as secondary on either ground, but its hover was
        written to land on black and now lands on white. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workFooter,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workFooter a,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-name,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-copy {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workFooter,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workFooter a,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-name,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-copy {
       color: #FFFFFF;
     }
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-rule {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workFooter .wf-rule {
       background: #FFFFFF;
     }
     /* The copyright and the reservation are the page's last line, and on this
@@ -3218,9 +3232,9 @@
        container is what moves; both are named anyway, because a span that
        ever gets a colour of its own should fail visibly here rather than
        quietly stay black. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #pageCopy,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #pageCopy .pc-mark,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #pageCopy .pc-name {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #pageCopy,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #pageCopy .pc-mark,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #pageCopy .pc-name {
       color: #FFFFFF;
     }
     /* The boxes the slides sit in are authored at true black for every lab
@@ -3228,8 +3242,8 @@
        that does not quite fill its frame shows the page behind it rather than
        a darker rectangle. The exported viewers still paint their own black
        inside their iframes, which is a value this sheet cannot reach. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #notypeLab1Section .rm-slide-item,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #notypeLab1Section .rest-item {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #notypeLab1Section .rm-slide-item,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #notypeLab1Section .rest-item {
       /* !important because the frames carry an inline background:#000 written
          on the element. Without it this rule reached the image slides and left
          the interactive ones at true black, which is the seam it exists to
@@ -3259,23 +3273,23 @@
        Titles and rules invert; the secondary grey is left where it is, since
        #7C7C7C was chosen to sit under the primary rather than to sit on white,
        and it does that on either ground. */
-    body.has-open .carousel-section.is-open#notypeLab1Section,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section {
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section {
       background: #080808 !important;
       color: #FFFFFF;
     }
     /* Both carry an authored #000, so inheriting the section's colour is not
        enough to move them. */
-    body.has-open .carousel-section.is-open#notypeLab1Section .info-title,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .info-title {
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .info-title,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .info-title {
       color: #FFFFFF;
     }
     /* The description is secondary here as it is everywhere else. It was
        inverted to full white with the title, which put the two at the same
        weight and lost the step between the name and what follows it. The
        same grey the rest of the site uses for the second rank. */
-    body.has-open .carousel-section.is-open#notypeLab1Section .info-description,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .info-description {
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .info-description,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .info-description {
       color: #7C7C7C;
     }
 
@@ -3286,10 +3300,10 @@
        black names, and the copyright line at the foot of the phone layout is
        black on near-black. Named at the same weight the light values were,
        since several of them are !important there. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-title,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-mark,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-name {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-title,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workPageCopy,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-mark,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) #workPageCopy .wpc-name {
       color: #FFFFFF !important;
     }
     /* ── THE CLAIM IS SECOND RANK ON EITHER GROUND ──
@@ -3298,7 +3312,7 @@
        and what it says. #7C7C7C was chosen to sit under the primary rather
        than to sit on white, and it does that on this ground too, which is the
        same call the open project's own .info-description already makes. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-line {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .info-line {
       color: #7C7C7C !important;
     }
     /* ── AND THE WHITE EDGE ON THE TAIL CARDS ──
@@ -3308,19 +3322,19 @@
        fraction short of the frame, which at half the measure it usually does.
        The frames take the ground instead. The crop is untouched: this is the
        colour behind it, not the fit of the image. */
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .rm-slide-item,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .rm-main-container,
-    body.has-open:has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .carousel-media-wrap {
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .rm-slide-item,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .rm-main-container,
+    body.has-open:not(.view-about):has(.carousel-section.is-open#notypeLab1Section) .carousel-section:not(.is-open) .carousel-media-wrap {
       background: #080808 !important;
     }
     /* The hairlines are the same relationship inverted: near the ground's
        opposite, half a pixel, so they read as structure and not as a border. */
-    body.has-open .carousel-section.is-open#notypeLab1Section .col-rule-inner,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .col-rule-inner,
-    body.has-open .carousel-section.is-open#notypeLab1Section .rest-rule,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .rest-rule,
-    body.has-open .carousel-section.is-open#notypeLab1Section .section-divider,
-    body.unified.has-open .carousel-section.is-open#notypeLab1Section .section-divider {
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .col-rule-inner,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .col-rule-inner,
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .rest-rule,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .rest-rule,
+    body.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .section-divider,
+    body.unified.has-open:not(.view-about) .carousel-section.is-open#notypeLab1Section .section-divider {
       background: #FFFFFF;
     }
 
