@@ -1,0 +1,38 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>K insets</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,Helvetica,sans-serif; background:#F5F5F5; }
+#pad { background:#c00; }
+#out { font:14px/1.7 monospace; padding:12px; }
+p { font-size:20px; padding:0 20px 18px; }
+.probe { position:absolute; visibility:hidden; }
+#svh { height:100svh; } #lvh { height:100lvh; } #dvh { height:100dvh; } #vh { height:100vh; }
+.safe-t { height: env(safe-area-inset-top, 0px); }
+.safe-b { height: env(safe-area-inset-bottom, 0px); }
+</style></head><body>
+<div id="pad"></div>
+<div id="out">reading…</div>
+<p>line 1 top marker</p><p>line 2</p><p>line 3</p><p>line 4</p><p>line 5</p>
+<p>line 6</p><p>line 7</p><p>line 8</p><p>line 9</p><p>line 10</p>
+<div class="probe" id="svh"></div><div class="probe" id="lvh"></div>
+<div class="probe" id="dvh"></div><div class="probe" id="vh"></div>
+<div class="probe safe-t" id="st"></div><div class="probe safe-b" id="sb"></div>
+<script>
+function h(id){ return document.getElementById(id).getBoundingClientRect().height.toFixed(0); }
+function read(){
+  var st = h('st'), sb = h('sb');
+  document.getElementById('out').innerHTML =
+    'screen ' + screen.height + ' x ' + screen.width + '<br>' +
+    'innerHeight ' + innerHeight + '<br>' +
+    'clientHeight ' + document.documentElement.clientHeight + '<br>' +
+    'vv ' + (visualViewport ? Math.round(visualViewport.height) : '-') + '<br>' +
+    'vh ' + h('vh') + '  svh ' + h('svh') + '<br>' +
+    'lvh ' + h('lvh') + '  dvh ' + h('dvh') + '<br>' +
+    'safe top ' + st + '  bottom ' + sb + '<br>' +
+    'dpr ' + devicePixelRatio + '  sy ' + Math.round(scrollY);
+  document.getElementById('pad').style.height = st + 'px';
+}
+read(); setInterval(read, 500);
+</script></body></html>
