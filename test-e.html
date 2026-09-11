@@ -6,7 +6,7 @@
 body { font-family:-apple-system,Helvetica,sans-serif; background:#F5F5F5; padding:20px; }
 p { font-size:20px; margin-bottom:18px; }
 
-.tag { position:fixed; bottom:8px; right:10px; font:12px monospace; background:#000; color:#fff; padding:4px 6px; z-index:10001; }
+.tag { position:fixed; top:50%; right:6px; transform:translateY(-50%); font:13px/1.5 monospace; background:#000; color:#fff; padding:6px 8px; z-index:10001; }
 </style></head><body>
 
 <p><b>E bare</b> line 1. If you can read this line at the very top, this page is fine.</p>
@@ -36,6 +36,6 @@ p { font-size:20px; margin-bottom:18px; }
 <p>line 25</p>
 <div class="tag" id="tag"></div>
 <script>
-function r(){document.getElementById('tag').textContent='ih '+innerHeight+' vv '+(window.visualViewport?Math.round(visualViewport.height)+' ot '+Math.round(visualViewport.offsetTop):'-')+' sy '+Math.round(scrollY);}
-r(); setInterval(r,500);
+function r(){document.getElementById('tag').innerHTML='ih '+innerHeight+'<br>vv '+(window.visualViewport?Math.round(visualViewport.height):'-')+'<br>ot '+(window.visualViewport?Math.round(visualViewport.offsetTop):'-')+'<br>sy '+Math.round(scrollY);}
+r(); setInterval(r,400);
 </script></body></html>
