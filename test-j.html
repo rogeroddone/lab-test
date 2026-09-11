@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J scroll reset</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,Helvetica,sans-serif; background:#F5F5F5; padding:20px; }
+p { font-size:20px; margin-bottom:18px; }
+
+.tag { position:fixed; top:50%; right:6px; transform:translateY(-50%); font:13px/1.5 monospace; background:#000; color:#fff; padding:6px 8px; z-index:10001; }
+</style></head><body>
+
+<p><b>J scroll reset</b> line 1. If you can read this line at the very top, this page is fine.</p>
+<p>line 2</p>
+<p>line 3</p>
+<p>line 4</p>
+<p>line 5</p>
+<p>line 6</p>
+<p>line 7</p>
+<p>line 8</p>
+<p>line 9</p>
+<p>line 10</p>
+<p>line 11</p>
+<p>line 12</p>
+<p>line 13</p>
+<p>line 14</p>
+<p>line 15</p>
+<p>line 16</p>
+<p>line 17</p>
+<p>line 18</p>
+<p>line 19</p>
+<p>line 20</p>
+<p>line 21</p>
+<p>line 22</p>
+<p>line 23</p>
+<p>line 24</p>
+<p>line 25</p>
+<div class="tag" id="tag"></div>
+<script>
+function r(){document.getElementById('tag').innerHTML='ih '+innerHeight+'<br>vv '+(window.visualViewport?Math.round(visualViewport.height):'-')+'<br>ot '+(window.visualViewport?Math.round(visualViewport.offsetTop):'-')+'<br>sy '+Math.round(scrollY);}
+r(); setInterval(r,400);
+var seen = [];
+function pin(){
+  var sy = window.scrollY|0;
+  var ot = (window.visualViewport && window.visualViewport.offsetTop)|0;
+  if (sy || ot) { seen.push('sy'+sy+'/ot'+ot); window.scrollTo(0,0); }
+}
+var n=0, iv=setInterval(function(){ pin(); if(++n>40) clearInterval(iv); },100);
+window.addEventListener('load', pin);
+document.addEventListener('DOMContentLoaded', pin);
+setTimeout(function(){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:20%;left:6px;background:#c00;color:#fff;font:12px monospace;padding:6px;z-index:99999;max-width:60%';
+  d.textContent = 'caught: ' + (seen.join(' ') || 'nothing');
+  document.body.appendChild(d);
+}, 5000);
+</script></body></html>
