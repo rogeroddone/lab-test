@@ -1919,13 +1919,13 @@
        the bottom left, each one a target, so a reader moves to the set they
        want rather than stepping through the ones they do not. */
 
-    /* Same distance from the bottom edge as from the left, both read from
-       the one gutter token rather than from two numbers that agree today. */
+    /* Centred on the frame, and lifted to twice the gutter so the row sits
+       clear of the bottom edge rather than tucked against it. */
     #labOverlay .lab-ov-count {
       position: absolute;
-      left: var(--gap);
-      bottom: var(--gap);
-      transform: none;
+      left: 50%;
+      bottom: calc(var(--gap) * 2);
+      transform: translateX(-50%);
       height: 26.6px;
       display: flex;
       align-items: center;
@@ -1949,9 +1949,10 @@
     }
     #labOverlay .lab-ov-count button.is-on { color: #FFFFFF; }
     #labOverlay .lab-ov-count button:active { opacity: 0.6; }
-    /* The separators are punctuation, not targets. */
+    /* The separators are punctuation, not targets. Roughly two more spaces of
+       air on each side than the single space they started with. */
     #labOverlay .lab-ov-count .sep {
-      padding: 0 0.45em;
+      padding: 0 1em;
       color: rgba(255,255,255,0.45);
       pointer-events: none;
     }
