@@ -24,11 +24,15 @@ button.active{border-color:rgba(255,255,255,0.45);color:#fff;}
 .swatch input[type=color]{position:absolute;inset:-4px;width:calc(100%+8px);height:calc(100%+8px);opacity:0;cursor:pointer;border:none;padding:0;}
 #ui{opacity:0;pointer-events:none;transition:opacity 0.25s;}
 #hint-c{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:0.1em;color:rgba(255,255,255,0.14);pointer-events:none;white-space:nowrap;font-family:monospace;transition:opacity 0.25s;}
-/* Standalone size slider, always visible, bottom centre.
-   Centred the way every other bottom-anchored element on this page is: half
-   the viewport, then pulled back by half its own width, so the track's centre
-   sits on the vertical axis of the form rather than its left edge. */
-#size-slider{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:150px;height:14px;display:flex;align-items:center;z-index:6;}
+/* ── THE ZOOM SLIDER SITS AT THE TOP ──
+   It used to sit at the bottom centre, which is where the viewer that frames
+   this file puts its own index row, so the two shared an edge. Moved to the
+   top and centred, on the same line as the viewer's close button: --ovTop is
+   where that button starts and --ovTopH is how tall it is, both written in by
+   the viewer, so the rule centres on the button rather than guessing at it.
+   Opened on its own, the fallbacks below hold and it sits in the top gutter. */
+:root{--ovTop:24px;--ovTopH:14px;}
+#size-slider{position:fixed;top:var(--ovTop);left:50%;transform:translateX(-50%);width:150px;height:var(--ovTopH);display:flex;align-items:center;z-index:6;}
 #size-slider input[type=range]{-webkit-appearance:none;width:100%;height:1px;background:rgba(255,255,255,0.22);outline:none;cursor:pointer;margin:0;}
 #size-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:#fff;cursor:pointer;}
 #size-slider input[type=range]::-moz-range-thumb{width:9px;height:9px;border:none;border-radius:50%;background:#fff;cursor:pointer;}

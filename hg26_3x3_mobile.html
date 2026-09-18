@@ -7,11 +7,17 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root { --gutter: 12px; --radius: 4px; }
+/* Set by the viewer that frames this file, and only by it. --ovTop is
+   where the viewer's close button starts, so the field lines up with it;
+   --ovBottom is how much of the foot the viewer's index row occupies, so
+   the canvas stops above it. Opened on its own, the defaults below are
+   what hold, and the file lays out exactly as it always did. */
+:root { --ovTop: var(--gutter); --ovBottom: 0px; }
 /* One gutter everywhere: page edge to bar, bar to panel, panel to the next
    set's bar, panel to page edge. The panels take equal shares of what is left. */
 body {
   background: #000; height: 100vh; width: 100vw; overflow: hidden;
-  padding: var(--gutter) 0 0;
+  padding: var(--ovTop) 0 0;
   display: flex; flex-direction: column; gap: 0;
   font-family: 'Aeonik Fono', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -40,7 +46,10 @@ body {
    sliders. The bar is raised above it so the strips keep their full grab
    area and stay drawn; both boxes are black, so nothing shows a seam. */
 .bar { position: relative; z-index: 2; }
-.panel { margin-top: calc(-1 * (var(--gutter) + (20px - 1.6px) / 2)); }
+.panel {
+  margin-top: calc(-1 * (var(--gutter) + (20px - 1.6px) / 2));
+  padding-bottom: var(--ovBottom);
+}
 .panel iframe { display: block; width: 100%; height: 100%; border: 0; }
 
 /* Control bar. One per set, sitting above the type it drives. */
@@ -133,7 +142,7 @@ body {
    result rather than naming it. */
 .spread { width: 57px; }
 .knob {
-  position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%;
+  position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%;
   transform: translate(-50%, -50%); pointer-events: none; background: #fff;
 }
 .models { display: flex; gap: 12px; flex: none; }
@@ -197,7 +206,7 @@ body {
   .sw {
     flex: 0 0 auto; order: 0; width: 50vw;
     background: none; border: none; border-radius: 0;
-    padding: 0; height: auto; gap: 14px;
+    padding: 0; height: auto; gap: 28px;
   }
   .strip { height: 20px; }
   .hue    { flex: 99 1 0; width: auto; }

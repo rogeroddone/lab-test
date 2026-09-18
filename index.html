@@ -1352,6 +1352,12 @@
       .col-list { display: none; }
       .col-readmore { grid-column: 9; grid-row: 1; justify-content: flex-start; }
       .col-year { grid-column: 10 / 13; grid-row: 1; display: flex; justify-content: flex-end; align-items: flex-start; }
+      /* Launch rides the title's own row, top aligned with it and pushed
+         right, so it stops sitting inside the read-more copy and pushing the
+         paragraph down. The copy then opens on the same 2.8em as every other
+         project. It stops short of the last three columns because the slide
+         indicator already owns the right edge. */
+      .col-launch { grid-column: 6 / 9; grid-row: 1; display: flex; justify-content: flex-end; align-items: flex-start; }
       .col-para-a, .col-para-b, .col-block:not(.col-block-mob) { display: none; }
       .info-secondary { display: grid; grid-template-columns: repeat(12, 1fr); gap: 0 var(--gap); width: 100%; }
       .col-para-mob { grid-column: 1 / -1; grid-row: 2; margin-top: 0; display: block; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.25s ease-in, opacity 0.2s ease; }
@@ -1869,12 +1875,15 @@
       background: transparent;
       border: 0.5px solid #FFFFFF;
       border-radius: var(--radius);
-      padding: 11px 16px;
+      padding: 6px 14px;
       margin: 0;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     #notypeLab1Section .lab-launch:active { opacity: 0.6; }
+    /* The launch control is a phone affordance: on the desktop the experiment
+       is already live in the carousel, so there is nothing to launch. */
+    .col-launch { display: none; }
 
     #labOverlay {
       position: fixed;
@@ -1919,12 +1928,15 @@
        the bottom left, each one a target, so a reader moves to the set they
        want rather than stepping through the ones they do not. */
 
-    /* Centred on the frame, and lifted to twice the gutter so the row sits
-       clear of the bottom edge rather than tucked against it. */
+    /* Centred on the frame, and set by its BASELINE rather than by the box
+       around it. The numerals sit about 7.8px above the bottom of their line
+       box, so the baseline currently stands (2 gutters + 7.8) off the edge;
+       that whole distance is what grows by half, and the in-box offset is
+       taken back off to land the box itself. */
     #labOverlay .lab-ov-count {
       position: absolute;
       left: 50%;
-      bottom: calc(var(--gap) * 2);
+      bottom: calc((var(--gap) * 2 + 7.8px) * 1.5 - 7.8px);
       transform: translateX(-50%);
       height: 26.6px;
       display: flex;
@@ -1949,10 +1961,10 @@
     }
     #labOverlay .lab-ov-count button.is-on { color: #FFFFFF; }
     #labOverlay .lab-ov-count button:active { opacity: 0.6; }
-    /* The separators are punctuation, not targets. Roughly two more spaces of
-       air on each side than the single space they started with. */
+    /* The separators are punctuation, not targets. Two more spaces of air on
+       each side again. */
     #labOverlay .lab-ov-count .sep {
-      padding: 0 1em;
+      padding: 0 1.55em;
       color: rgba(255,255,255,0.45);
       pointer-events: none;
     }
@@ -3605,6 +3617,7 @@ window.__errLog = [];
         </div>
         <div class="info-grid">
           <div class="col-title"><div class="info-title">HG26</div><span class="info-line">Built a typeface that draws itself from particles</span><div class="info-description">Particle system /<br>Textural typeface</div></div>
+          <div class="col-launch"><button type="button" class="lab-launch" data-lab-launch aria-label="Launch the live experiments">Launch</button></div>
           <div class="col-list"><div class="info-list-para"><span>Creative coding</span><span>Generative design</span></div></div>
           <div class="col-readmore"><button class="read-more-btn"></button></div>
           <div class="col-year"><div class="slide-indicator"></div></div>
@@ -3613,7 +3626,7 @@ window.__errLog = [];
         </div>
         <div class="info-secondary">
           <div class="col-list-mob"><div class="info-list-para"><span>• Creative coding</span><span>• Generative design</span></div></div>
-          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span><br><br><button type="button" class="lab-launch" data-lab-launch aria-label="Launch the live experiments">Launch</button><br><br>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
+          <div class="col-para-mob"><div class="info-paragraph-wrap"><p class="info-paragraph"><span class="info-line">Built a typeface that draws itself from particles</span><span class="mob-tags">• Creative coding<br>• Generative design</span>HG26 is an experimental typeface where the letterforms are vessels, the particles are the texture that fills them, and interaction is what sets them in motion. The grains behave like sand in an hourglass, some drawn toward the cursor and pushed away by it, others left to fall under gravity.<br><br>It began as an exploration of particles, and the typeface emerged as the vessel that gave them purpose. As much as anything, it is built to be played with. This typeface is not for sale.<br><br>2026</p></div></div>
         </div>
       </div>
 
@@ -9387,9 +9400,53 @@ document.addEventListener('visibilitychange', function() {
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && ov.classList.contains('is-open')) close(); });
 
+    /* Written once the frame's document exists, again after its own layout
+       settles, and on every orientation change. */
+    frame.addEventListener('load', function () {
+      measureChrome();
+      setTimeout(measureChrome, 120);
+      setTimeout(measureChrome, 500);
+    });
+    window.addEventListener('resize', function () {
+      if (ov && ov.classList.contains('is-open')) measureChrome();
+    });
   }
 
   function pad(n) { return String(n).padStart(2, '0'); }
+
+  /* ── THE EXPERIMENT IS TOLD WHERE THE CHROME IS ──
+     The close button and the index row belong to this overlay, and the
+     experiment inside the frame has no way to know they are there. So the two
+     edges are measured here and written into the frame's own document as
+     --ovTop and --ovBottom. The experiment uses them to start its bar under
+     the close button and to hold its canvas clear of the numerals, which is
+     what puts the type on the centre line between the two.
+
+     Nothing is required: opened on its own, the experiment never receives
+     these and its defaults stand. Same origin, so the read is legal; wrapped
+     anyway, because a frame mid-navigation is not readable. */
+  function measureChrome() {
+    if (!ov || !frame) return;
+    var d;
+    try { d = frame.contentDocument; } catch (err) { return; }
+    if (!d || !d.documentElement) return;
+
+    var closeEl = ov.querySelector('.lab-ov-close');
+    var cr = closeEl ? closeEl.getBoundingClientRect() : null;
+    var top = cr ? cr.top : 0;
+    /* Its height too, so an experiment can centre a control of its own on the
+       button's line rather than carrying that number as a literal. */
+    if (cr) d.documentElement.style.setProperty('--ovTopH', cr.height + 'px');
+
+    var bottom = 0;
+    if (count) {
+      var r = count.getBoundingClientRect();
+      bottom = Math.max(0, ov.getBoundingClientRect().bottom - r.top);
+    }
+
+    d.documentElement.style.setProperty('--ovTop', Math.max(0, top) + 'px');
+    d.documentElement.style.setProperty('--ovBottom', bottom + 'px');
+  }
 
   function show(i) {
     idx = (i + FILES.length) % FILES.length;
