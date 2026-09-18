@@ -1915,14 +1915,17 @@
     #labOverlay .lab-ov-btn svg { width: 24px; height: 18px; display: block; }
     #labOverlay .lab-ov-btn:active { opacity: 0.6; }
     #labOverlay .lab-ov-close { top: calc(var(--gap) + env(safe-area-inset-top, 0px)); right: var(--gap); }
-    #labOverlay .lab-ov-prev  { bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px)); left: var(--gap); }
-    #labOverlay .lab-ov-next  { bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px)); right: var(--gap); }
+    /* The arrows are gone. The index itself is the control: three numbers on
+       the bottom left, each one a target, so a reader moves to the set they
+       want rather than stepping through the ones they do not. */
 
+    /* Same distance from the bottom edge as from the left, both read from
+       the one gutter token rather than from two numbers that agree today. */
     #labOverlay .lab-ov-count {
       position: absolute;
-      left: 50%;
-      bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px));
-      transform: translateX(-50%);
+      left: var(--gap);
+      bottom: var(--gap);
+      transform: none;
       height: 26.6px;
       display: flex;
       align-items: center;
@@ -1930,8 +1933,27 @@
       font-size: var(--type);
       font-variant-numeric: tabular-nums;
       color: #999999;
-      pointer-events: none;
       user-select: none;
+    }
+    #labOverlay .lab-ov-count button {
+      padding: 0;
+      margin: 0;
+      border: 0;
+      background: none;
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: inherit;
+      color: rgba(255,255,255,0.45);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #labOverlay .lab-ov-count button.is-on { color: #FFFFFF; }
+    #labOverlay .lab-ov-count button:active { opacity: 0.6; }
+    /* The separators are punctuation, not targets. */
+    #labOverlay .lab-ov-count .sep {
+      padding: 0 0.45em;
+      color: rgba(255,255,255,0.45);
+      pointer-events: none;
     }
 
     body.lab-overlay-open { overflow: hidden !important; }
@@ -3286,12 +3308,9 @@ window.__errLog = [];
       <div id="carSpacer" style="grid-column:1/-1; position:relative;">
         <div id="heroImage" aria-hidden="true">
 
-          <video id="heroVideo"
-            poster="https://ik.imagekit.io/rfi7kdlxzn/tr:q-80,w-1600/reel%207.mp4/ik-thumbnail.jpg"
-            autoplay muted loop playsinline disableremoteplayback preload="metadata">
-            <source media="(max-width: 768px)" src="https://ik.imagekit.io/rfi7kdlxzn/reel%207.mp4?tr=q-60,w-900" type="video/mp4">
-            <source src="https://ik.imagekit.io/rfi7kdlxzn/reel%207.mp4" type="video/mp4">
-          </video>
+          <!-- Hero reel removed: reel 7.mp4 was deleted from ImageKit and every
+               request for it 404'd, stalling the page on load. Drop a new
+               <video id="heroVideo"> here when there is a file to point at. -->
 
           <div id="heroArrow" aria-hidden="true"></div>
         </div>
@@ -9346,12 +9365,27 @@ document.addEventListener('visibilitychange', function() {
     count.setAttribute('aria-live', 'polite');
     ov.appendChild(frame);
     ov.appendChild(mk('lab-ov-close', CROSS, 'Close', close));
-    ov.appendChild(mk('lab-ov-prev', ARROW_L, 'Previous experiment', () => show(idx - 1)));
-    ov.appendChild(mk('lab-ov-next', ARROW_R, 'Next experiment', () => show(idx + 1)));
+    /* One target per experiment, built once. show() only repaints which of
+       them is the current one. */
+    FILES.forEach(function (_, i) {
+      if (i) {
+        var sep = document.createElement('span');
+        sep.className = 'sep';
+        sep.textContent = '/';
+        count.appendChild(sep);
+      }
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = pad(i + 1);
+      b.setAttribute('aria-label', 'Experiment ' + pad(i + 1));
+      b.addEventListener('click', function () { show(i); });
+      count.appendChild(b);
+    });
     ov.appendChild(count);
     document.body.appendChild(ov);
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && ov.classList.contains('is-open')) close(); });
+
   }
 
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -9361,7 +9395,8 @@ document.addEventListener('visibilitychange', function() {
 
     frame.src = 'about:blank';
     requestAnimationFrame(() => { frame.src = FILES[idx]; });
-    count.textContent = pad(idx + 1) + '-' + pad(FILES.length);
+    var btns = count.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('is-on', i === idx);
   }
 
   function open(i) {
@@ -9446,6 +9481,73 @@ document.addEventListener('visibilitychange', function() {
       } catch (e) {}
     }, 500);
   });
+})();
+</script>
+
+<script>
+/* Deep links. Adding #hg26 (or #cruise, #uber, #google, #aero, #oddone, #expa)
+   to the URL opens the site with that project already open, so a link from
+   Behance or LinkedIn lands on the work instead of the top of the page.
+   No hash means the site behaves exactly as before. */
+(function deepLink() {
+  var MAP = {
+    hg26:   'notypeLab1Section',
+    cruise: 'firstCarouselSection',
+    uber:   'uberCarouselSection',
+    google: 'googleIconCarouselSection',
+    aero:   'aeroCarouselSection',
+    oddone: 'oddoneCarouselSection',
+    expa:   'expaCarouselSection'
+  };
+
+  function target() {
+    var key = (location.hash || '').replace('#', '').trim().toLowerCase();
+    if (!key || !MAP[key]) return null;
+    return document.getElementById(MAP[key]);
+  }
+
+  function go(tries) {
+    var sec = target();
+    if (!sec) return;
+    var fn = window._sectionOpen && window._sectionOpen.get(sec);
+    /* The carousels wire themselves up after layout, so wait for the opener
+       rather than firing into an empty map. */
+    if (!fn) {
+      if ((tries || 0) < 40) setTimeout(function () { go((tries || 0) + 1); }, 100);
+      return;
+    }
+    if (typeof switchView === 'function') switchView('work');
+    fn(true);
+
+    /* On mobile the opener already parks the scroller at the top of the
+       opened section, so scrolling again just drags the page to the bottom.
+       Pin it at zero a few times instead, since late-loading media can shift
+       it. Desktop keeps the anchor scroll. */
+    if (window.innerWidth <= 768) {
+      var main = document.getElementById('mainContent') ||
+                 document.scrollingElement;
+      var pin = function () {
+        if (!main) return;
+        main.style.scrollBehavior = 'auto';
+        main.scrollTop = 0;
+        main.style.scrollBehavior = '';
+      };
+      pin();
+      requestAnimationFrame(pin);
+      setTimeout(pin, 120);
+      setTimeout(pin, 400);
+      setTimeout(pin, 900);
+    } else {
+      setTimeout(function () {
+        sec.scrollIntoView({ block: 'start' });
+      }, 60);
+    }
+  }
+
+  function start() { setTimeout(function () { go(0); }, 200); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+  window.addEventListener('hashchange', function () { go(0); });
 })();
 </script>
 </body>
