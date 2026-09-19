@@ -230,7 +230,7 @@ body {
              autocapitalize="characters" autocorrect="off" inputmode="text" enterkeyhint="done"
              placeholder="">
       <span class="caret" aria-hidden="true"></span>
-      <span class="flabel">(2 max)</span>
+      <span class="flabel">(2x2 max)</span>
     </div>
     <span class="mirror" aria-hidden="true"></span>
     <div class="sw">
@@ -257,7 +257,8 @@ const PANEL_HTML = "<!DOCTYPE html>\n<html><head>\n<meta charset=\"utf-8\">\n<me
   const frames = [
     { set: "3x3", el: document.getElementById("f3"), unit: document.getElementById("u3") }
   ];
-  const CAP = 2;
+  /* No flat cap: the 3x3 takes two letters a line, two lines, set below. */
+  const CAP = null;
   /* A bar can start empty while its panel still shows something, so the
      placeholder stays readable and the canvas is not blank. */
   const PANEL_SEED = "";
@@ -267,7 +268,7 @@ const PANEL_HTML = "<!DOCTYPE html>\n<html><head>\n<meta charset=\"utf-8\">\n<me
      out to the panel. Soft wraps are no longer marked. They used to be shown as
      a space, which is exactly the character that now has to survive being
      typed, so the two could not both be true. */
-  const LINE = 0, LINES = 1, BRK = '-';
+  const LINE = 2, LINES = 2, BRK = '-';
   /* ── THE TWO GLYPHS STACK ──
      One letter per line rather than two side by side. The field still holds
      one line, because a field is one line; the break is put in on the way out
@@ -282,7 +283,9 @@ const PANEL_HTML = "<!DOCTYPE html>\n<html><head>\n<meta charset=\"utf-8\">\n<me
      nothing here is conditional and nothing can disagree about which surface
      is being drawn. */
   const PHONE = true;
-  const STACK = true;
+  /* Off: the phone now takes two letters a line on two lines (LINE, LINES
+     above) instead of one glyph per line. */
+  const STACK = false;
   function stacked(raw) {
     if (!STACK) return raw;
     return String(raw).split('\n').join('').split('').join('\n');
