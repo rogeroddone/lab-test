@@ -36,6 +36,8 @@ button.active{border-color:rgba(255,255,255,0.45);color:#fff;}
 #size-slider input[type=range]{-webkit-appearance:none;width:100%;height:1px;background:rgba(255,255,255,0.22);outline:none;cursor:pointer;margin:0;}
 #size-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:#fff;cursor:pointer;}
 #size-slider input[type=range]::-moz-range-thumb{width:9px;height:9px;border:none;border-radius:50%;background:#fff;cursor:pointer;}
+/* Phone: the zoom dot matches the 3x3's slider knob, 15px. */
+@media (max-width:768px){#size-slider input[type=range]::-webkit-slider-thumb{width:15px;height:15px;}#size-slider input[type=range]::-moz-range-thumb{width:15px;height:15px;}}
 </style>
 </head>
 <body>
